@@ -1,4 +1,4 @@
-# tetris
+# OT60
 
 ## Project setup
 ```
