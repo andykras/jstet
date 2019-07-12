@@ -7,7 +7,7 @@
         <div v-for="x in 10"
              :key="x"
              :class="'N'+get(x,y)">
-          <span v-html="getSymbol(x,y,0)"></span>
+          <span v-html="getSymbol(x,y,1)"></span>
         </div>
       </div>
     </div>
@@ -41,71 +41,71 @@ export default {
   data() {
     const tets = []
     const z = 0
+    // tets.push([
+    //   //
+    //   [z, z, z, z, z],
+    //   [z, z, 1, 1, z],
+    //   [z, z, 1, z, z],
+    //   [z, 1, 1, z, z],
+    //   [z, z, z, z, z]
+    // ])
+    // tets.push([
+    //   //
+    //   [z, z, z, z, z],
+    //   [z, z, 1, 1, z],
+    //   [z, 1, 1, z, z],
+    //   [z, z, 1, z, z],
+    //   [z, z, z, z, z]
+    // ])
     tets.push([
       //
-      [z, z, z, z, z],
-      [z, z, 1, 1, z],
-      [z, z, 1, z, z],
-      [z, 1, 1, z, z],
-      [z, z, z, z, z]
+      [z, z, 1, z],
+      [z, z, 1, z],
+      [z, z, 1, z],
+      [z, z, 1, z]
     ])
     tets.push([
       //
-      [z, z, z, z, z],
-      [z, z, 1, 1, z],
-      [z, 1, 1, z, z],
-      [z, z, 1, z, z],
-      [z, z, z, z, z]
+      [z, z, 2, z],
+      [z, 2, 2, z],
+      [z, 2, z, z],
+      [z, z, z, z]
     ])
-    // tets.push([
-    //   //
-    //   [z, z, 1, z],
-    //   [z, z, 1, z],
-    //   [z, z, 1, z],
-    //   [z, z, 1, z]
-    // ])
-    // tets.push([
-    //   //
-    //   [z, z, 2, z],
-    //   [z, 2, 2, z],
-    //   [z, 2, z, z],
-    //   [z, z, z, z]
-    // ])
-    // tets.push([
-    //   //
-    //   [z, 3, z, z],
-    //   [z, 3, 3, z],
-    //   [z, z, 3, z],
-    //   [z, z, z, z]
-    // ])
-    // tets.push([
-    //   //
-    //   [z, z, z, z],
-    //   [z, 4, 4, z],
-    //   [z, 4, 4, z],
-    //   [z, z, z, z]
-    // ])
-    // tets.push([
-    //   //
-    //   [z, z, 5, z],
-    //   [z, 5, 5, z],
-    //   [z, z, 5, z],
-    //   [z, z, z, z]
-    // ])
-    // tets.push([
-    //   //
-    //   [z, z, z, z],
-    //   [z, 6, 6, z],
-    //   [z, z, 6, z],
-    //   [z, z, 6, z]
-    // ])
-    // tets.push([
-    //   //
-    //   [z, z, z, z],
-    //   [z, 7, 7, z],
-    //   [z, 7, z, z],
-    //   [z, 7, z, z]
-    // ])
+    tets.push([
+      //
+      [z, 3, z, z],
+      [z, 3, 3, z],
+      [z, z, 3, z],
+      [z, z, z, z]
+    ])
+    tets.push([
+      //
+      [z, z, z, z],
+      [z, 4, 4, z],
+      [z, 4, 4, z],
+      [z, z, z, z]
+    ])
+    tets.push([
+      //
+      [z, z, 5, z],
+      [z, 5, 5, z],
+      [z, z, 5, z],
+      [z, z, z, z]
+    ])
+    tets.push([
+      //
+      [z, z, z, z],
+      [z, 6, 6, z],
+      [z, z, 6, z],
+      [z, z, 6, z]
+    ])
+    tets.push([
+      //
+      [z, z, z, z],
+      [z, 7, 7, z],
+      [z, 7, z, z],
+      [z, 7, z, z]
+    ])
     nm = tets[0].length
 
     const cells = emptyCells()
@@ -392,7 +392,8 @@ a {
       // height: 25px;
       // width: 25px;
       flex: 0 0 25px
-      background-color: #efe
+      // background-color: #efe
+      background-color: #eee
       font-family: 'Helvetica Neue'
       font-weight: 900
       font-size: 20px
@@ -430,7 +431,7 @@ a {
       }
 
       &.N9 {
-        background-color: #eee
+        background-color: #abc
       }
     }
   }
