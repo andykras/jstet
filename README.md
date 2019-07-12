@@ -1,4 +1,4 @@
-# tetris clone in javascript
+# tetris clone in javascript, based on vue.js
 
 ## Screenshots
 
