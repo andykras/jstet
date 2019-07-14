@@ -1,17 +1,19 @@
 <template>
   <div class="main">
-    <div class="stakan next">
-      <div v-for="y in getSize(nextTet)"
-           :key="y"
-           class="row">
-        <div v-for="x in getSize(nextTet)"
-             :key="x"
-             :class="'N' + getPiece(nextTet, x-1, y-1, 0)">
-          <span v-html="getSymbol(x-1, y-1, nextTet, 0)"></span>
+    <div class="info">
+      <div>Lines: {{totalLines}}</div>
+      <div class="stakan next">
+        <div v-for="y in getSize(nextTet)"
+             :key="y"
+             class="row">
+          <div v-for="x in getSize(nextTet)"
+               :key="x"
+               :class="'N' + getPiece(nextTet, x-1, y-1, 0)">
+            <span v-html="getSymbol(x-1, y-1, nextTet, 0)"></span>
+          </div>
         </div>
       </div>
     </div>
-    <div>Lines: {{totalLines}}</div>
     <div class="stakan">
       <div class="dupa"
            :class="{end:!gameActive}">ДУПА</div>
@@ -459,9 +461,17 @@ export default {
 .main {
   text-align: center
   display: flex
-  margin: auto
-  flex-direction: row
+  // margin: auto
+  // flex-direction: row
   justify-content: center
+
+  .info {
+    display: flex
+    // padding: 1rem
+    flex-direction: column
+    min-width: 7rem
+    align-items: center
+  }
 
   .dupa {
     position: relative
@@ -483,22 +493,22 @@ export default {
   }
 
   .stakan {
-    flex: 1 1
+    // flex: 1 1
     display: flex
-    margin: auto
+    // margin: auto
     flex-direction: column-reverse
-    justify-content: center
 
+    // justify-content: center
     .row {
       display: flex
-      flex-direction: row
-      justify-content: center
-      align-items: baseline
 
+      // flex-direction: row
+      // justify-content: center
+      // align-items: baseline
       & > div {
-        // height: 25px;
-        // width: 25px;
-        flex: 0 0 25px
+        height: 25px
+        width: 25px
+        // flex: 0 0 25px
         background-color: #efe
         // background-color: #eee
         font-family: 'Helvetica Neue'
@@ -546,7 +556,7 @@ export default {
   }
 
   .next {
-    flex: 0.3
+    // flex: 0.3
 
     // align-items: flex-end
     .row {
