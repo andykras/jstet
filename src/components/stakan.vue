@@ -1,10 +1,6 @@
 <template>
   <div class="main">
     <div class="stakan next">
-      <div>
-        <input type="number"
-               v-model.number="theme">
-      </div>
       <div v-for="y in getSize(nextTet)"
            :key="y"
            class="row">
@@ -15,8 +11,15 @@
         </div>
       </div>
     </div>
+    <div>Lines: {{totalLines}}</div>
     <div class="stakan">
-      <div v-if="!gameActive">ДУПА</div>
+      <div class="dupa"
+           :class="{end:!gameActive}">ДУПА</div>
+      <div>
+        <div>animated: {{linesAnimated ? 'A': 'a'}}</div>
+        <div>drop soft: {{dropSoft ? 'S' : 's'}}</div>
+        <div>theme: {{theme}}</div>
+      </div>
       <div v-for="y in 20"
            :key="y"
            class="row">
@@ -31,6 +34,7 @@
 </template>
 
 <script>
+import { setTimeout } from 'timers'
 const border = 9
 const space = 0
 const h = 20
@@ -40,6 +44,7 @@ let indexBorder = 0
 let ticks = performance.now()
 let iskeydown = false
 let nm = 0
+const speed = 300
 
 const filled = 0 //0.38
 const emptyCells = _ =>
@@ -76,10 +81,14 @@ export default {
     // tetris:
     tets.push([
       //
-      [z, 1, z, z],
-      [z, 1, z, z],
-      [z, 1, z, z],
-      [z, 1, z, z]
+      // [z, 1, z, z],
+      // [z, 1, z, z],
+      // [z, 1, z, z],
+      // [z, 1, z, z]
+      [z, 1],
+      [z, 1],
+      [z, 1],
+      [z, 1]
     ])
     tets.push([
       //
@@ -97,9 +106,12 @@ export default {
       // [z, 3, 3, z],
       // [z, z, 3, z],
       // [z, z, z, z]
-      [3, z, z],
-      [3, 3, z],
-      [z, 3, z]
+      // [3, z, z],
+      // [3, 3, z],
+      // [z, 3, z]
+      [3, z],
+      [3, 3],
+      [z, 3]
     ])
     tets.push([
       //
@@ -126,8 +138,11 @@ export default {
       // [z, 6, 6, z],
       // [z, z, 6, z],
       // [z, z, 6, z]
-      [z, 6, z],
-      [z, 6, z],
+      // [z, 6, z],
+      // [z, 6, z],
+      // [z, 6, 6]
+      [z, 6],
+      [z, 6],
       [z, 6, 6]
     ])
     tets.push([
@@ -136,9 +151,12 @@ export default {
       // [z, 7, 7, z],
       // [z, 7, z, z],
       // [z, 7, z, z]
-      [z, 7, z],
-      [z, 7, z],
-      [7, 7, z]
+      // [z, 7, z],
+      // [z, 7, z],
+      // [7, 7, z]
+      [z, 7],
+      [z, 7],
+      [7, 7]
     ])
     nm = tets[0].length
 
@@ -158,8 +176,12 @@ export default {
       loop: null,
       posDecrement: null,
       gameActive: false,
-      dropped: false,
-      theme: 1
+      dropping: false,
+      dropSoft: true,
+      theme: 1,
+      totalLines: 0,
+      linesCutting: false,
+      linesAnimated: true
     }
   },
   created() {
@@ -169,6 +191,8 @@ export default {
     window.addEventListener('keypress', this.keypress)
   },
   destroyed() {
+    clearInterval(this.loop)
+    clearInterval(this.posDecrement)
     window.removeEventListener('keydown', this.keydown)
     window.removeEventListener('keyup', this.keyup)
     window.removeEventListener('keypress', this.keypress)
@@ -227,24 +251,24 @@ export default {
 
       this.gameActive = true
       this.posDecrement = setInterval(_ => {
+        if (this.dropping) return
         indexBorder++
-        this.tryY--
+        if (!this.linesCutting) this.tryY--
+        // this.tryY--
         this.render()
-      }, 300)
+      }, speed)
       this.loop = setInterval(_ => {
         // this.tryY--;
         // this.render();
       }, 10)
     },
     keydown(e) {
+      if (this.linesCutting) return
       // e.preventDefault()
-      //   this.dropped = false;
+      if (!this.gameActive) return this.newGame()
 
-      //   console.log("keydown", arguments);
-      if ((e.code == 'Space' || e.code == 'Enter') && !this.gameActive) {
-        return this.newGame()
-      }
       if (!this.gameActive) return
+
       if (e.code == 'KeyP') {
         if (this.loop == null) {
           return this.newGame()
@@ -253,33 +277,50 @@ export default {
         clearInterval(this.posDecrement)
         this.loop = null
       } else if (e.code == 'Space') {
-        while (this.check(this.curTet, this.currX, this.tryY - 1, this.rotate)) this.tryY--
-        this.dropped = true
-        setTimeout(_ => {
-          this.dropped = false
-        }, 100)
-        // this.tryY++;
-        // return;
+        if (this.dropSoft) {
+          this.dropping = true
+          let start = performance.now()
+          const step = _ => {
+            const curr = performance.now()
+            if (curr - start > 10) {
+              start = curr
+              const check = this.check(this.curTet, this.currX, this.tryY - 1, this.rotate)
+              this.tryY--
+              this.render()
+              if (!check) {
+                this.dropping = false
+                return
+              }
+            }
+            requestAnimationFrame(step)
+          }
+          step()
+        } else {
+          while (this.check(this.curTet, this.currX, this.currY - 1, this.rotate)) this.currY--
+          this.tryY = this.currY - 1
+        }
       } else if (e.code == 'ArrowUp' && (!iskeydown || ticks + 100 < performance.now())) {
         ticks = performance.now()
         this.tryRotate++
       } else if (e.code == 'ArrowDown') this.tryY--
       else if (e.code == 'ArrowLeft') this.tryX--
-      //this.tryX = Math.max(-nm, this.tryX - 1)
       else if (e.code == 'ArrowRight') this.tryX++
-      //this.tryX = Math.min(w + nm, this.tryX + 1)
       this.render()
       iskeydown = true
     },
     keyup(e) {
       // e.preventDefault()
-      console.log('keyup', arguments)
       // ticks = performance.now()
       iskeydown = false
+      let p = parseInt(e.key)
+      if (p > 0 && p < 10) {
+        this.theme = p
+      }
+      if (e.key == 'a') this.linesAnimated = !this.linesAnimated
+      if (e.key == 's') this.dropSoft = !this.dropSoft
     },
     keypress(e) {
       // e.preventDefault()
-      console.log('keypress', arguments)
     },
     getSize(T) {
       return this.tets[T].length
@@ -289,41 +330,65 @@ export default {
       const T = this.curTet
       return this.getPiece(T, x - this.currX - 1, y - this.currY - 1, R) || this.cells[y - 1][x - 1]
     },
+    drop() {
+      while (this.check(this.curTet, this.currX, this.tryY - 1, this.rotate)) this.tryY--
+    },
     render() {
       const check = this.check(this.curTet, this.tryX, this.tryY, this.tryRotate)
-      //   console.log({ check });
-
+      // console.log({ check })
       if (check) {
         this.currX = this.tryX
         this.currY = this.tryY
         this.rotate = this.tryRotate
       } else {
-        if (this.tryY < this.currY && !this.dropped) {
+        if (this.tryY < this.currY) {
           const put = this.put(this.curTet, this.currX, this.currY, this.rotate)
-          //   console.log({ put });
-
           if (!put) {
             clearInterval(this.loop)
             clearInterval(this.posDecrement)
             this.gameActive = false
           } else {
-            const lines = this.fill()
-            // console.log({ lines })
+            const lines = this.getSolidLines(!this.linesAnimated)
 
-            if (lines.length) {
+            if (lines.length && this.linesAnimated) {
+              let start = performance.now()
+              this.linesCutting = true
+              const step = _ => {
+                const curr = performance.now()
+                if (curr - start > 80) {
+                  start = curr
+                  for (let y = lines.pop(); y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; ++x) {
+                      this.cells[y][x] = this.cells[y + 1][x]
+                    }
+                  }
+                  this.totalLines++
+                  if (!lines.length) {
+                    this.linesCutting = false
+                    return
+                  }
+                }
+                requestAnimationFrame(step)
+              }
+              step()
+            }
+
+            if (lines.length && !this.linesAnimated) {
               setTimeout(_ => {
-                let current = lines.shift()
-                for (let y = current + 1; y < h; y++) {
-                  if (lines.length && y == lines[0]) {
-                    lines.shift()
+                this.totalLines += lines.length
+                let cur = lines.pop()
+                for (let y = cur + 1; y < h; y++) {
+                  const len = lines.length
+                  if (len && y == lines[len - 1]) {
+                    lines.pop()
                     continue
                   }
                   for (let x = 1; x < w - 1; ++x) {
-                    this.cells[current][x] = this.cells[y][x]
+                    this.cells[cur][x] = this.cells[y][x]
                   }
-                  current++
+                  cur++
                 }
-                for (let y = current; y < h; y++) {
+                for (let y = cur; y < h; y++) {
                   for (let x = 1; x < w - 1; ++x) {
                     this.cells[y][x] = 0
                   }
@@ -341,20 +406,15 @@ export default {
         this.tryY = this.currY
         this.tryRotate = this.rotate
       }
-      console.log({ curTet: this.curTet, Y: this.currY, X: this.currX, check })
+      // console.log({ curTet: this.curTet, Y: this.currY, X: this.currX, check })
     },
     check(T, X, Y, R) {
       const N = this.getSize(T)
       for (let y = 0; y < N; y++) {
-        if (!this.cells[Y + y]) continue //return true;
-        // const row = this.tets[T][y];
+        if (!this.cells[Y + y]) continue
         for (let x = 0; x < N; x++) {
-          //   const cell = row[x];
           const cell = this.getPiece(T, x, y, R)
-          // if (!cell || this.cells[Y + y][X + x] == undefined) continue
-          if (cell > 0 && this.cells[Y + y][X + x] > 0) {
-            return false
-          }
+          if (cell > 0 && this.cells[Y + y][X + x] > 0) return false
         }
       }
       return true
@@ -363,15 +423,10 @@ export default {
       const N = this.getSize(T)
       let success = false
       for (let y = 0; y < N; y++) {
-        // if (!this.cells[Y + y]) continue
         if (Y + y > h - 1) return false
-        // const row = this.tets[T][y];
         for (let x = 0; x < N; x++) {
-          //   const cell = row[x];
           const cell = this.getPiece(T, x, y, R)
-
           if (cell > 0 && this.cells[Y + y]) {
-            // if (this.cells[Y + y][X + x] == undefined) return false;
             this.cells[Y + y][X + x] = cell
             success = true
           }
@@ -379,9 +434,9 @@ export default {
       }
       return success
     },
-    fill() {
+    getSolidLines(reverse = false) {
       let lines = []
-      for (let y = 0; y < nm; ++y) {
+      for (let y = reverse ? nm - 1 : 0; reverse ? y >= 0 : y < nm; reverse ? --y : ++y) {
         if (this.currY + y <= 0 || this.currY + y > h - 1) continue
         let line = true
         for (let x = 1; x < w - 1 && line; ++x) {
@@ -389,7 +444,7 @@ export default {
         }
         if (line) {
           lines.push(this.currY + y)
-          for (let x = 1; x < w - 1 && line; ++x) {
+          for (let x = 1; x < w - 1; ++x) {
             this.cells[this.currY + y][x] = 8
           }
         }
@@ -400,7 +455,6 @@ export default {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="stylus">
 .main {
   text-align: center
@@ -408,6 +462,25 @@ export default {
   margin: auto
   flex-direction: row
   justify-content: center
+
+  .dupa {
+    position: relative
+    background: rgba(252, 255, 79, 0.878)
+    width: 50%
+    align-self: center
+    border: 2px solid #333
+    padding: 0.5em
+    color: red
+    transition: all 1s
+    // transition: all 1s cubic-bezier(0, 0, 0.2, 1)
+    top: -30em
+    opacity: 0
+
+    &.end {
+      top: -18em
+      opacity: 1
+    }
+  }
 
   .stakan {
     flex: 1 1
