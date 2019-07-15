@@ -99,10 +99,14 @@ export default {
       // [z, 1, z, z],
       // [z, 1, z, z],
       // [z, 1, z, z]
-      [z, 1],
-      [z, 1],
-      [z, 1],
-      [z, 1]
+      // [z, 1],
+      // [z, 1],
+      // [z, 1],
+      // [z, 1]
+      [z],
+      [1, 1, 1, 1],
+      [z],
+      [z]
     ])
     tets.push([
       //
@@ -110,9 +114,12 @@ export default {
       // [z, 2, 2, z],
       // [z, 2, z, z],
       // [z, z, z, z]
-      [z, z, 2],
+      // [z, z, 2],
+      // [z, 2, 2],
+      // [z, 2, z]
+      [2, 2],
       [z, 2, 2],
-      [z, 2, z]
+      [z]
     ])
     tets.push([
       //
@@ -123,9 +130,9 @@ export default {
       // [3, z, z],
       // [3, 3, z],
       // [z, 3, z]
-      [3, z],
-      [3, 3],
-      [z, 3]
+      [z, 3, 3],
+      [3, 3, z],
+      [z]
     ])
     tets.push([
       //
@@ -142,9 +149,12 @@ export default {
       // [z, 5, 5, z],
       // [z, z, 5, z],
       // [z, z, z, z]
-      [z, z, z],
+      // [z, z, z],
+      // [5, 5, 5],
+      // [z, 5, z]
+      [z, 5],
       [5, 5, 5],
-      [z, 5, z]
+      [z]
     ])
     tets.push([
       //
@@ -155,9 +165,12 @@ export default {
       // [z, 6, z],
       // [z, 6, z],
       // [z, 6, 6]
-      [z, 6],
-      [z, 6],
-      [z, 6, 6]
+      // [z, 6],
+      // [z, 6],
+      // [z, 6, 6]
+      [6],
+      [6, 6, 6],
+      [z]
     ])
     tets.push([
       //
@@ -168,9 +181,9 @@ export default {
       // [z, 7, z],
       // [z, 7, z],
       // [7, 7, z]
-      [z, 7],
-      [z, 7],
-      [7, 7]
+      [z],
+      [7, 7, 7],
+      [7]
     ])
     nm = tets[0].length
 
@@ -279,7 +292,7 @@ export default {
     },
     keydown(e) {
       if (this.linesCutting) return
-      // e.preventDefault()
+      e.preventDefault()
       if (!this.gameActive) return this.newGame()
 
       if (!this.gameActive) return
@@ -324,21 +337,22 @@ export default {
       iskeydown = true
     },
     keyup(e) {
-      // e.preventDefault()
+      e.preventDefault()
       // ticks = performance.now()
       iskeydown = false
       let p = parseInt(e.key)
-      if (p > 0 && p < 10) {
+      if (p >= 0 && p <= 9) {
         this.theme = p
       }
       if (e.key == 'a') this.linesAnimated = !this.linesAnimated
       if (e.key == 's') this.dropSoft = !this.dropSoft
     },
     keypress(e) {
-      // e.preventDefault()
+      e.preventDefault()
     },
     getSize(T) {
       return this.tets[T].length
+      // return this.tets[T].reduce((acc, cur) => Math.max(acc, cur.length), 0)
     },
     getValue(x, y) {
       const R = this.rotate
@@ -485,6 +499,10 @@ export default {
     flex-direction: column
     min-width: 7rem
     align-items: center
+
+    &> div {
+      padding-bottom: 0.3rem
+    }
   }
 
   .github {

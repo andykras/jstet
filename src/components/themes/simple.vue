@@ -1,9 +1,9 @@
 <template>
   <div class="stakan">
-    <div v-for="y in h"
+    <div v-for="y in getDimensions.height"
          :key="y"
          class="row">
-      <div v-for="x in w"
+      <div v-for="x in getDimensions.width"
            :key="x"
            :class="getThemeClass(x, y)">
         <span v-html="getThemeSymbol(x, y)"></span>
@@ -13,17 +13,11 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
+
 export default {
-  // props: ['cells', 'h', 'w'],
   computed: {
-    ...mapGetters(['getValue', 'getDimensions']),
-    h() {
-      return this.getDimensions.height
-    },
-    w() {
-      return this.getDimensions.width
-    }
+    ...mapGetters(['getValue', 'getDimensions'])
   },
   methods: {
     getThemeClass(x, y) {
