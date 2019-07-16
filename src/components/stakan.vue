@@ -29,15 +29,22 @@
                version="1.1"
                aria-hidden="true">
             <path fill-rule="evenodd"
-                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47
+                  7.59.4.07.55-.17.55-.38
+                  0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01
+                  1.08.58 1.23.82.72 1.21 1.87.87
+                  2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12
+                  0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08
+                  2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2
+                  0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
           </svg>
           <a href="https://github.com/andykras/jstet">github.com/andykras/jstet</a>
         </div>
       </div>
-      <div v-for="y in 20"
+      <div v-for="y in cells.height"
            :key="y"
            class="row">
-        <div v-for="x in 10"
+        <div v-for="x in cells.width"
              :key="x"
              :class="'N' + getValue(x, y)">
           <span v-html="getSymbol(x, y)"></span>
@@ -48,25 +55,29 @@
 </template>
 
 <script>
-import { setTimeout } from 'timers'
 const border = 9
 const space = 0
 const h = 20
-const w = 10
+const w = 12
 let startY = h - 1
 let indexBorder = 0
 let ticks = performance.now()
 let iskeydown = false
 let nm = 0
+let dim = 4 // tetra
 const speed = 300
 
 const filled = 0 //0.38
-const emptyCells = _ =>
-  Array.from({ length: h + nm }, (_, row) =>
+const emptyCells = _ => {
+  const res = Array.from({ length: h + nm }, (_, row) =>
     Array.from({ length: w }, (_, i) =>
       i == 0 || i == w - 1 || row == 0 ? border : row < h / 3 && Math.random() < filled ? Math.floor(Math.random() * 7) : space
     )
   )
+  res.width = w
+  res.height = h
+  return res
+}
 
 export default {
   name: 'stakan',
@@ -185,7 +196,8 @@ export default {
       [7, 7, 7],
       [7]
     ])
-    nm = tets[0].length
+    nm = 0 //tets[0].length
+    // make cells height bigger than visible height to prevent moving piece ot ouf the border, esp. when quickly moving to left\right
 
     const cells = emptyCells()
     return {
@@ -466,7 +478,7 @@ export default {
     },
     getSolidLines(reverse = false) {
       let lines = []
-      for (let y = reverse ? nm - 1 : 0; reverse ? y >= 0 : y < nm; reverse ? --y : ++y) {
+      for (let y = reverse ? dim - 1 : 0; reverse ? y >= 0 : y < dim; reverse ? --y : ++y) {
         if (this.currY + y <= 0 || this.currY + y > h - 1) continue
         let line = true
         for (let x = 1; x < w - 1 && line; ++x) {

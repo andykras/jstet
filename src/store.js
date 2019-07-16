@@ -8,9 +8,10 @@ export default new Vuex.Store({
     cells: null,
     pieces: null,
     rotate: 0,
-    current: 0,
-    currX: 3,
-    currY: 15
+    current: -1,
+    next: -1,
+    currX: 1000,
+    currY: 1000
   },
   mutations: {
     setCells(store, cells) {
@@ -19,10 +20,12 @@ export default new Vuex.Store({
     setPieces(store, pieces) {
       store.pieces = pieces
     },
-    setPieceState(store, { X, Y, R }) {
-      store.currX = X
-      store.currY = Y
-      store.rotate = R
+    setPieceState(store, { currX, currY, rotate, current, next }) {
+      store.currX = currX
+      store.currY = currY
+      store.rotate = rotate
+      store.current = current
+      store.next = next
     },
     moveDown(store) {
       store.currY--
@@ -44,13 +47,13 @@ export default new Vuex.Store({
   getters: {
     getDimensions(state) {
       return {
-        height: state.cells && state.cells.length,
-        width: state.cells && state.cells[0].length
+        height: state.cells && state.cells.height,
+        width: state.cells && state.cells.width
       }
     },
     getValue: state => (x, y) => {
       const R = state.rotate
-      const T = state.current
+      const T = Math.max(0, state.current)
       return state.pieces[T].get(x - state.currX - 1, y - state.currY - 1, R) || state.cells[y - 1][x - 1]
     }
   }
