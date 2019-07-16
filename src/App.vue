@@ -1,9 +1,13 @@
 <template>
   <div id="app">
+    <input type="checkbox"
+           v-model="naive">naive implementation: {{naiveImplementation}}
+
     <stakan v-if="naiveImplementation" />
     <div v-else>
+      <div>{{this.hard ? 'hard' : 'soft'}} drop (S)</div>
       <input type="button"
-             value="new"
+             value="new game"
              @click="createStakan">
       <simple />
     </div>
@@ -14,17 +18,24 @@
 import { mapMutations } from 'vuex'
 import { straight, rowL, rowJ, square, domZ } from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
-import { newGame, setEventHandler } from '@/utils/game.js'
+import { setEventHandler } from '@/utils/game.js'
 
 let randomNoise = false
 
 export default {
   name: 'jstet',
+  data() {
+    return {
+      naive: false,
+      hard: false
+    }
+  },
 
   computed: {
     naiveImplementation() {
-      return false
+      // return false
       // return true
+      return this.naive
     }
   },
 
@@ -33,6 +44,7 @@ export default {
   },
   created() {
     console.log('created App')
+    if (this.naiveImplementation) return
 
     setEventHandler(this)
 
@@ -55,11 +67,11 @@ export default {
     createStakan() {
       const z = 0
       const pieces = [straight(2, z), straight(4, z), rowL(4, z), rowJ(4, z), square(0, z), domZ(2, z), domZ(4, z)]
-      this.setPieces(pieces)
+      this.setPieces(Object.freeze(pieces))
       const extra = randomNoise ? [0.3, 0.1, pieces.length] : []
       const cells = new Stakan(20, 20, 4, ...extra)
-      this.setCells(cells)
-      newGame(cells, pieces)
+      this.setCells(Object.freeze(cells))
+      this.$emit('start', { cells, pieces })
       randomNoise = !randomNoise
     },
 
@@ -69,7 +81,11 @@ export default {
         ArrowDown: _ => this.$emit('down:start'),
         ArrowUp: _ => this.$emit('rotate:start'),
         ArrowLeft: _ => this.$emit('left:start'),
-        ArrowRight: _ => this.$emit('right:start')
+        ArrowRight: _ => this.$emit('right:start'),
+        KeyY: _ => this.createStakan(),
+        KeyP: _ => this.$emit('pause'),
+        KeyS: _ => (this.hard = !this.hard),
+        Space: _ => this.$emit(this.hard ? 'hard' : 'drop')
       }
       actions[e.code] && actions[e.code]()
     },

@@ -4,13 +4,14 @@
 function Piece(values, rotate) {
   const self = Array.from(values)
 
-  Object.defineProperty(self, 'R', { get: _ => rotate })
+  Object.defineProperty(self, 'R', { get: _ => rotate, configurable: false })
 
   Object.defineProperty(self, 'N', {
     get() {
       // return this.reduce((acc, cur) => Math.max(acc, cur.length), 0)
       return this.length
-    }
+    },
+    configurable: false
   })
 
   self.get = function(x, y, R) {

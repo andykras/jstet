@@ -21,6 +21,7 @@ export default new Vuex.Store({
       store.pieces = pieces
     },
     setPieceState(store, { currX, currY, rotate, current, next }) {
+      // ;[store.currX, store.currY, store.rotate, store.current, store.next] = [currX, currY, rotate, current, next]
       store.currX = currX
       store.currY = currY
       store.rotate = rotate
