@@ -7,55 +7,35 @@ export default new Vuex.Store({
   state: {
     cells: null,
     pieces: null,
-    rotate: 0,
-    current: -1,
-    next: -1,
-    currX: 1000,
-    currY: 1000
+    item: null,
+    lines: 0
   },
   mutations: {
-    setCells(store, cells) {
-      store.cells = cells
+    setCells(state, cells) {
+      state.cells = Object.freeze(cells)
     },
-    setPieces(store, pieces) {
-      store.pieces = pieces
+    setPieces(state, pieces) {
+      state.pieces = Object.freeze(pieces)
     },
-    setPieceState(store, { currX, currY, rotate, current, next }) {
-      // ;[store.currX, store.currY, store.rotate, store.current, store.next] = [currX, currY, rotate, current, next]
-      store.currX = currX
-      store.currY = currY
-      store.rotate = rotate
-      store.current = current
-      store.next = next
+    setPieceState(state, item) {
+      state.item = Object.freeze(item)
+      // state.item = item
     },
-    moveDown(store) {
-      store.currY--
-    },
-    moveLeft(store) {
-      store.currX--
-    },
-    moveRight(store) {
-      store.currX++
-    },
-    doRotate(store) {
-      store.rotate++
-    },
-    setCurrent(store, current) {
-      console.assert(current >= 0 && current < store.pieces.length, 'No Piece by this number', { N: current })
-      if (current >= 0 && current < store.pieces.length) store.current = current
+    setLines(state, lines) {
+      state.lines = lines
     }
   },
   getters: {
-    getDimensions(state) {
+    getDimensions({ cells }) {
       return {
-        height: state.cells && state.cells.height,
-        width: state.cells && state.cells.width
+        height: cells && cells.height,
+        width: cells && cells.width
       }
     },
-    getValue: state => (x, y) => {
-      const R = state.rotate
-      const T = Math.max(0, state.current)
-      return state.pieces[T].get(x - state.currX - 1, y - state.currY - 1, R) || state.cells[y - 1][x - 1]
+    getWellValue: ({ cells, pieces, item, lines }) => (x, y) => {
+      if (!item) return cells[y - 1][x - 1] + lines
+      const { T, X, Y, R } = item
+      return pieces[T].get(x - X - 1, y - Y - 1, R) || cells[y - 1][x - 1]
     }
   }
 })

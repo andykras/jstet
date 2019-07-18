@@ -13,5 +13,5 @@ export default function stakan(h, w, dim, part = 0, density = 0, pieces = 0) {
   )
   cells.height = h
   cells.width = w
-  return Object.freeze(cells)
+  return cells
 }

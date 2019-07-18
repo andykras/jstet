@@ -1,43 +1,53 @@
 import Piece from '@/utils/piece.js'
 
-export function straight(rotates, z = 0) {
+export function createStraight(rotates, z = 0) {
   return new Piece(
     [
       // I (also a "straight polyomino"): four blocks in a straight line.
-      [z, 1],
-      [z, 1],
-      [z, 1],
-      [z, 1]
+      // [z, 1],
+      // [z, 1],
+      // [z, 1],
+      // [z, 1]
+      [z],
+      [1, 1, 1, 1],
+      [z],
+      [z]
     ],
     rotates
   )
 }
 
-export function rowL(rotates, z = 0) {
+export function createLShape(rotates, z = 0) {
   return new Piece(
     [
       // L: a row of three blocks with one added below the left side.
-      [z, 6],
-      [z, 6],
-      [z, 6, 6]
+      // [z, 7],
+      // [z, 7],
+      // [z, 7, 7]
+      [z],
+      [7, 7, 7],
+      [7]
     ],
     rotates
   )
 }
 
-export function rowJ(rotates, z = 0) {
+export function createJShape(rotates, z = 0) {
   return new Piece(
     [
       // J: a row of three blocks with one added below the right side.
-      [z, 7],
-      [z, 7],
-      [7, 7]
+      // [z, 7],
+      // [z, 7],
+      // [7, 7]
+      [z],
+      [6, 6, 6],
+      [z, z, 6]
     ],
     rotates
   )
 }
 
-export function square(rotates) {
+export function createSquare(rotates) {
   return new Piece(
     [
       // O (also a "square polyomino"): four blocks in a 2×2 square.
@@ -48,12 +58,24 @@ export function square(rotates) {
   )
 }
 
-export function domZ(rotates, z = 0) {
+export function createZShape(rotates, z = 0) {
   return new Piece(
     [
       // Z: two stacked horizontal dominoes with the top one offset to the left.
       [2, 2],
       [z, 2, 2],
+      [z]
+    ],
+    rotates
+  )
+}
+
+export function createSShape(rotates, z = 0) {
+  return new Piece(
+    [
+      // S: two stacked horizontal dominoes with the top one offset to the right.
+      [z, 3, 3],
+      [3, 3, z],
       [z]
     ],
     rotates

@@ -9,6 +9,8 @@
         <span v-html="getThemeSymbol(x, y)"></span>
       </div>
     </div>
+    <div> {{$store.state.item}} </div>
+    <!-- <div> Total lines: {{$store.state.lines}} </div> -->
   </div>
 </template>
 
@@ -17,14 +19,14 @@ import { mapGetters } from 'vuex'
 
 export default {
   computed: {
-    ...mapGetters(['getValue', 'getDimensions'])
+    ...mapGetters(['getWellValue', 'getDimensions'])
   },
   methods: {
     getThemeClass(x, y) {
-      return 'N' + this.getValue(x, y)
+      return 'N' + this.getWellValue(x, y)
     },
     getThemeSymbol(x, y) {
-      return this.getValue(x, y) ? '&nbsp' : '.'
+      return this.getWellValue(x, y) ? '&nbsp' : '.'
     }
   }
 }

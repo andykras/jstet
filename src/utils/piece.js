@@ -6,7 +6,7 @@ function Piece(values, rotate) {
 
   Object.defineProperty(self, 'R', { get: _ => rotate, configurable: false })
 
-  Object.defineProperty(self, 'N', {
+  Object.defineProperty(self, 'size', {
     get() {
       // return this.reduce((acc, cur) => Math.max(acc, cur.length), 0)
       return this.length
@@ -15,16 +15,16 @@ function Piece(values, rotate) {
   })
 
   self.get = function(x, y, R) {
-    const N = this.N
+    const S = this.size
     switch (R % this.R) {
       case 1:
-        ;[x, y] = [N - y - 1, x]
+        ;[x, y] = [S - y - 1, x]
         break
       case 2:
-        ;[x, y] = [N - x - 1, N - y - 1]
+        ;[x, y] = [S - x - 1, S - y - 1]
         break
       case 3:
-        ;[x, y] = [y, N - x - 1]
+        ;[x, y] = [y, S - x - 1]
         break
     }
     return this[y] && this[y][x]
@@ -34,45 +34,3 @@ function Piece(values, rotate) {
 }
 
 export default Piece
-
-// class Piece extends Array {
-//   constructor(values, rotate) {
-//     super(values)
-//     this.rotate = rotate
-//   }
-//   get R() {
-//     return this.rotate
-//   }
-//   get N() {
-//     // return this.reduce((acc, cur) => Math.max(acc, cur.length), 0)
-//     return this.length
-//   }
-//   get(x, y, R) {
-//     const N = this.N
-//     switch (R % this.R) {
-//       case 1:
-//         ;[x, y] = [N - y - 1, x]
-//         break
-//       case 2:
-//         ;[x, y] = [N - x - 1, N - y - 1]
-//         break
-//       case 3:
-//         ;[x, y] = [y, N - x - 1]
-//         break
-//     }
-//     return this[y] && this[y][x]
-//   }
-// }
-
-// Piece.prototype = new Array()
-// Object.defineProperty(Piece.prototype, 'R', {
-//   get: function() {
-//     return this.__rotate
-//   }
-// })
-// Object.defineProperty(Piece.prototype, 'N', {
-//   get: function() {
-//     // return this.reduce((acc, cur) => Math.max(acc, cur.length), 0)
-//     return this.length
-//   }
-// })

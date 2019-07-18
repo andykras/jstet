@@ -1,53 +1,110 @@
 import { events } from '@/utils/events'
 
-const speed = { start: 300, drop: 20 }
+// todo fill measure!!!!!!!!!!!!!!!
+const speed = { start: 300, fill: 80, drop: 20 }
+// let item = { T: 0 }
+let item = {}
+let $cells = null
+let $pieces = null
+let $bus = null
+let $lines = []
+
+export function setup(bus) {
+  events.init(), ($bus = bus)
+  ;['rotate', 'left', 'right', 'down'].forEach(e => ['start', 'stop'].forEach(t => $bus.$on(e + ':' + t, _ => events.emit(e + ':' + t))))
+  $bus.$on('start', ({ cells, pieces }) => (($cells = cells), ($pieces = pieces), game.start()))
+  $bus.$on('pause', _ => (game.paused = !game.paused))
+  $bus.$on('drop', hard => (hard ? dropDown() : game.drop++))
+  $bus.$on('fill', _ => (game.fillAnimated = !game.fillAnimated))
+  $bus.$on('fill:pause', _ => (game.pauseOnFill = !game.pauseOnFill))
+}
 
 const game = {
   started: false,
   level: 0,
   paused: false,
   drop: 0,
-  speed: _ => (game.drop > 0 ? speed.drop / game.drop : speed.start / (game.level + 1))
+  fillAnimated: true,
+  pauseOnFill: true,
+  totalLines: 0,
+
+  speed: _ => (game.drop > 0 ? speed.drop / game.drop : speed.start / (game.level + 1)),
+
+  start() {
+    cancelAnimationFrame(this.id)
+    this.intervals = {}
+    this.started = this.drop = this.totalLines = 1
+    next()
+    this.startedTime = performance.now()
+    this.id = requestAnimationFrame(this.loop.bind(this))
+
+    this.performance_measure_counter = 0
+    this.performance_measure_delta = 0
+  },
+
+  interval(delta) {
+    const count = (this.currentTime - this.startedTime) / delta
+    this.intervals[delta] = this.intervals[delta] || count
+    return count > this.intervals[delta] + 1
+  },
+
+  increase() {
+    for (let [key] of Object.entries(this.intervals)) if (this.interval(key)) this.intervals[key]++
+  },
+
+  loop() {
+    if (this.performance_measure_counter > 100 && this.performance_measure_delta < performance.now() - this.currentTime) {
+      this.performance_measure_delta = performance.now() - this.currentTime
+      console.log({ delta: this.performance_measure_delta })
+    }
+    this.performance_measure_counter++
+
+    if (!game.started) return $bus.$emit('done')
+    this.currentTime = performance.now()
+
+    if ($lines.length && this.interval(speed.fill)) fill()
+    if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
+    if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R)
+    if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R)
+    if (events.rotate.active(this.currentTime)) update(item.X, item.Y, item.R + 1)
+    if (events.down.active(this.currentTime)) update(item.X, item.Y - 1, item.R)
+
+    this.increase()
+    this.id = requestAnimationFrame(this.loop.bind(this))
+  }
 }
 
-let currX = 0
-let currY = 0
-let rotate = 0
-let current = -1
-let next = -1
+const rand = _ => Math.floor(Math.random() * $pieces.length)
 
-let $cells = null
-let $pieces = null
-let $bus = null
-
-const nextPiece = _ => {
-  current = next < 0 ? Math.floor(Math.random() * $pieces.length) : next
-  next = Math.floor(Math.random() * $pieces.length)
-  currX = Math.floor(($cells.width - $pieces[current].N) / 2 + 0.5)
-  currY = $cells.height
-  rotate = 0
+const next = _ => {
+  item = {
+    T: item.N || rand(),
+    N: rand(),
+    X: Math.round(($cells.width - $pieces[0].size) / 2),
+    Y: $cells.height - 1,
+    R: 0
+  }
   game.drop = Math.max(0, game.drop - 1)
 }
 
-const check = (T, X, Y, R) => {
-  const N = $pieces[T].N
-  for (let y = 0; y < N; y++) {
+const set = (X, Y, R, T = item.T, N = item.N) => {
+  const S = $pieces[T].size
+  for (let y = 0; y < S; y++) {
     if (!$cells[Y + y]) continue
-    for (let x = 0; x < N; x++) {
+    for (let x = 0; x < S; x++) {
       const cell = $pieces[T].get(x, y, R)
       if (cell > 0 && $cells[Y + y][X + x] !== 0) return false
     }
   }
-  ;[currX, currY, rotate] = [X, Y, R]
-  return true
+  return (item = { X, Y, R, T, N }) // true
 }
 
-const put = (T, X, Y, R) => {
-  const N = $pieces[T].N
+const put = ({ X, Y, R, T }) => {
+  const S = $pieces[T].size
   let success = false
-  for (let y = 0; y < N; y++) {
+  for (let y = 0; y < S; y++) {
     if (Y + y > $cells.height - 1) return false
-    for (let x = 0; x < N; x++) {
+    for (let x = 0; x < S; x++) {
       const cell = $pieces[T].get(x, y, R)
       if (cell > 0 && $cells[Y + y]) {
         $cells[Y + y][X + x] = cell
@@ -59,85 +116,52 @@ const put = (T, X, Y, R) => {
 }
 
 const update = (X, Y, R) => {
-  if (!check(current, X, Y, R) && Y < currY) {
-    if (put(current, currX, currY, rotate)) {
-      nextPiece()
+  if ($lines.length > 0 && game.pauseOnFill) return
+  if (!set(X, Y, R) && Y < item.Y) {
+    if (put(item)) {
+      getSolidLines(!game.fillAnimated)
+      next()
+      game.intervals = {} // reset timers on next piece, so the next piece falling starts to count from zero
     } else {
       game.started = false
-      console.log('done')
     }
   }
-  $bus.$emit('update', { currX, currY, rotate, current, next })
+  $bus.$emit('update', item)
 }
 
-const gameLoop = {
-  intervals: {},
-  start() {
-    cancelAnimationFrame(this.id)
-    this.startedTime = performance.now()
-    this.clear()
-    this.loop()
-  },
-  clear() {
-    for (let key in this.intervals) this.intervals[key] = 0
-  },
-  interval(delta) {
-    delta = +delta
-    // const count = Math.floor((this.currentTime - this.startedTime) / delta)
-    const count = (this.currentTime - this.startedTime) / delta
-    this.intervals[delta] = this.intervals[delta] || count
-    return count > this.intervals[delta]
-  },
-  updateIntervals() {
-    for (let key in this.intervals) {
-      if (this.interval(key)) this.intervals[key]++
+const fill = _ => {
+  //if(game.fillAnimated) todo
+  const h = $cells.height
+  const w = $cells.width
+  for (let y = $lines.pop(); y < h - 1; y++) {
+    for (let x = 1; x < w - 1; ++x) {
+      $cells[y][x] = $cells[y + 1][x]
     }
-  },
-  loop() {
-    if (!game.started) return
-
-    this.currentTime = performance.now()
-    if (this.interval(1000)) {
-      console.log({ sec: this.intervals[1000] })
-    }
-
-    if (!game.paused && this.interval(game.speed())) {
-      update(currX, currY - 1, rotate)
-    }
-
-    if (events.left.active(this.currentTime)) update(currX - 1, currY, rotate)
-    if (events.right.active(this.currentTime)) update(currX + 1, currY, rotate)
-    if (events.rotate.active(this.currentTime)) update(currX, currY, rotate + 1)
-    if (events.down.active(this.currentTime)) update(currX, currY - 1, rotate)
-
-    this.updateIntervals()
-    this.id = requestAnimationFrame(this.loop.bind(this))
   }
+  $bus.$emit('lines', game.totalLines++)
 }
 
-function newGame({ cells, pieces }) {
-  $cells = cells
-  $pieces = pieces
-
-  game.drop = 1
-  nextPiece()
-
-  game.started = true
-  gameLoop.start()
+function dropDown(allowFinalMove = false) {
+  while (set(item.X, item.Y - 1, item.R));
+  update(item.X, item.Y - 1 + allowFinalMove, item.R)
 }
 
-export function setEventHandler(bus) {
-  events.init(), ($bus = bus)
-  ;['rotate', 'left', 'right', 'down'].forEach(event =>
-    ['start', 'stop'].forEach(type =>
-      // subscribe on events 'event:type'
-      $bus.$on(event + ':' + type, _ => events.emit(event + ':' + type))
-    )
-  )
-  $bus.$on('pause', _ => (game.paused = !game.paused))
-  $bus.$on('start', newGame)
-  $bus.$on('drop', _ => game.drop++)
-  $bus.$on('hard', _ => {
-    while (check(current, currX, currY - 1, rotate)) update(currX, currY, rotate)
-  })
+function getSolidLines(reverse = false) {
+  const dim = $pieces[item.T].size
+  const h = $cells.height
+  const w = $cells.width
+  const border = -2
+  for (let y = reverse ? dim - 1 : 0; reverse ? y >= 0 : y < dim; reverse ? --y : ++y) {
+    if (item.Y + y <= 0 || item.Y + y > h - 1) continue
+    let line = true
+    for (let x = 1; x < w - 1 && line; ++x) {
+      line = $cells[item.Y + y][x] != 0
+    }
+    if (line) {
+      $lines.push(item.Y + y)
+      for (let x = 1; x < w - 1; ++x) {
+        $cells[item.Y + y][x] = border
+      }
+    }
+  }
 }

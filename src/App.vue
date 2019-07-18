@@ -6,6 +6,7 @@
     <stakan v-if="naiveImplementation" />
     <div v-else>
       <div>{{this.hard ? 'hard' : 'soft'}} drop (S)</div>
+      <div>Total lines: {{$store.state.lines}}</div>
       <input type="button"
              value="new game"
              @click="createStakan">
@@ -16,9 +17,9 @@
 
 <script>
 import { mapMutations } from 'vuex'
-import { straight, rowL, rowJ, square, domZ } from '@/utils/tetraminos.js'
+import { createStraight, createLShape, createJShape, createSquare, createZShape, createSShape } from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
-import { setEventHandler } from '@/utils/game.js'
+import { setup } from '@/utils/game.js'
 
 let randomNoise = false
 
@@ -46,10 +47,12 @@ export default {
     console.log('created App')
     if (this.naiveImplementation) return
 
-    setEventHandler(this)
+    setup(this)
 
     this.createStakan()
     this.$on('update', state => this.setPieceState(state))
+    this.$on('done', _ => console.log('done'))
+    this.$on('lines', state => this.setLines(state))
 
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keyup', this.onKeyUp)
@@ -62,16 +65,28 @@ export default {
   },
 
   methods: {
-    ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setCurrent', 'moveDown', 'moveLeft', 'moveRight', 'doRotate']),
+    ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines']),
 
     createStakan() {
       const z = 0
-      const pieces = [straight(2, z), straight(4, z), rowL(4, z), rowJ(4, z), square(0, z), domZ(2, z), domZ(4, z)]
-      this.setPieces(Object.freeze(pieces))
+      const pieces = [
+        createStraight(2, z),
+        createStraight(4, z),
+        createLShape(4, z),
+        createJShape(4, z),
+        createSquare(0, z),
+        createZShape(2, z),
+        createZShape(4, z),
+        createSShape(2, z),
+        createSShape(4, z)
+      ]
+      this.setPieces(pieces)
       const extra = randomNoise ? [0.3, 0.1, pieces.length] : []
       const cells = new Stakan(20, 20, 4, ...extra)
-      this.setCells(Object.freeze(cells))
+      this.setCells(cells)
+      this.setLines(0)
       this.$emit('start', { cells, pieces })
+
       randomNoise = !randomNoise
     },
 
@@ -85,7 +100,7 @@ export default {
         KeyY: _ => this.createStakan(),
         KeyP: _ => this.$emit('pause'),
         KeyS: _ => (this.hard = !this.hard),
-        Space: _ => this.$emit(this.hard ? 'hard' : 'drop')
+        Space: _ => this.$emit('drop', this.hard)
       }
       actions[e.code] && actions[e.code]()
     },
@@ -100,8 +115,8 @@ export default {
       }
       actions[e.code] && actions[e.code]()
 
-      let p = parseInt(e.key)
-      if (p >= 0 && p < 10) this.setCurrent(p)
+      // let p = parseInt(e.key)
+      // if (p >= 0 && p < 10) this.setCurrent(p)
     }
   }
 }
