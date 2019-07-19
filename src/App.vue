@@ -17,7 +17,17 @@
 
 <script>
 import { mapMutations } from 'vuex'
-import { createStraight, createLShape, createJShape, createSquare, createZShape, createSShape } from '@/utils/tetraminos.js'
+import {
+  createStraight,
+  createLShape,
+  createJShape,
+  createSquare,
+  createZShape,
+  createSShape,
+  createTetColor3,
+  createTetColor2,
+  createTetColor1
+} from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
 import { setup } from '@/utils/game.js'
 
@@ -70,19 +80,31 @@ export default {
     createStakan() {
       const z = 0
       const pieces = [
-        createStraight(2, z),
-        createStraight(4, z),
-        createLShape(4, z),
-        createJShape(4, z),
-        createSquare(0, z),
-        createZShape(2, z),
-        createZShape(4, z),
-        createSShape(2, z),
-        createSShape(4, z)
+        createTetColor3(4, z),
+        createTetColor2(4, z),
+        createTetColor1(4, z),
+        createTetColor3(4, z),
+        createTetColor2(4, z),
+        createTetColor1(4, z),
+        createTetColor3(4, z),
+        createTetColor2(4, z),
+        createTetColor1(4, z),
+        createTetColor3(4, z),
+        createTetColor2(4, z),
+        createTetColor1(4, z)
+        // createStraight(2, z),
+        // createStraight(4, z),
+        // createLShape(4, z),
+        // createJShape(4, z),
+        // createSquare(0, z),
+        // createZShape(2, z),
+        // createZShape(4, z),
+        // createSShape(2, z),
+        // createSShape(4, z)
       ]
       this.setPieces(pieces)
       const extra = randomNoise ? [0.3, 0.1, pieces.length] : []
-      const cells = new Stakan(20, 20, 4, ...extra)
+      const cells = new Stakan(20, 10, 4, ...extra)
       this.setCells(cells)
       this.setLines(0)
       this.$emit('start', { cells, pieces })

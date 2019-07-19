@@ -55,6 +55,12 @@
       "plugin:vue/essential"
     ],
     "rules": {
+      "newline-per-chained-call": [
+        "error",
+        {
+          "ignoreChainWithDepth": 10
+        }
+      ],
       "vue/max-attributes-per-line": [
         "error",
         {

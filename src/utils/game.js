@@ -8,6 +8,7 @@ let $cells = null
 let $pieces = null
 let $bus = null
 let $lines = []
+let $three = new Set()
 
 export function setup(bus) {
   events.init(), ($bus = bus)
@@ -27,6 +28,7 @@ const game = {
   fillAnimated: true,
   pauseOnFill: true,
   totalLines: 0,
+  color: true,
 
   speed: _ => (game.drop > 0 ? speed.drop / game.drop : speed.start / (game.level + 1)),
 
@@ -62,7 +64,13 @@ const game = {
     if (!game.started) return $bus.$emit('done')
     this.currentTime = performance.now()
 
-    if ($lines.length && this.interval(speed.fill)) fill()
+    if ($three.size && this.interval(400)) {
+      game.totalLines += $three.size
+      removeThreeBlock()
+      getThreeBlock()
+      $bus.$emit('lines', game.totalLines)
+    }
+    if ($lines.length && this.interval(game.fillAnimated ? speed.fill : 2 * speed.fill)) fill()
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
     if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R)
     if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R)
@@ -116,10 +124,12 @@ const put = ({ X, Y, R, T }) => {
 }
 
 const update = (X, Y, R) => {
-  if ($lines.length > 0 && game.pauseOnFill) return
+  if ($lines.length > 0 && game.fillAnimated) return
   if (!set(X, Y, R) && Y < item.Y) {
     if (put(item)) {
-      getSolidLines(!game.fillAnimated)
+      if (game.color) getThreeBlock()
+      else getSolidLines(!game.fillAnimated)
+
       next()
       game.intervals = {} // reset timers on next piece, so the next piece falling starts to count from zero
     } else {
@@ -130,12 +140,32 @@ const update = (X, Y, R) => {
 }
 
 const fill = _ => {
-  //if(game.fillAnimated) todo
   const h = $cells.height
   const w = $cells.width
-  for (let y = $lines.pop(); y < h - 1; y++) {
-    for (let x = 1; x < w - 1; ++x) {
-      $cells[y][x] = $cells[y + 1][x]
+  if (game.fillAnimated) {
+    for (let y = $lines.pop(); y < h - 1; y++) {
+      for (let x = 1; x < w - 1; ++x) {
+        $cells[y][x] = $cells[y + 1][x]
+      }
+    }
+  } else {
+    game.totalLines += $lines.length - 1
+    let cur = $lines.pop()
+    for (let y = cur + 1; y < h; y++) {
+      const len = $lines.length
+      if (len && y == $lines[len - 1]) {
+        $lines.pop()
+        continue
+      }
+      for (let x = 1; x < w - 1; ++x) {
+        $cells[cur][x] = $cells[y][x]
+      }
+      cur++
+    }
+    for (let y = cur; y < h; y++) {
+      for (let x = 1; x < w - 1; ++x) {
+        $cells[y][x] = 0
+      }
     }
   }
   $bus.$emit('lines', game.totalLines++)
@@ -144,6 +174,44 @@ const fill = _ => {
 function dropDown(allowFinalMove = false) {
   while (set(item.X, item.Y - 1, item.R));
   update(item.X, item.Y - 1 + allowFinalMove, item.R)
+}
+
+function removeThreeBlock() {
+  const h = $cells.height
+  const w = $cells.width
+  for (let x = 1; x < w - 1; ++x) {
+    for (let cur = 1, y = cur; y < h + 1; ++y) {
+      if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
+      $three.delete(x * h + y)
+    }
+  }
+}
+
+function getThreeBlock() {
+  const h = $cells.height
+  const w = $cells.width
+
+  const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) => $cells[y + ly][x + lx] == $cells[y][x] && $cells[y][x] == $cells[y + ry][x + rx]
+
+  for (let y = 1; y < h - 1; ++y) {
+    for (let x = 1; x < w - 1; ++x) {
+      if ($cells[y][x] <= 0) continue
+      if (check(x, y,  0, -1, 0,  1)) $three.add(x * h + y).add((x - 1) * h + y).add((x + 1) * h + y) // prettier-ignore
+      if (check(x, y, -1, -1, 1,  1)) $three.add(x * h + y).add((x - 1) * h + y - 1).add((x + 1) * h + y + 1) // prettier-ignore
+      if (check(x, y, -1,  0, 1,  0)) $three.add(x * h + y).add(x * h + y - 1).add(x * h + y + 1) // prettier-ignore
+      if (check(x, y, -1,  1, 1, -1)) $three.add(x * h + y).add((x - 1) * h + y + 1).add((x + 1) * h + y - 1) // prettier-ignore
+    }
+  }
+  if ($three.size > 0) {
+    // console.log({ $three })
+    for (let x = 1; x < w - 1; ++x) {
+      for (let y = 1; y < h - 1; ++y) {
+        if ($three.has(x * h + y)) {
+          $cells[y][x] = -2
+        }
+      }
+    }
+  }
 }
 
 function getSolidLines(reverse = false) {
