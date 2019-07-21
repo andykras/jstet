@@ -12,6 +12,9 @@
           </div>
         </div>
       </div>
+      <div>Level: {{$store.state.level+1}}</div>
+      <div>Score: {{$store.state.score}}</div>
+      <div v-show="$store.state.bonus">Bonus: {{$store.state.bonus}}</div>
     </div>
     <div class="stakan">
       <div v-for="y in getDimensions.height"
@@ -111,7 +114,7 @@ export default {
         box-sizing: border-box
 
         &.item {
-          border: 1px solid #000
+          border: 1px solid $border-color
 
           &.left {
             border-left: none
@@ -126,11 +129,11 @@ export default {
           border: none
 
           &.right {
-            border-right: 1px solid #000
+            border-right: 1px solid $border-color
           }
 
           &.top {
-            border-top: 1px solid #000
+            border-top: 1px solid $border-color
           }
         }
 
@@ -159,7 +162,7 @@ export default {
         }
 
         &.N-2 {
-          background-color: #aebece
+          background-color: #000BA4
         }
 
         &.N-1 {

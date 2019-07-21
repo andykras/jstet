@@ -8,7 +8,10 @@ export default new Vuex.Store({
     cells: null,
     pieces: null,
     item: null,
-    lines: 0
+    lines: 0,
+    score: 0,
+    bonus: 0,
+    level: 0
   },
   mutations: {
     setCells(state, cells) {
@@ -23,6 +26,15 @@ export default new Vuex.Store({
     },
     setLines(state, lines) {
       state.lines = lines
+    },
+    setScore(state, score) {
+      state.score = score
+    },
+    setBonus(state, bonus) {
+      state.bonus = bonus
+    },
+    setLevel(state, level) {
+      state.level = level
     }
   },
   getters: {

@@ -65,6 +65,9 @@ export default {
     this.$on('update', state => this.setPieceState(state))
     this.$on('done', _ => console.log('done'))
     this.$on('lines', state => this.setLines(state))
+    this.$on('score', state => this.setScore(state))
+    this.$on('bonus', state => this.setBonus(state))
+    this.$on('level', state => this.setLevel(state))
 
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keyup', this.onKeyUp)
@@ -77,7 +80,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines']),
+    ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel']),
 
     createStakan() {
       const z = 0
@@ -116,7 +119,8 @@ export default {
         KeyY: _ => this.createStakan(),
         KeyP: _ => this.$emit('pause'),
         KeyS: _ => (this.hard = !this.hard),
-        Space: _ => this.$emit('drop', this.hard)
+        Space: _ => this.$emit('drop', this.hard),
+        KeyN: _ => this.$emit('next')
       }
       actions[e.code] && actions[e.code]()
     },

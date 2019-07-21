@@ -1,7 +1,7 @@
 import { events } from '@/utils/events'
 
 // todo fill measure!!!!!!!!!!!!!!!
-const speed = { start: 300, fill: 80, drop: 20 }
+const speed = { start: 1000, fill: 80, drop: 20, three: 100 }
 // let item = { T: 0 }
 let item = {}
 let $cells = null
@@ -9,6 +9,7 @@ let $pieces = null
 let $bus = null
 let $lines = []
 let $three = new Set()
+$three.sorted = []
 
 export function setup(bus) {
   events.init(), ($bus = bus)
@@ -18,19 +19,30 @@ export function setup(bus) {
   $bus.$on('drop', hard => (hard ? dropDown() : game.drop++))
   $bus.$on('fill', _ => (game.fillAnimated = !game.fillAnimated))
   $bus.$on('fill:pause', _ => (game.pauseOnFill = !game.pauseOnFill))
+  $bus.$on('next', _ => next(item.N))
 }
 
 const game = {
   started: false,
+
   level: 0,
-  paused: false,
+  maxLevel: 9,
+  levelTime: 60,
+  score: 0,
+  scorePart: 10,
+  scoreBonus: 500,
+  bonusSize: 500,
   drop: 0,
-  fillAnimated: true,
-  pauseOnFill: true,
   totalLines: 0,
+
+  paused: false,
+  fillAnimated: true,
+  removingAnimated: true,
+  pauseOnFill: true,
   color: true,
 
-  speed: _ => (game.drop > 0 ? speed.drop / game.drop : speed.start / (game.level + 1)),
+  // speed: _ => (game.drop > 0 ? speed.drop / game.drop : speed.start / (game.level + 1)),
+  speed: _ => (game.drop > 0 ? speed.drop / game.drop : Math.floor(speed.start - 150 * game.level + 4.3 * game.level * game.level)),
 
   start() {
     cancelAnimationFrame(this.id)
@@ -41,11 +53,16 @@ const game = {
     this.startedTime = performance.now()
     this.id = requestAnimationFrame(this.loop.bind(this))
 
+    game.level = game.score = 0
+    game.scorePart = 10
+    game.scoreBonus = game.bonusSize
+    $bus.$emit('level', game.level)
+
     this.performance_measure_counter = 0
     this.performance_measure_delta = 0
   },
 
-  interval(delta) {
+  interval(delta, log) {
     const count = (this.currentTime - this.startedTime) / delta
     this.intervals[delta] = this.intervals[delta] || count
     return count > this.intervals[delta] + 1
@@ -65,11 +82,37 @@ const game = {
     if (!game.started) return $bus.$emit('done')
     this.currentTime = performance.now()
 
-    if ($three.size && this.interval(400)) {
-      game.totalLines += $three.size
-      removeThreeBlock()
-      getThreeBlock()
-      $bus.$emit('lines', game.totalLines - 1)
+    if (!game.paused && game.level < game.maxLevel - 1 && this.interval(game.levelTime * 1000)) {
+      $bus.$emit('level', ++game.level)
+      console.log({ speed: game.speed() })
+    }
+
+    if ($three.size && this.interval(speed.three)) {
+      // removeThreeBlockOne()
+      // removeThreeBlockSingle()
+      removeThreeBlockSorted()
+      if ($three.sorted.length == 0) $three.clear()
+      if ($three.size == 0) {
+        getThreeBlock()
+        if ($three.size) {
+          game.score += game.scoreBonus
+          $bus.$emit('bonus', game.scoreBonus)
+          game.scoreBonus = game.scoreBonus + game.bonusSize
+        } else {
+          game.scoreBonus = game.bonusSize
+        }
+        game.scorePart = 10
+      } else {
+        game.scorePart += 5
+        game.score += game.scorePart
+        // setTimeout(_ => $bus.$emit('bonus', 0), 5000)
+      }
+      $bus.$emit('lines', game.totalLines++)
+      $bus.$emit('score', game.score)
+      // game.totalLines += $three.size
+      // removeThreeBlock()
+      // getThreeBlock()
+      // $bus.$emit('lines', game.totalLines - 1)
     }
     if ($lines.length && this.interval(game.fillAnimated ? speed.fill : 2 * speed.fill)) fill()
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
@@ -135,14 +178,14 @@ const put = ({ X, Y, R, T }) => {
 }
 
 const update = (X, Y, R) => {
-  if ($lines.length > 0 && game.fillAnimated) return
+  if (($lines.length > 0 && game.fillAnimated) || ($three.size > 0 && game.removingAnimated)) return
   if (!set(X, Y, R) && Y < item.Y) {
     if (put(item)) {
       if (game.color) getThreeBlock()
       else getSolidLines(!game.fillAnimated)
-
+      $bus.$emit('bonus', 0)
       next(item.N)
-      game.intervals = {} // reset timers on next piece, so the next piece falling starts to count from zero
+      // game.intervals = {} // reset timers on next piece, so the next piece falling starts to count from zero
     } else {
       game.started = false
     }
@@ -187,15 +230,79 @@ function dropDown(allowFinalMove = false) {
   update(item.X, item.Y - 1 + allowFinalMove, item.R)
 }
 
+function removeThreeBlockSorted() {
+  const h = $cells.height
+
+  const xy = $three.sorted.pop()
+
+  let x = Math.floor(xy / h)
+  let y = xy - x * h
+  // console.log({ x, y, xy })
+  for (; y < h; ++y) {
+    $cells[y][x] = $cells[y + 1][x]
+  }
+
+  // $three.sorted.forEach(xy => {
+  //   const x = Math.floor(xy / h)
+  //   const y = xy - x * h
+  //   console.log({ x, y })
+  // })
+}
+function removeThreeBlockSingle() {
+  const h = $cells.height
+  const w = $cells.width
+
+  let ymax = -1
+  let xy = -1
+  $three.forEach(val => {
+    const x = Math.floor(val / h)
+    const y = val - x * h
+    if (y > ymax) {
+      ymax = y
+      xy = val
+    }
+  })
+
+  // const xy = $three.values().next().value
+  let x = Math.floor(xy / h)
+  let y = xy - x * h
+  console.log({ x, y, xy })
+  for (; y < h; ++y) {
+    $cells[y][x] = $cells[y + 1][x]
+  }
+  $three.delete(xy)
+  // return
+
+  // $three.clear()
+
+  // let done = false
+  // for (let x = 1; x < w - 1 && !done; ++x) {
+  //   for (let cur = 1, y = cur; y < h + 1; ++y) {
+  //     if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
+  //     else done = $three.delete(x * h + y)
+  //   }
+  // }
+}
+function removeThreeBlockOne() {
+  const h = $cells.height
+  const w = $cells.width
+  let done = false
+  for (let x = 1; x < w - 1 && !done; ++x) {
+    for (let cur = 1, y = cur; y < h + 1; ++y) {
+      if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
+      else done = $three.delete(x * h + y)
+    }
+  }
+}
 function removeThreeBlock() {
   const h = $cells.height
   const w = $cells.width
   for (let x = 1; x < w - 1; ++x) {
     for (let cur = 1, y = cur; y < h + 1; ++y) {
       if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
-      $three.delete(x * h + y)
     }
   }
+  $three.clear()
 }
 
 function getThreeBlock() {
@@ -223,6 +330,15 @@ function getThreeBlock() {
       }
     }
   }
+  $three.sorted = Array.from($three)
+  $three.sorted.sort((a, b) => {
+    const xA = Math.floor(a / h)
+    const yA = a - xA * h
+    const xB = Math.floor(b / h)
+    const yB = b - xB * h
+    return yA == yB ? xB - xA : yA - yB
+  })
+  // console.log($three.sorted)
 }
 
 function getSolidLines(reverse = false) {
