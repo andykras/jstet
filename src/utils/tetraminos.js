@@ -1,15 +1,26 @@
 import Piece from '@/utils/piece.js'
 
-const count = 7
 export function createTetColor3(rotates, z) {
-  const c1 = 1 + Math.floor(Math.random() * count)
-  const c2 = 1 + Math.floor(Math.random() * count)
-  const c3 = 1 + Math.floor(Math.random() * count)
   return new Piece(
     [
       //
       [z],
-      [c1, c2, c3],
+      [1, 1, 1],
+      [z]
+      // [z, 1],
+      // [z, 1],
+      // [z, 1]
+    ],
+    rotates
+  )
+}
+
+export function createTetColorZ(rotates, z) {
+  return new Piece(
+    [
+      //
+      [z, 1],
+      [1, 1],
       [z]
     ],
     rotates
@@ -17,22 +28,31 @@ export function createTetColor3(rotates, z) {
 }
 
 export function createTetColor2(rotates, z) {
-  const c1 = 1 + Math.floor(Math.random() * count)
-  const c2 = 1 + Math.floor(Math.random() * count)
   return new Piece(
     [
       //
       [z],
-      [c1, c2, z],
+      [1, 1, z],
       [z]
+      // [z, 1],
+      // [z, 1],
+      // [z]
     ],
     rotates
   )
 }
 
 export function createTetColor1(rotates, z) {
-  const c1 = 1 + Math.floor(Math.random() * count)
-  return new Piece([[c1]], rotates)
+  return new Piece(
+    [
+      //
+      // [1]
+      [z],
+      [z, 1, z],
+      [z]
+    ],
+    rotates
+  )
 }
 
 export function createStraight(rotates, z = 0) {

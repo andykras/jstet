@@ -36,7 +36,8 @@ const game = {
     cancelAnimationFrame(this.id)
     this.intervals = {}
     this.started = this.drop = this.totalLines = 1
-    next()
+    next(rand())
+    next(item.N)
     this.startedTime = performance.now()
     this.id = requestAnimationFrame(this.loop.bind(this))
 
@@ -68,7 +69,7 @@ const game = {
       game.totalLines += $three.size
       removeThreeBlock()
       getThreeBlock()
-      $bus.$emit('lines', game.totalLines)
+      $bus.$emit('lines', game.totalLines - 1)
     }
     if ($lines.length && this.interval(game.fillAnimated ? speed.fill : 2 * speed.fill)) fill()
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
@@ -84,14 +85,24 @@ const game = {
 
 const rand = _ => Math.floor(Math.random() * $pieces.length)
 
-const next = _ => {
+const next = N => {
   item = {
-    T: item.N || rand(),
-    N: rand(),
-    X: Math.round(($cells.width - $pieces[0].size) / 2),
-    Y: $cells.height - 1,
+    T: N,
+    N: N,
+    X: Math.round(($cells.width - $pieces[N].size) / 2),
+    Y: $cells.height - (game.color ? 2 : 1),
     R: 0
   }
+
+  while (item.T == item.N) item.N = rand()
+
+  if (game.color)
+    $pieces[item.N].forEach(row =>
+      row.forEach((col, i) => {
+        if (col > 0) row[i] = 1 + Math.floor(Math.random() * 6)
+      })
+    )
+
   game.drop = Math.max(0, game.drop - 1)
 }
 
@@ -130,7 +141,7 @@ const update = (X, Y, R) => {
       if (game.color) getThreeBlock()
       else getSolidLines(!game.fillAnimated)
 
-      next()
+      next(item.N)
       game.intervals = {} // reset timers on next piece, so the next piece falling starts to count from zero
     } else {
       game.started = false

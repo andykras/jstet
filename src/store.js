@@ -36,6 +36,11 @@ export default new Vuex.Store({
       if (!item) return cells[y - 1][x - 1] + lines
       const { T, X, Y, R } = item
       return pieces[T].get(x - X - 1, y - Y - 1, R) || cells[y - 1][x - 1]
+    },
+    getNextValue: ({ pieces, item, lines }) => (x, y) => {
+      if (!item) return lines
+      const { N } = item
+      return pieces[N].get(x - 1, y - 1, 0) || 0
     }
   }
 })

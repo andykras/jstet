@@ -6,11 +6,12 @@
     <stakan v-if="naiveImplementation" />
     <div v-else>
       <div>{{this.hard ? 'hard' : 'soft'}} drop (S)</div>
-      <div>Total lines: {{$store.state.lines}}</div>
+      <!-- <div>Total lines: {{$store.state.lines}}</div> -->
       <input type="button"
              value="new game"
              @click="createStakan">
-      <simple />
+      <!-- <simple /> -->
+      <tetcolor />
     </div>
   </div>
 </template>
@@ -26,7 +27,8 @@ import {
   createSShape,
   createTetColor3,
   createTetColor2,
-  createTetColor1
+  createTetColor1,
+  createTetColorZ
 } from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
 import { setup } from '@/utils/game.js'
@@ -83,15 +85,7 @@ export default {
         createTetColor3(4, z),
         createTetColor2(4, z),
         createTetColor1(4, z),
-        createTetColor3(4, z),
-        createTetColor2(4, z),
-        createTetColor1(4, z),
-        createTetColor3(4, z),
-        createTetColor2(4, z),
-        createTetColor1(4, z),
-        createTetColor3(4, z),
-        createTetColor2(4, z),
-        createTetColor1(4, z)
+        createTetColorZ(4, z)
         // createStraight(2, z),
         // createStraight(4, z),
         // createLShape(4, z),
@@ -104,7 +98,7 @@ export default {
       ]
       this.setPieces(pieces)
       const extra = randomNoise ? [0.3, 0.1, pieces.length] : []
-      const cells = new Stakan(20, 10, 4, ...extra)
+      const cells = new Stakan(19, 9, 4, ...extra)
       this.setCells(cells)
       this.setLines(0)
       this.$emit('start', { cells, pieces })
