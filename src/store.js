@@ -44,6 +44,9 @@ export default new Vuex.Store({
         width: cells && cells.width
       }
     },
+    getSize({ pieces, item }) {
+      return pieces && item && pieces[item.N].size
+    },
     getWellValue: ({ cells, pieces, item, lines }) => (x, y) => {
       if (!item) return cells[y - 1][x - 1] + lines
       const { T, X, Y, R } = item

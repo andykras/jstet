@@ -104,7 +104,7 @@ export default {
       const cells = new Stakan(19, 9, 4, ...extra)
       this.setCells(cells)
       this.setLines(0)
-      this.$emit('start', { cells, pieces })
+      this.$emit('start')
 
       randomNoise = !randomNoise
     },
@@ -120,7 +120,8 @@ export default {
         KeyP: _ => this.$emit('pause'),
         KeyS: _ => (this.hard = !this.hard),
         Space: _ => this.$emit('drop', this.hard),
-        KeyN: _ => this.$emit('next')
+        KeyN: _ => this.$emit('next'),
+        KeyF: _ => this.$emit('fill')
       }
       actions[e.code] && actions[e.code]()
     },
