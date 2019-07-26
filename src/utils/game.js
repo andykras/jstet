@@ -5,7 +5,7 @@ import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines } from '@/game/tetris'
 
 // todo clear measure!!!!!!!!!!!!!!!
-const speed = { start: 1000, clear: 80, drop: 20, three: 100 }
+const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
 // let item = { T: 0 }
 let item = {}
 let $cells = null
@@ -21,21 +21,12 @@ export function setup(bus) {
   $bus.$on('start', _ => game.start())
   $bus.$on('pause', _ => (game.paused = !game.paused))
   $bus.$on('drop', hard => (hard ? dropDown() : game.drop++))
-  $bus.$on('fill', _ => (game.clearAnimated = !game.clearAnimated))
+  $bus.$on('fill', _ => ((game.clearAnimated = !game.clearAnimated), (game.removingAnimated = !game.removingAnimated)))
   $bus.$on('fill:pause', _ => (game.pauseOnFill = !game.pauseOnFill))
   $bus.$on('next', _ => (item = next(item.N)))
 }
 
 export const game = {
-  started: false,
-  paused: false,
-
-  level: 0,
-  score: 0,
-  bonus: 0,
-  drop: 0,
-  totalLines: 0,
-
   // TODO: move to options
   maxLevel: 9,
   levelTime: 60,
@@ -46,28 +37,27 @@ export const game = {
   pauseOnFill: true,
   tetcolor: true,
 
-  // speed: _ => (game.drop > 0 ? speed.drop / game.drop : speed.start / (game.level + 1)),
-  speed: _ => (game.drop > 0 ? speed.drop / game.drop : Math.floor(speed.start - 150 * game.level + 4.3 * game.level * game.level)),
-  clearSpeed: _ => (game.clearAnimated ? speed.clear : 2 * speed.clear),
+  levelSpeed: level => Math.floor(speed.start - 150 * level + 4.3 * level * level),
+  clearSpeed: _ => (game.tetcolor ? speed.three : game.clearAnimated ? speed.clear : 2 * speed.clear),
+  speed: _ => (game.scheduled ? speed.scheduled : game.drop > 0 ? speed.drop / game.drop : game.levelSpeed(game.level)),
 
   start() {
+    cancelAnimationFrame(this.id)
+
     $cells = store.state.cells
     $pieces = store.state.pieces
 
-    cancelAnimationFrame(this.id)
+    this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
     this.intervals = {}
     this.started = true
-    this.drop = this.totalLines = 0
-    item = next()
-    item = next(item.N)
+
+    item = next(next().N)
+
     this.startedTime = performance.now()
     this.id = requestAnimationFrame(this.loop.bind(this))
 
-    game.level = game.score = 0
-    game.scorePart = 10
-    game.bonus = game.bonusSize
     $bus.$emit('level', game.level)
-    $bus.$emit('score', 0)
+    $bus.$emit('score', game.score)
 
     this.performance_measure_counter = 0
     this.performance_measure_delta = 0
@@ -98,30 +88,25 @@ export const game = {
       console.log({ speed: game.speed() })
     }
 
-    if ($three.size && this.interval(speed.three)) {
-      // removeThreeBlockOne()
-      removeThreeBlockSorted()
-      if ($three.sorted.length == 0) $three.clear()
-      if ($three.size == 0) {
-        getThreeBlock()
-        if ($three.size) {
+    if ($three.size && this.interval(game.clearSpeed())) {
+      do {
+        const add = Math.floor(game.scorePart * ($three.bonus / $three.sorted.length))
+        game.score += add
+        if (!game.removingAnimated) $three.sorted.pop()
+      } while ($three.sorted.length && !game.removingAnimated)
+      game.totalLines += game.removingAnimated ? removeThreeBlockSorted() || 1 : removeThreeBlock() || $three.size
+      if ($three.sorted.length === 0) {
+        $three.clear()
+        if (getThreeBlock()) {
           game.bonus += Math.round((game.bonusSize + 0.5 * game.bonus) / 100) * 100
           game.score += game.bonus
           $bus.$emit('bonus', game.bonus)
         } else {
           game.bonus = 0
         }
-        game.scorePart = 10
-      } else {
-        game.scorePart += 5
-        game.score += game.scorePart
       }
-      $bus.$emit('lines', game.totalLines++)
+      $bus.$emit('lines', game.totalLines)
       $bus.$emit('score', game.score)
-      // game.totalLines += $three.size
-      // removeThreeBlock()
-      // getThreeBlock()
-      // $bus.$emit('lines', game.totalLines - 1)
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
@@ -194,19 +179,29 @@ const set = (X, Y, R, T = item.T, N = item.N) => {
 
 const update = (X, Y, R) => {
   if (($lines.length > 0 && game.clearAnimated) || ($three.size > 0 && game.removingAnimated)) return
+
   if (!set(X, Y, R) && Y < item.Y) {
+    game.drop = Math.max(0, game.drop - 1)
+
+    game.scheduled = !game.scheduled
+    if (game.scheduled) return
+
     if (put(item)) {
       if (game.tetcolor) getThreeBlock()
       else $lines = getSolidLines({ asc: game.clearAnimated, item })
+
       $bus.$emit('bonus', 0)
       item = next(item.N)
 
-      // reset all timers on next piece, except level timer
+      // reset all timers for next piece, except level timer
       game.intervals = { [game.levelTime * 1000]: game.intervals[game.levelTime * 1000] }
     } else {
       game.started = false
     }
   }
+
+  // game.scheduled = false
+
   $bus.$emit('update', item)
 }
 
@@ -242,39 +237,16 @@ const update = (X, Y, R) => {
 //   $bus.$emit('lines', game.totalLines++)
 // }
 
-function dropDown(allowFinalMove = false) {
+function dropDown() {
   while (set(item.X, item.Y - 1, item.R));
-  update(item.X, item.Y - 1 + allowFinalMove, item.R)
+  update(item.X, item.Y + game.drop++, item.R)
 }
 
 function removeThreeBlockSorted() {
   const h = $cells.height
-
   const xy = $three.sorted.pop()
-
-  let x = Math.floor(xy / h)
-  let y = xy - x * h
-  // console.log({ x, y, xy })
-  for (; y < h; ++y) {
-    $cells[y][x] = $cells[y + 1][x]
-  }
-
-  // $three.sorted.forEach(xy => {
-  //   const x = Math.floor(xy / h)
-  //   const y = xy - x * h
-  //   console.log({ x, y })
-  // })
-}
-function removeThreeBlockOne() {
-  const h = $cells.height
-  const w = $cells.width
-  let done = false
-  for (let x = 1; x < w - 1 && !done; ++x) {
-    for (let cur = 1, y = cur; y < h + 1; ++y) {
-      if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
-      else done = $three.delete(x * h + y)
-    }
-  }
+  const x = Math.floor(xy / h)
+  for (let y = xy - x * h; y < h; ++y) $cells[y][x] = $cells[y + 1][x]
 }
 function removeThreeBlock() {
   const h = $cells.height
@@ -284,7 +256,6 @@ function removeThreeBlock() {
       if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
     }
   }
-  $three.clear()
 }
 
 function getThreeBlock() {
@@ -303,9 +274,15 @@ function getThreeBlock() {
     }
   }
   if ($three.size > 0) {
+    let delta = -1
+    $three.bonus = 0
     for (let x = 1; x < w - 1; ++x) {
       for (let y = 1; y < h - 1; ++y) {
-        if ($three.has(x * h + y)) {
+        const xhy = x * h + y
+        if ($three.has(xhy)) {
+          const diff = xhy - delta
+          delta = xhy
+          if (diff != h && diff != w && diff > 1) $three.bonus++
           $cells[y][x] = -2
         }
       }
@@ -319,6 +296,7 @@ function getThreeBlock() {
     const yB = b - xB * h
     return yA == yB ? xB - xA : yA - yB
   })
+  return $three.size
 }
 
 // function getSolidLines(reverse = false) {

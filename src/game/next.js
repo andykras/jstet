@@ -26,7 +26,8 @@ const next = N => {
       })
     )
   }
-  game.drop = Math.max(0, game.drop - 1)
+  // game.drop = Math.max(0, game.drop - 1)
+
   return item
 }
 
