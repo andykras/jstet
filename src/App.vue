@@ -12,6 +12,7 @@
              @click="createStakan">
       <!-- <simple /> -->
       <tetcolor />
+      <div class="options"> {{ $store.state.options }} </div>
     </div>
   </div>
 </template>
@@ -32,6 +33,7 @@ import {
 } from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
 import { setup } from '@/utils/game.js'
+import options from '@/game/options.js'
 
 let randomNoise = false
 
@@ -59,6 +61,8 @@ export default {
     console.log('created App')
     if (this.naiveImplementation) return
 
+    this.setOptions(options)
+
     setup(this)
 
     this.createStakan()
@@ -80,7 +84,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel']),
+    ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel', 'setOptions']),
 
     createStakan() {
       const z = 0

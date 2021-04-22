@@ -3,6 +3,7 @@ import store from '@/store'
 import { next } from '@/game/next'
 import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines } from '@/game/tetris'
+import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock } from '@/game/tetcolor'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -21,9 +22,9 @@ export function setup(bus) {
   $bus.$on('start', _ => game.start())
   $bus.$on('pause', _ => (game.paused = !game.paused))
   $bus.$on('drop', hard => (hard ? dropDown() : game.drop++))
-  $bus.$on('fill', _ => ((game.clearAnimated = !game.clearAnimated), (game.removingAnimated = !game.removingAnimated)))
-  $bus.$on('fill:pause', _ => (game.pauseOnFill = !game.pauseOnFill))
+  $bus.$on('fill', _ => (game.singleBlock = !game.singleBlock))
   $bus.$on('next', _ => (item = next(item.N)))
+  // $bus.$on('next', _ => next(item.N))
 }
 
 export const game = {
@@ -32,13 +33,11 @@ export const game = {
   levelTime: 60,
   scorePart: 10,
   bonusSize: 500,
-  clearAnimated: true,
-  removingAnimated: true,
-  pauseOnFill: true,
+  singleBlock: true,
   tetcolor: true,
 
   levelSpeed: level => Math.floor(speed.start - 150 * level + 4.3 * level * level),
-  clearSpeed: _ => (game.tetcolor ? speed.three : game.clearAnimated ? speed.clear : 2 * speed.clear),
+  clearSpeed: _ => (game.tetcolor ? speed.three : game.singleBlock ? speed.clear : 2 * speed.clear),
   speed: _ => (game.scheduled ? speed.scheduled : game.drop > 0 ? speed.drop / game.drop : game.levelSpeed(game.level)),
 
   start() {
@@ -52,6 +51,8 @@ export const game = {
     this.started = true
 
     item = next(next().N)
+    // next(rand())
+    // next(item.N)
 
     this.startedTime = performance.now()
     this.id = requestAnimationFrame(this.loop.bind(this))
@@ -92,12 +93,12 @@ export const game = {
       do {
         const add = Math.floor(game.scorePart * ($three.bonus / $three.sorted.length))
         game.score += add
-        if (!game.removingAnimated) $three.sorted.pop()
-      } while ($three.sorted.length && !game.removingAnimated)
-      game.totalLines += game.removingAnimated ? removeThreeBlockSorted() || 1 : removeThreeBlock() || $three.size
+        if (!game.singleBlock) $three.sorted.pop()
+      } while ($three.sorted.length && !game.singleBlock)
+      game.totalLines += game.singleBlock ? removeThreeBlockSorted() || 1 : removeThreeBlock() || $three.size
       if ($three.sorted.length === 0) {
         $three.clear()
-        if (getThreeBlock()) {
+        if (($three = getThreeBlock()).size) {
           game.bonus += Math.round((game.bonusSize + 0.5 * game.bonus) / 100) * 100
           game.score += game.bonus
           $bus.$emit('bonus', game.bonus)
@@ -110,7 +111,7 @@ export const game = {
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
-      game.totalLines += game.clearAnimated ? clearOneLine() : clearAllLines()
+      game.totalLines += game.singleBlock ? clearOneLine() : clearAllLines()
       $bus.$emit('lines', game.totalLines)
     }
 
@@ -126,8 +127,8 @@ export const game = {
 }
 
 // const rand = _ => Math.floor(Math.random() * $pieces.length)
-
 // const next = N => {
+//   // N = Number.isInteger(N) ? N : rand()
 //   item = {
 //     T: N,
 //     N: N,
@@ -146,7 +147,8 @@ export const game = {
 //       })
 //     )
 //   }
-//   game.drop = Math.max(0, game.drop - 1)
+//   // return item
+//   // game.drop = Math.max(0, game.drop - 1)
 // }
 
 const set = (X, Y, R, T = item.T, N = item.N) => {
@@ -178,7 +180,7 @@ const set = (X, Y, R, T = item.T, N = item.N) => {
 // }
 
 const update = (X, Y, R) => {
-  if (($lines.length > 0 && game.clearAnimated) || ($three.size > 0 && game.removingAnimated)) return
+  if (($lines.length > 0 && game.singleBlock) || ($three.size > 0 && game.singleBlock)) return
 
   if (!set(X, Y, R) && Y < item.Y) {
     game.drop = Math.max(0, game.drop - 1)
@@ -187,11 +189,12 @@ const update = (X, Y, R) => {
     if (game.scheduled) return
 
     if (put(item)) {
-      if (game.tetcolor) getThreeBlock()
-      else $lines = getSolidLines({ asc: game.clearAnimated, item })
+      if (game.tetcolor) $three = getThreeBlock()
+      else $lines = getSolidLines({ asc: game.singleBlock, item })
 
       $bus.$emit('bonus', 0)
       item = next(item.N)
+      // next(item.N)
 
       // reset all timers for next piece, except level timer
       game.intervals = { [game.levelTime * 1000]: game.intervals[game.levelTime * 1000] }
@@ -208,7 +211,7 @@ const update = (X, Y, R) => {
 // const clearLines = _ => {
 //   const h = $cells.height
 //   const w = $cells.width
-//   if (game.clearAnimated) {
+//   if (game.singleBlock) {
 //     for (let y = $lines.pop(); y < h - 1; y++) {
 //       for (let x = 1; x < w - 1; ++x) {
 //         $cells[y][x] = $cells[y + 1][x]
@@ -237,67 +240,67 @@ const update = (X, Y, R) => {
 //   $bus.$emit('lines', game.totalLines++)
 // }
 
-function dropDown() {
+const dropDown = _ => {
   while (set(item.X, item.Y - 1, item.R));
   update(item.X, item.Y + game.drop++, item.R)
 }
 
-function removeThreeBlockSorted() {
-  const h = $cells.height
-  const xy = $three.sorted.pop()
-  const x = Math.floor(xy / h)
-  for (let y = xy - x * h; y < h; ++y) $cells[y][x] = $cells[y + 1][x]
-}
-function removeThreeBlock() {
-  const h = $cells.height
-  const w = $cells.width
-  for (let x = 1; x < w - 1; ++x) {
-    for (let cur = 1, y = cur; y < h + 1; ++y) {
-      if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
-    }
-  }
-}
+// function removeThreeBlockSorted() {
+//   const h = $cells.height
+//   const xy = $three.sorted.pop()
+//   const x = Math.floor(xy / h)
+//   for (let y = xy - x * h; y < h; ++y) $cells[y][x] = $cells[y + 1][x]
+// }
+// function removeThreeBlock() {
+//   const h = $cells.height
+//   const w = $cells.width
+//   for (let x = 1; x < w - 1; ++x) {
+//     for (let cur = 1, y = cur; y < h + 1; ++y) {
+//       if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
+//     }
+//   }
+// }
 
-function getThreeBlock() {
-  const h = $cells.height
-  const w = $cells.width
+// function getThreeBlock() {
+//   const h = $cells.height
+//   const w = $cells.width
 
-  const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) => $cells[y + ly][x + lx] == $cells[y][x] && $cells[y][x] == $cells[y + ry][x + rx]
+//   const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) => $cells[y + ly][x + lx] == $cells[y][x] && $cells[y][x] == $cells[y + ry][x + rx]
 
-  for (let y = 1; y < h - 1; ++y) {
-    for (let x = 1; x < w - 1; ++x) {
-      if ($cells[y][x] <= 0) continue
-      if (check(x, y,  0, -1, 0,  1)) $three.add(x * h + y).add((x - 1) * h + y).add((x + 1) * h + y) // prettier-ignore
-      if (check(x, y, -1, -1, 1,  1)) $three.add(x * h + y).add((x - 1) * h + y - 1).add((x + 1) * h + y + 1) // prettier-ignore
-      if (check(x, y, -1,  0, 1,  0)) $three.add(x * h + y).add(x * h + y - 1).add(x * h + y + 1) // prettier-ignore
-      if (check(x, y, -1,  1, 1, -1)) $three.add(x * h + y).add((x - 1) * h + y + 1).add((x + 1) * h + y - 1) // prettier-ignore
-    }
-  }
-  if ($three.size > 0) {
-    let delta = -1
-    $three.bonus = 0
-    for (let x = 1; x < w - 1; ++x) {
-      for (let y = 1; y < h - 1; ++y) {
-        const xhy = x * h + y
-        if ($three.has(xhy)) {
-          const diff = xhy - delta
-          delta = xhy
-          if (diff != h && diff != w && diff > 1) $three.bonus++
-          $cells[y][x] = -2
-        }
-      }
-    }
-  }
-  $three.sorted = Array.from($three)
-  $three.sorted.sort((a, b) => {
-    const xA = Math.floor(a / h)
-    const yA = a - xA * h
-    const xB = Math.floor(b / h)
-    const yB = b - xB * h
-    return yA == yB ? xB - xA : yA - yB
-  })
-  return $three.size
-}
+//   for (let y = 1; y < h - 1; ++y) {
+//     for (let x = 1; x < w - 1; ++x) {
+//       if ($cells[y][x] <= 0) continue
+//       if (check(x, y,  0, -1, 0,  1)) $three.add(x * h + y).add((x - 1) * h + y).add((x + 1) * h + y) // prettier-ignore
+//       if (check(x, y, -1, -1, 1,  1)) $three.add(x * h + y).add((x - 1) * h + y - 1).add((x + 1) * h + y + 1) // prettier-ignore
+//       if (check(x, y, -1,  0, 1,  0)) $three.add(x * h + y).add(x * h + y - 1).add(x * h + y + 1) // prettier-ignore
+//       if (check(x, y, -1,  1, 1, -1)) $three.add(x * h + y).add((x - 1) * h + y + 1).add((x + 1) * h + y - 1) // prettier-ignore
+//     }
+//   }
+//   if ($three.size > 0) {
+//     let delta = -1
+//     $three.bonus = 0
+//     for (let x = 1; x < w - 1; ++x) {
+//       for (let y = 1; y < h - 1; ++y) {
+//         const xhy = x * h + y
+//         if ($three.has(xhy)) {
+//           const diff = xhy - delta
+//           delta = xhy
+//           if (diff != h && diff != w && diff > 1) $three.bonus++
+//           $cells[y][x] = -2
+//         }
+//       }
+//     }
+//   }
+//   $three.sorted = Array.from($three)
+//   $three.sorted.sort((a, b) => {
+//     const xA = Math.floor(a / h)
+//     const yA = a - xA * h
+//     const xB = Math.floor(b / h)
+//     const yB = b - xB * h
+//     return yA == yB ? xB - xA : yA - yB
+//   })
+//   return $three.size
+// }
 
 // function getSolidLines(reverse = false) {
 //   const dim = $pieces[item.T].size

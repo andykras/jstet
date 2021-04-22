@@ -11,7 +11,8 @@ export default new Vuex.Store({
     lines: 0,
     score: 0,
     bonus: 0,
-    level: 0
+    level: 0,
+    options: null
   },
   mutations: {
     setCells(state, cells) {
@@ -35,6 +36,9 @@ export default new Vuex.Store({
     },
     setLevel(state, level) {
       state.level = level
+    },
+    setOptions(state, options) {
+      state.options = options
     }
   },
   getters: {
