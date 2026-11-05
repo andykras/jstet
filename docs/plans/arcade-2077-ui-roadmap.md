@@ -134,15 +134,16 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 0 — Baseline and acceptance harness
 
-**Status:** [ ] Not started
+**Status:** [ ] In progress — code audit and focused tests prepared; local build/browser verification required. See [Stage 0 baseline](./arcade-2077-baseline.md).
 
-- Capture baseline screenshots of modern TetColor and legacy naive views on desktop and phone-sized viewport.
-- Run `npm run test:unit`, `npm run lint`, `npm run build`, and a development/preview smoke test; document results and pre-existing failures honestly.
-- Verify keyboard movement, held-key repeat, both drop behaviors, pause/resume, New Game, score, level, match clearing/cascades and game-over for current default play.
-- Record existing runtime bugs separately; do not conflate pre-existing failures with UI regressions.
-- Define a compact, repeatable browser acceptance checklist (manual or Playwright if available, without adding GitHub Actions).
+- [ ] Capture current desktop and phone-sized screenshots of modern TetColor and legacy naive views (older repository screenshots are only historical references).
+- [ ] Run `npm run test:unit`, `npm run lint`, `npm run build`, and development/preview browser smoke tests from a full local checkout.
+- [ ] Verify keyboard movement, held-key repeat, both drop behaviors, pause/resume, New Game, score, level, matching/cascades and game-over.
+- [x] Document code-confirmed baseline quirks and distinguish unverified runtime behavior from observed behavior.
+- [x] Define a repeatable browser acceptance checklist and a screenshot capture protocol.
+- [x] Add focused input-timing regression tests (3 cases); executed against an isolated local copy of the unchanged `events.js` source, **not** the complete checkout.
 
-**Gate 0:** Baseline and limitations documented; known-good behavior and existing bugs are distinguished.
+**Gate 0:** **Pending local QA**. Record actual run results and current screenshots in the baseline document before checking off this stage. Do not claim the gate passed on static analysis alone.
 
 ### Stage 1 — Game control and settings contract
 
