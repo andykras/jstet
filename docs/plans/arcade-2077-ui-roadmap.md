@@ -41,6 +41,14 @@ These statements describe the code baseline, not evidence that all runtime paths
 
 ## 3. UX and visual direction
 
+### Approved design reference — Arcade Console (variant C)
+
+![Approved JSTET Arcade Console design reference](./arcade-2077-ui-reference.avif)
+
+This is the user-selected **Arcade Console** direction: a dark, softly illuminated physical arcade cabinet, warm amber/orange board frame and HUD, restrained violet highlights, and a synthwave city skyline with a striped setting sun and water reflections on the left. Keep the central board dominant and the right-hand side useful but restrained.
+
+The image is a compact, optimized visual reference; the design is **not** a literal gameplay specification. Do not implement unplanned controls or invent gameplay features to match decorative mockup details. The documented gameplay and acceptance gates remain authoritative.
+
 ### 3.1 Product identity: Premium Arcade 2077
 
 - Dark graphite/deep-navy surfaces; restrained cyan/violet accents; clear semantic colors for active, paused, warning, and game-over states.
