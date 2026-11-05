@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div class="jstet-app">
     <input type="checkbox"
            v-model="naive">naive implementation: {{naiveImplementation}}
 
@@ -151,7 +151,7 @@ export default {
 }
 </script>
 <style lang="stylus">
-#app {
+.jstet-app {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
