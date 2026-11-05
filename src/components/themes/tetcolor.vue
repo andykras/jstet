@@ -20,11 +20,12 @@
       <div v-for="y in getDimensions.height"
            :key="y"
            class="row">
-        <div v-for="x in getDimensions.width"
-             :key="x"
-             :class="getThemeClass(x, y)"
-             v-if="!isBorder(x,y)">
-        </div>
+        <template v-for="x in getDimensions.width"
+                  :key="x">
+          <div v-if="!isBorder(x, y)"
+               :class="getThemeClass(x, y)">
+          </div>
+        </template>
       </div>
     </div>
   </div>

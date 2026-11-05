@@ -1,6 +1,6 @@
 # JSTET
 
-Browser puzzle game built with **Vue 2.7**, **Vuex 3**, and **Vite 7**.
+Browser puzzle game built with **Vue 3**, **Vuex 4**, and **Vite 7**.
 The existing Vue Options API components and game engine are unchanged.
 
 ![themes](assets/screenshots/themes.png)
@@ -36,12 +36,12 @@ npm run lint
 npm run test:unit
 ```
 
-The unit tests cover two pure game utilities. They do not replace an in-browser gameplay smoke test.
+The unit tests cover pure game utilities, the Vuex store, and the event bus. They do not replace an in-browser gameplay smoke test.
 
 ## Migration notes
 
-* Vue 2.6 -> 2.7 is required by `@vitejs/plugin-vue2`; this does not migrate the app to Vue 3.
+* Vue 2.6 -> 2.7 was an intermediate step in PR #2. This branch migrates the app to Vue 3 without changing the Options API components.
 * Global component auto-registration now uses `import.meta.glob` instead of webpack `require.context`.
 * `vue.config.js` and Vue CLI dependencies have been removed.
 * PWA generation uses `vite-plugin-pwa`. Registration remains in `src/registerServiceWorker.js`.
-* Vue 2 and its Vite plugin are end-of-life; a Vue 3 migration can be planned separately.
+* Vue 3 uses `createApp` and Vuex 4, and a `mitt` event bus replaces Vue 2's removed `$on` API. The existing game mechanics and visual themes are retained.
