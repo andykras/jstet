@@ -18,13 +18,13 @@ $three.sorted = []
 
 export function setup(bus) {
   events.init(), ($bus = bus)
-  ;['rotate', 'left', 'right', 'down'].forEach(e => ['start', 'stop'].forEach(t => $bus.$on(e + ':' + t, _ => events.emit(e + ':' + t))))
-  $bus.$on('start', _ => game.start())
-  $bus.$on('pause', _ => (game.paused = !game.paused))
-  $bus.$on('drop', hard => (hard ? dropDown() : game.drop++))
-  $bus.$on('fill', _ => (game.singleBlock = !game.singleBlock))
-  $bus.$on('next', _ => (item = next(item.N)))
-  // $bus.$on('next', _ => next(item.N))
+  ;['rotate', 'left', 'right', 'down'].forEach(e => ['start', 'stop'].forEach(t => $bus.on(e + ':' + t, _ => events.emit(e + ':' + t))))
+  $bus.on('start', _ => game.start())
+  $bus.on('pause', _ => (game.paused = !game.paused))
+  $bus.on('drop', hard => (hard ? dropDown() : game.drop++))
+  $bus.on('fill', _ => (game.singleBlock = !game.singleBlock))
+  $bus.on('next', _ => (item = next(item.N)))
+  // $bus.on('next', _ => next(item.N))
 }
 
 export const game = {
@@ -57,8 +57,8 @@ export const game = {
     this.startedTime = performance.now()
     this.id = requestAnimationFrame(this.loop.bind(this))
 
-    $bus.$emit('level', game.level)
-    $bus.$emit('score', game.score)
+    $bus.emit('level', game.level)
+    $bus.emit('score', game.score)
 
     this.performance_measure_counter = 0
     this.performance_measure_delta = 0
@@ -81,11 +81,11 @@ export const game = {
     }
     this.performance_measure_counter++
 
-    if (!game.started) return $bus.$emit('done')
+    if (!game.started) return $bus.emit('done')
     this.currentTime = performance.now()
 
     if (!game.paused && game.level < game.maxLevel - 1 && this.interval(game.levelTime * 1000)) {
-      $bus.$emit('level', ++game.level)
+      $bus.emit('level', ++game.level)
       console.log({ speed: game.speed() })
     }
 
@@ -101,18 +101,18 @@ export const game = {
         if (($three = getThreeBlock()).size) {
           game.bonus += Math.round((game.bonusSize + 0.5 * game.bonus) / 100) * 100
           game.score += game.bonus
-          $bus.$emit('bonus', game.bonus)
+          $bus.emit('bonus', game.bonus)
         } else {
           game.bonus = 0
         }
       }
-      $bus.$emit('lines', game.totalLines)
-      $bus.$emit('score', game.score)
+      $bus.emit('lines', game.totalLines)
+      $bus.emit('score', game.score)
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
       game.totalLines += game.singleBlock ? clearOneLine() : clearAllLines()
-      $bus.$emit('lines', game.totalLines)
+      $bus.emit('lines', game.totalLines)
     }
 
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
@@ -192,7 +192,7 @@ const update = (X, Y, R) => {
       if (game.tetcolor) $three = getThreeBlock()
       else $lines = getSolidLines({ asc: game.singleBlock, item })
 
-      $bus.$emit('bonus', 0)
+      $bus.emit('bonus', 0)
       item = next(item.N)
       // next(item.N)
 
@@ -205,7 +205,7 @@ const update = (X, Y, R) => {
 
   // game.scheduled = false
 
-  $bus.$emit('update', item)
+  $bus.emit('update', item)
 }
 
 // const clearLines = _ => {
@@ -237,7 +237,7 @@ const update = (X, Y, R) => {
 //       }
 //     }
 //   }
-//   $bus.$emit('lines', game.totalLines++)
+//   $bus.emit('lines', game.totalLines++)
 // }
 
 const dropDown = _ => {

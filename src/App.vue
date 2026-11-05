@@ -5,7 +5,7 @@
 
     <stakan v-if="naiveImplementation" />
     <div v-else>
-      <div>{{this.hard ? 'hard' : 'soft'}} drop (S)</div>
+      <div>{{hard ? 'hard' : 'soft'}} drop (S)</div>
       <!-- <div>Total lines: {{$store.state.lines}}</div> -->
       <input type="button"
              value="new game"
@@ -32,7 +32,8 @@ import {
   createTetColorZ
 } from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
-import { setup } from '@/utils/game.js'
+import { setup, game } from '@/utils/game.js'
+import { gameBus } from '@/utils/gameBus.js'
 import options from '@/game/options.js'
 
 let randomNoise = false
@@ -63,21 +64,24 @@ export default {
 
     this.setOptions(options)
 
-    setup(this)
+    setup(gameBus)
 
     this.createStakan()
-    this.$on('update', state => this.setPieceState(state))
-    this.$on('done', _ => console.log('done'))
-    this.$on('lines', state => this.setLines(state))
-    this.$on('score', state => this.setScore(state))
-    this.$on('bonus', state => this.setBonus(state))
-    this.$on('level', state => this.setLevel(state))
+    gameBus.on('update', state => this.setPieceState(state))
+    gameBus.on('done', _ => console.log('done'))
+    gameBus.on('lines', state => this.setLines(state))
+    gameBus.on('score', state => this.setScore(state))
+    gameBus.on('bonus', state => this.setBonus(state))
+    gameBus.on('level', state => this.setLevel(state))
 
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keyup', this.onKeyUp)
   },
-  destroyed() {
-    console.log('destroyed')
+  unmounted() {
+    game.started = false
+    cancelAnimationFrame(game.id)
+    gameBus.all.clear()
+    console.log('unmounted')
 
     window.removeEventListener('keydown', this.onKeyDown)
     window.removeEventListener('keyup', this.onKeyUp)
@@ -108,7 +112,7 @@ export default {
       const cells = new Stakan(19, 9, 4, ...extra)
       this.setCells(cells)
       this.setLines(0)
-      this.$emit('start')
+      gameBus.emit('start')
 
       randomNoise = !randomNoise
     },
@@ -116,16 +120,16 @@ export default {
     onKeyDown(e) {
       // console.log('DOWN', e.code, e.repeat)
       const actions = {
-        ArrowDown: _ => this.$emit('down:start'),
-        ArrowUp: _ => this.$emit('rotate:start'),
-        ArrowLeft: _ => this.$emit('left:start'),
-        ArrowRight: _ => this.$emit('right:start'),
+        ArrowDown: _ => gameBus.emit('down:start'),
+        ArrowUp: _ => gameBus.emit('rotate:start'),
+        ArrowLeft: _ => gameBus.emit('left:start'),
+        ArrowRight: _ => gameBus.emit('right:start'),
         KeyY: _ => this.createStakan(),
-        KeyP: _ => this.$emit('pause'),
+        KeyP: _ => gameBus.emit('pause'),
         KeyS: _ => (this.hard = !this.hard),
-        Space: _ => this.$emit('drop', this.hard),
-        KeyN: _ => this.$emit('next'),
-        KeyF: _ => this.$emit('fill')
+        Space: _ => gameBus.emit('drop', this.hard),
+        KeyN: _ => gameBus.emit('next'),
+        KeyF: _ => gameBus.emit('fill')
       }
       actions[e.code] && actions[e.code]()
     },
@@ -133,10 +137,10 @@ export default {
       // console.log('UP', e)
 
       const actions = {
-        ArrowDown: _ => this.$emit('down:stop'),
-        ArrowUp: _ => this.$emit('rotate:stop'),
-        ArrowLeft: _ => this.$emit('left:stop'),
-        ArrowRight: _ => this.$emit('right:stop')
+        ArrowDown: _ => gameBus.emit('down:stop'),
+        ArrowUp: _ => gameBus.emit('rotate:stop'),
+        ArrowLeft: _ => gameBus.emit('left:stop'),
+        ArrowRight: _ => gameBus.emit('right:stop')
       }
       actions[e.code] && actions[e.code]()
 

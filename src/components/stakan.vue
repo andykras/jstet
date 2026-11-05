@@ -229,7 +229,7 @@ export default {
     window.addEventListener('keyup', this.keyup)
     window.addEventListener('keypress', this.keypress)
   },
-  destroyed() {
+  unmounted() {
     clearInterval(this.loop)
     clearInterval(this.posDecrement)
     window.removeEventListener('keydown', this.keydown)

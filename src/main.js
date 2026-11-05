@@ -1,19 +1,10 @@
-import '@/components/registration'
-
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from '@/App.vue'
 import store from '@/store'
+import { registerComponents } from '@/components/registration'
 import '@/registerServiceWorker'
 
-// import { library } from '@fortawesome/fontawesome-svg-core'
-// import { faAtom } from '@fortawesome/free-solid-svg-icons'
-// import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-// library.add(faAtom)
-// Vue.component('font-awesome-icon', FontAwesomeIcon)
-
-Vue.config.productionTip = false
-
-new Vue({
-  store,
-  render: h => h(App)
-}).$mount('#app')
+const app = createApp(App)
+app.use(store)
+registerComponents(app)
+app.mount('#app')
