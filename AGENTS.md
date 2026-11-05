@@ -119,11 +119,13 @@ Understand these contracts before touching collision, rotation, rendering, or cl
 - The next-piece logic and TetColor color assignment live in `src/game/next.js`. Do not move them into a theme.
 - The current game includes both Tetris-style line clearing and TetColor matching/removal paths. Preserve both even though the default UI is configured for TetColor.
 
-### State and mutation
+### State and performance
 
 - Vuex holds `cells`, `pieces`, `item`, and displayed counters/options.
-- Existing mutations apply `Object.freeze` to some top-level state values, while the engine still updates nested well cells. **This is a shallow-freeze arrangement, not deep immutable state.**
-- Do not introduce deep freezing, structural cloning per frame, or unrelated reactivity changes without validating the rendering and performance consequences.
+- **`Object.freeze` is a deliberate, gameplay-critical performance optimization from Vue 2**, not incidental legacy code. It prevented Vue 2 from deeply observing the high-frequency mutable game data; the reactivity overhead otherwise made gameplay unacceptably slow.
+- The existing freeze is **shallow**: the engine still mutates nested well cells directly. Do not mistake this for an immutable-state design or "fix" it by deep-freezing the board.
+- Vue 3 has a different reactivity implementation; whether this optimization is still necessary or beneficial has **not** been established. **Preserve the existing `Object.freeze` calls unchanged** in ordinary feature work. Do not remove, replace, or refactor them as cleanup.
+- Revisit this only in an explicitly requested performance/refactoring task, with representative gameplay benchmarks and rendering/regression checks before and after. Do not introduce per-frame structural cloning or a new state architecture without evidence.
 - Avoid new cross-module mutable globals. If the task requires restructuring shared state, make the ownership and lifetime unambiguous and add tests first.
 
 ### Timing, scoring, and input
