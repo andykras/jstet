@@ -1,13 +1,9 @@
 import Vue from 'vue'
 
-const requireComponent = require.context('.', true, /[\w-]+\.vue$/)
-requireComponent.keys().forEach(fileName => {
-  const componentConfig = requireComponent(fileName)
+// Vite equivalent of webpack's require.context: preserve the global component names.
+const components = import.meta.glob('./**/*.vue', { eager: true })
 
-  // strip name: "./folder/component.vue" -> "component"
-  const componentName = fileName.replace(/.*\/([\w-]+)\.\w+/, '$1')
-
-  // register component globally
-  Vue.component(componentName, componentConfig.default || componentConfig)
+Object.entries(components).forEach(([path, module]) => {
+  const name = path.split('/').pop().replace(/\.vue$/, '')
+  Vue.component(name, module.default || module)
 })
-console.log('registration-of-global-components completed.')
