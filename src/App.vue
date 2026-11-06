@@ -1,24 +1,112 @@
 <template>
   <div class="jstet-app">
-    <input type="checkbox"
-           v-model="naive">naive implementation: {{naiveImplementation}}
+    <div class="arcade-console">
+      <header class="arcade-header">
+        <div class="arcade-brand"
+             aria-label="JSTET">
+          <span class="arcade-brand__mark"
+                aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <span class="arcade-brand__name">JSTET</span>
+        </div>
+        <div class="mode-indicator"
+             aria-label="Current game mode">
+          <span class="mode-indicator__dot"
+                aria-hidden="true"></span>
+          <span>{{ naiveImplementation ? 'Legacy Lab' : 'TetColor' }}</span>
+        </div>
+        <div v-if="!naiveImplementation"
+             class="header-actions">
+          <button type="button"
+                  class="arcade-button arcade-button--primary"
+                  @click="createStakan">
+            New Game
+          </button>
+          <button type="button"
+                  class="arcade-button"
+                  :disabled="status !== 'running' && status !== 'paused'"
+                  @click="togglePause">
+            {{ status === 'paused' ? 'Resume' : 'Pause' }}
+          </button>
+        </div>
+        <button v-else
+                type="button"
+                class="arcade-button"
+                @click="naive = false">
+          Back to game
+        </button>
+      </header>
 
-    <stakan v-if="naiveImplementation" />
-    <div v-else>
-      <div>{{hard ? 'hard' : 'soft'}} drop (S)</div>
-      <!-- <div>Total lines: {{$store.state.lines}}</div> -->
-      <input type="button"
-             value="new game"
-             @click="createStakan">
-      <!-- <simple /> -->
-      <tetcolor />
-      <div class="options"> {{ $store.state.options }} </div>
+      <main v-if="!naiveImplementation"
+            class="game-layout"
+            aria-label="TetColor game">
+        <GameHud class="stats-column" />
+
+        <section class="board-panel"
+                 aria-label="Playing field">
+          <div class="board-panel__top">
+            <span class="panel-eyebrow">PLAYFIELD / 01</span>
+            <span class="game-status"
+                  :class="'game-status--' + status"
+                  role="status"
+                  aria-live="polite">{{ statusLabel }}</span>
+          </div>
+          <div class="board-panel__well">
+            <tetcolor />
+          </div>
+          <div class="board-panel__bottom">
+            <span>Color match</span>
+            <span>{{ hard ? 'Hard drop' : 'Soft drop' }} <kbd>S</kbd></span>
+          </div>
+        </section>
+
+        <NextPiece class="preview-column" />
+
+        <aside class="arcade-panel guide-column"
+               aria-label="How to play and keyboard controls">
+          <h2 class="panel-heading">TetColor</h2>
+          <p>Connect three or more matching blocks horizontally, vertically or diagonally.</p>
+          <div class="guide-divider"></div>
+          <h3>Controls</h3>
+          <dl class="control-guide">
+            <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Move</dd></div>
+            <div><dt><kbd>↑</kbd></dt><dd>Rotate</dd></div>
+            <div><dt><kbd>↓</kbd></dt><dd>Down</dd></div>
+            <div><dt><kbd>Space</kbd></dt><dd>Drop</dd></div>
+            <div><dt><kbd>P</kbd></dt><dd>Pause</dd></div>
+          </dl>
+        </aside>
+      </main>
+
+      <main v-else
+            class="lab-layout"
+            aria-label="Legacy game laboratory">
+        <p class="lab-layout__notice">Legacy implementation — development view</p>
+        <stakan />
+      </main>
+
+      <footer class="arcade-footer">
+        <p v-if="!naiveImplementation"
+           class="arcade-footer__help"><kbd>S</kbd> Drop mode · <kbd>Y</kbd> New Game · <kbd>P</kbd> Pause</p>
+        <span v-else>Legacy game laboratory</span>
+        <details class="lab-entry">
+          <summary>Developer lab</summary>
+          <label>
+            <input type="checkbox"
+                   v-model="naive">
+            Legacy engine
+          </label>
+        </details>
+      </footer>
     </div>
   </div>
 </template>
 
 <script>
 import { mapMutations } from 'vuex'
+import GameHud from '@/components/GameHud.vue'
+import NextPiece from '@/components/NextPiece.vue'
 import { createTetColor3, createTetColor2, createTetColor1, createTetColorZ } from '@/utils/tetraminos.js'
 import Stakan from '@/utils/stakan.js'
 import { setup, game } from '@/utils/game.js'
@@ -27,7 +115,8 @@ import { shouldIgnoreGameInput } from '@/utils/keyboard.js'
 import options, { resolveRunOptions } from '@/game/options.js'
 
 export default {
-  name: 'jstet',
+  name: 'JstetApp',
+  components: { GameHud, NextPiece },
   data() {
     return {
       naive: false,
@@ -40,6 +129,14 @@ export default {
   computed: {
     naiveImplementation() {
       return this.naive
+    },
+    status() {
+      return this.$store.state.status
+    },
+    statusLabel() {
+      if (this.status === 'gameOver') return 'GAME OVER'
+      if (this.status === 'paused') return 'PAUSED'
+      return this.status === 'running' ? 'PLAYING' : 'READY'
     }
   },
 
@@ -59,6 +156,9 @@ export default {
   },
 
   methods: {
+    togglePause() {
+      gameBus.emit('pause')
+    },
     ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel', 'setOptions', 'setStatus']),
 
     startModern() {
@@ -151,13 +251,5 @@ export default {
 }
 </script>
 <style lang="stylus">
-.jstet-app {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif
-  -webkit-font-smoothing: antialiased
-  -moz-osx-font-smoothing: grayscale
-  margin-top: 60px
-  // display: flex
-  // flex-direction: column
-  // align-items: center
-}
+@import './styles/arcade-shell.styl'
 </style>
