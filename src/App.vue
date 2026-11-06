@@ -128,14 +128,7 @@
                class="arcade-panel guide-column"
                aria-label="How to play and keyboard controls">
           <h2 class="panel-heading">{{ modeTitle }}</h2>
-          <div class="guide-example"
-               aria-hidden="true">
-            <span v-for="cell in (mode === 'classic' ? 6 : 3)"
-                  :key="cell"
-                  class="guide-example__block"
-                  :class="{ 'guide-example__block--classic': mode === 'classic' }"></span>
-          </div>
-          <span class="guide-example__caption">{{ mode === 'classic' ? 'FILL A LINE' : 'CONNECT THREE' }}</span>
+          <p class="guide-column__objective">{{ mode === 'classic' ? 'FILL A LINE' : 'CONNECT THREE' }}</p>
           <p>{{ modeDescription }}</p>
           <div class="guide-divider"></div>
           <h3>Controls</h3>
