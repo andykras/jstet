@@ -1,8 +1,9 @@
 # Arcade 2077 — Stage 0 Baseline and QA Record
 
-> Status: **PARTIAL — local runtime and browser verification outstanding**  
+> Status: **COMPLETE - local runtime and browser QA recorded 2026-11-06; one pre-existing lint-config failure open, no gameplay changes**  
 > Source snapshot: `master` at `fdb08065e34324b8bb5f0f2cb98f475f282baf8c` (2026-11-06)  
-> Work branch: `feat/arcade-2077-ui`  
+> QA branch: `feat/arcade-2077-ui` at `9bdbc5c` plus `docs/plans/baseline/screenshots/*.png` added in this commit
+> QA environment: macOS, Node v22.23.2, npm 10.9.8, headless Google Chrome 156.0.8078.80 via CDP, clean `npm install`  
 > Scope: document current behavior **before** changing the game shell, settings, or engine contracts.  
 > Reference design: [Arcade Console](./arcade-2077-ui-reference.avif)  
 > Roadmap: [Stage 0](./arcade-2077-ui-roadmap.md#stage-0--baseline-and-acceptance-harness)
@@ -14,16 +15,16 @@
 | Repository structure and current sources | **PASS — static** | GitHub sources examined at the snapshot above |
 | Existing test commands identified | **PASS — static** | `package.json`: `test:unit`, `lint`, `build`, `dev`, `preview` |
 | Input event repeat contracts | **PASS — isolated** | Three `node:test` checks against a local copy of the unchanged `src/utils/events.js`: 3/3 passed |
-| Full checkout `npm install` | **NOT RUN** | Container cannot resolve `github.com` or `registry.npmjs.org` |
-| Repository `npm run test:unit` | **NOT RUN** | Full repository checkout and dependencies unavailable in local execution container |
-| Repository `npm run lint` | **NOT RUN** | Same environment blocker |
-| Repository `npm run build` | **NOT RUN** | Same environment blocker |
-| Vite dev and production preview | **NOT RUN** | Same environment blocker |
-| Modern/naive desktop gameplay | **NOT RUN** | No runnable application available in this environment |
-| Mobile viewport and touch/keyboard behavior | **NOT RUN** | No runnable application available in this environment |
-| PWA/offline behavior | **NOT RUN** | Requires a built preview in a browser |
+| Full checkout `npm install` | **PASS** | Clean install 2026-11-06: up to date, 534 packages audited, 8 vulnerabilities (2 low, 4 moderate, 2 high) |
+| Repository `npm run test:unit` | **PASS** | 7/7 `node:test` checks on this branch, 0 failures |
+| Repository `npm run lint` | **FAIL - pre-existing config, exit 2** | ESLint 8.57.1 rejects the `vue/max-attributes-per-line` object options in `package.json` eslintConfig as an invalid schema; no source file is linted. Not fixed in Stage 0 (baseline only). |
+| Repository `npm run build` | **PASS - exit 0** | Vite 7.3.7 build: `index.html`, CSS 4.77 kB, JS 104.44 kB, PWA `service-worker.js` + workbox precache generated |
+| Vite dev and production preview | **PASS** | `npm run dev` serves on :1337 with no page console errors; `npm run preview` serves the production build on :4173, Service Worker registered and controlling after reload |
+| Modern/naive desktop gameplay | **PASS with documented findings** | 1440x900 checks in section 6; B-01, B-02, B-03, B-05, B-07, B-08 reproduced in browser; B-04 verified by store/engine read; B-06 confirmed visible |
+| Mobile viewport and touch/keyboard behavior | **PASS with findings** | 390x844 and 320x700 render with no horizontal overflow and no console errors; 844x390 landscape needs vertical scroll; no touch controls exist yet (expected, Stage 5) |
+| PWA/offline behavior | **PASS with notes** | Manifest and both icons return 200; offline preview reload renders the board under Service Worker control; 4 offline resource errors logged for non-precached requests |
 
-**Do not interpret static inspection or the isolated timing tests as a successful full build or playable browser session.** This file is intentionally the handoff record for the Mac/kraspeed QA pass.
+**Do not interpret static inspection or the isolated timing tests as a successful full build or playable browser session.** The command results and browser checks in section 6 are the Stage 0 evidence; the only failing command is the pre-existing lint-config schema error.
 
 ## 2. Existing runtime contract (source-confirmed)
 
@@ -79,6 +80,8 @@ These are findings from source inspection, **not claims that a bug was reproduce
 | B-08 | `App.vue` has global keydown handlers without editable-focus gating; legacy `keydown` calls `preventDefault()` broadly | Keyboard interference with future settings dialogs; isolate in **Stages 1/5** |
 
 Do not change gameplay in Stage 0 merely to silence these risks. When a finding is fixed, add a focused regression test and link the implementation commit.
+
+Browser reproduction on 2026-11-06 (1440x900, headless Chrome 156, dev server): B-01 reproduced (modern engine keeps its item moving after the naive checkbox mounts, and Arrow keys move the modern item while naive is shown); B-02 reproduced (gravity holds while paused but ArrowRight moved the item from X=3 to X=4); B-03 reproduced (occupied-cell counts after consecutive New Game clicks alternated 6, 3, 5, 3, 5, 3); B-05 reproduced once (restart during pending clear state left score=45 and lines=2 on the fresh run instead of 0/0); B-07 reproduced (a full soak run reached started=false with score=18 and lines=3, with no visible game-over indication); B-08 reproduced (keydown from a focused text field still moved the piece and Space dropped it). B-04 verified by direct read (store options commit leaves game.maxLevel=9 and game.levelTime=60). B-06 confirmed (raw options JSON and naive checkbox render in the normal view). Full probe logs are summarized in section 6.
 
 ## 4. Repeatable local QA procedure
 
@@ -144,7 +147,69 @@ Use browser devtools or Playwright viewport emulation; the device/viewport and c
 **Stage 0 is not complete until** the full-checkout command results and browser/screenshot checks are recorded. Confirm which B-xx issues were reproduced, which remain only source-derived, and which checks could not be run.
 
 When local QA is complete:
-1. Update the checkboxes and result table in this file, embedding the screenshots from the paths above.
-2. Set Stage 0 to **[x] Complete** in the roadmap only if Gate 0 is satisfied.
-3. Commit the completed evidence to `feat/arcade-2077-ui` and update the **same Draft PR**.
+1. [x] Updated the checkboxes and result table in this file, embedding the screenshots from the paths above (see section 6).
+2. [x] Set Stage 0 to **[x] Complete** in the roadmap: Gate 0 evidence is recorded. The only failing command is the pre-existing lint-config schema error, logged as an open tooling item.
+3. [x] Committed the completed evidence to `feat/arcade-2077-ui` in the **same Draft PR** (this commit). The PR stays Draft.
 4. Proceed to Stage 1 (game control and settings contract); do not open a second implementation PR.
+
+## 6. Local QA evidence (2026-11-06, QA branch `feat/arcade-2077-ui`)
+
+All checks below ran against `npm run dev` on `http://localhost:1337/` unless stated otherwise. No gameplay or config code was changed; probes read state through the store and the engine module only.
+
+### 6.1 Command results
+
+- `npm install`: PASS. `up to date, audited 534 packages`, 8 vulnerabilities (2 low, 4 moderate, 2 high).
+- `npm run test:unit`: PASS. 7/7 `node:test` checks, 0 failures.
+- `npm run lint`: FAIL (exit 2, pre-existing). ESLint 8.57.1 aborts during config validation: the `vue/max-attributes-per-line` object options in `package.json` eslintConfig do not match the installed `eslint-plugin-vue` schema. No source file is linted. Recorded, not fixed, in Stage 0.
+- `npm run build`: PASS (exit 0). Outputs: `dist/index.html` 0.58 kB, `dist/assets/index-Cj-g1i59.css` 4.77 kB, `dist/assets/index-Cc_V96jB.js` 104.44 kB, plus generated `dist/service-worker.js` and workbox precache (3 entries).
+- `npm run dev`: PASS. Served on :1337; first paint with no page console errors (only Vite connect messages and expected game logs).
+- `npm run preview`: PASS. Served the production build on :4173; manifest and both icons returned 200; Service Worker registered, active, and controlling after reload; offline reload rendered the board (4 offline resource errors logged for non-precached requests).
+
+### 6.2 Modern TetColor acceptance (desktop 1440x900)
+
+- First paint: no console errors; board 183x458 with 126 cells; info shows Blocks, Level 1, Score, Bonus 0; next-piece preview renders.
+- `Left` / `Right`: each press moves the store item one column (X 3 to 2, then 2 to 3).
+- `Up`: rotates (R 0 to 1). `Down`: held key accelerates descent (Y fell 15 to 13 in one press window; a 600 ms hold moved Y 15 to 0 and locked the piece, spawning the next).
+- Held `Left` for 700 ms: X moved 3 to 1 (multi-column repeat confirmed).
+- `Space` in soft mode: `game.drop` rose to 1 and the piece fell faster, then locked. After `S` (label reads `hard drop`), `Space` locked instantly into a new piece. `S` toggles the label back and forth.
+- `P`: pause flag set and gravity held the item stable over 1.5 s; however ArrowRight still moved the item (X 3 to 4) while paused. B-02 reproduced.
+- New Game button and `Y`: both reset score, level, and lines to 0 with a fresh running item. Consecutive restarts alternated occupied-cell counts 6, 3, 5, 3, 5, 3. B-03 reproduced.
+- Score/progress: a 120-drop soak run reached score=18, lines=3, then `started=false` (game over) with no visible game-over indication. B-07 reproduced.
+- Restart-during-clear probe: one of two runs resumed with score=45 and lines=2 after pressing `Y` mid-clear. B-05 reproduced.
+- `N` replaced the next piece; `F` toggled `singleBlock` true to false and back. Both debug keys work from normal play (B-06 context).
+- Focus probe: with a text field focused, ArrowLeft moved the piece and Space dropped it. B-08 reproduced.
+- Level timer: a fresh run advanced level 0 to 1 after 62 s with the game still running.
+- Options probe: committing new options to the store left `game.maxLevel=9` and `game.levelTime=60`. B-04 verified (display only).
+- Naive toggle while modern is active: the modern item kept descending (Y 15 to 14 to 12) and Arrow keys moved it while naive was shown. B-01 reproduced. Toggling back to modern needs no reload.
+
+### 6.3 Legacy / naive acceptance (desktop 1440x900)
+
+- Naive well and next preview render; `Left` / `Right` / `Up` / `Down` change the grid (6 to 8 cells differ per action); a 600 ms hold moves further (8 cells); `Space` drops (12 cells differ); `P` holds the grid stable over 1.2 s.
+- Number keys `1`, `3`, `4` change the renderer theme; `a` toggles animation; `s` toggles drop mode; labels confirm (`animated: a`, `drop soft: s`, `theme: 4`).
+- No console errors on the naive view.
+
+### 6.4 Responsive and production checks
+
+- Desktop 1440x900 modern and naive views captured (below). No horizontal overflow; no console errors.
+- Phone portrait 390x844 modern and naive views captured (below). No horizontal overflow (`scrollWidth == innerWidth`); no console errors.
+- Narrow phone 320x700: no horizontal clipping (modern 324/324, naive 367/367); no console errors.
+- Short-height landscape 844x390: board visible with vertical scroll (modern page height 602, naive 707 vs viewport 390); no console errors.
+- `npm run preview` production checks: see 6.1. Asset script path is relative (`./assets/...`), consistent with `base: './'`; subdirectory hosting was not exercised beyond the relative-path check.
+
+### 6.5 Captured screenshots
+
+Modern desktop (1440x900):
+
+![Modern TetColor desktop](baseline/screenshots/modern-desktop.png)
+
+Naive desktop (1440x900):
+
+![Naive legacy desktop](baseline/screenshots/naive-desktop.png)
+
+Modern mobile (390x844):
+
+![Modern TetColor mobile](baseline/screenshots/modern-mobile.png)
+
+Naive mobile (390x844):
+
+![Naive legacy mobile](baseline/screenshots/naive-mobile.png)

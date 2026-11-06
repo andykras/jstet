@@ -134,16 +134,16 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 0 — Baseline and acceptance harness
 
-**Status:** [ ] In progress — code audit and focused tests prepared; local build/browser verification required. See [Stage 0 baseline](./arcade-2077-baseline.md).
+**Status:** [x] Complete — code audit and focused tests done; local QA evidence recorded 2026-11-06 on `feat/arcade-2077-ui` (see [Stage 0 baseline](./arcade-2077-baseline.md), section 6). The only failing command is the pre-existing `npm run lint` config schema error, logged as an open tooling item; no gameplay code was changed.
 
-- [ ] Capture current desktop and phone-sized screenshots of modern TetColor and legacy naive views (older repository screenshots are only historical references).
-- [ ] Run `npm run test:unit`, `npm run lint`, `npm run build`, and development/preview browser smoke tests from a full local checkout.
-- [ ] Verify keyboard movement, held-key repeat, both drop behaviors, pause/resume, New Game, score, level, matching/cascades and game-over.
-- [x] Document code-confirmed baseline quirks and distinguish unverified runtime behavior from observed behavior.
+- [x] Captured current desktop and phone-sized screenshots of modern TetColor and legacy naive views (older repository screenshots are only historical references).
+- [x] Ran `npm run test:unit` (7/7 pass), `npm run build` (pass), and development/preview browser smoke tests from a full local checkout. `npm run lint` fails on a pre-existing ESLint config schema error (exit 2), recorded in the baseline.
+- [x] Verified keyboard movement, held-key repeat, both drop behaviors, pause/resume, New Game, score, level (0 to 1 over 62 s), matching progress and game-over; documented pause-input, restart-noise, restart-state, game-over-overlay, focus, and dual-engine findings.
+- [x] Documented code-confirmed baseline quirks and distinguished reproduced findings (B-01, B-02, B-03, B-05, B-07, B-08 in browser; B-04 by store/engine read) from confirmed-visible items (B-06).
 - [x] Define a repeatable browser acceptance checklist and a screenshot capture protocol.
 - [x] Add focused input-timing regression tests (3 cases); executed against an isolated local copy of the unchanged `events.js` source, **not** the complete checkout.
 
-**Gate 0:** **Pending local QA**. Record actual run results and current screenshots in the baseline document before checking off this stage. Do not claim the gate passed on static analysis alone.
+**Gate 0:** Evidence recorded (command results, browser checks, four screenshots in the baseline). `npm run lint` is blocked by a pre-existing config schema error; fixing it belongs to a later stage, without gameplay changes.
 
 ### Stage 1 — Game control and settings contract
 
