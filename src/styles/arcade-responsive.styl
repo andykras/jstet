@@ -1,5 +1,4 @@
-// Viewport-first layout. The playable grid sizes itself inside the remaining
-// board space; the HUD, artwork and help must not dictate the page height.
+// Viewport-first play area: preserve square cells and prioritize the actual board.
 .jstet-app
   height 100dvh
   min-height 0
@@ -13,7 +12,7 @@
   min-height 0
   padding clamp(10px, 1.5vmin, 18px)
 
-// The legacy laboratory stays scrollable on desktop and mobile.
+// Legacy owns its own controls and can use the natural document height.
 .jstet-app.is-lab
   height auto
   min-height 100dvh
@@ -29,25 +28,112 @@
   gap clamp(8px, 1.3vw, 20px)
   padding-bottom clamp(7px, 1vh, 11px)
 
-.arcade-footer
-  flex 0 0 auto
-  min-height 0
-  margin-top 7px
-  padding-top 6px
+.mode-switch
+  flex-shrink 0
+  gap 2px
 
+.mode-switch__button
+  white-space nowrap
+
+// Three purposeful columns: skyline + HUD, well, and next piece.
 .game-layout
   flex 1 1 0
   min-height 0
   max-height 100%
   width 100%
+  max-width 1280px
   margin 0 auto
   padding-top clamp(8px, 1.2vh, 14px)
+  display grid
+  grid-template-areas 'dashboard board preview'
+  grid-template-columns minmax(205px, .83fr) minmax(0, 1.45fr) minmax(142px, .49fr)
+  grid-template-rows minmax(0, 1fr)
   align-items stretch
-  gap clamp(8px, 1.2vw, 15px)
+  gap clamp(8px, 1.3vw, 16px)
+
+.dashboard-column
+  grid-area dashboard
+  position relative
+  isolation isolate
+  min-width 0
+  min-height 0
+  overflow hidden
+  border 2px solid rgba(252, 113, 164, 0.91)
+  border-radius 18px
+  background #170f30
+  box-shadow 0 0 0 2px rgba(249, 139, 201, 0.16), 0 0 28px rgba(235, 70, 159, 0.21)
+
+.dashboard-column::after
+  content ''
+  position absolute
+  z-index 0
+  inset 0 0 auto
+  height 53%
+  pointer-events none
+  background linear-gradient(180deg, rgba(9, 8, 29, .87), rgba(17, 9, 39, .65) 60%, transparent)
+
+.dashboard-column .cityscape-column
+  grid-area auto
+  position absolute
+  z-index -1
+  inset 0
+  display block
+  width 100%
+  height 100%
+  min-height 0
+  border 0
+  border-radius inherit
+  box-shadow none
+
+.dashboard-column .game-hud
+  grid-area auto
+  position relative
+  z-index 1
+  display grid
+  grid-template-columns repeat(2, minmax(0, 1fr))
+  align-content start
+  gap clamp(6px, 1vh, 10px)
+  height auto
+  min-height 0
+  padding clamp(8px, 1.2vh, 13px)
+  border 0
+  background transparent
+  box-shadow none
+
+.dashboard-column .game-hud .hud-stat
+  flex none
+  grid-column auto
+  min-width 0
+  min-height 67px
+  padding clamp(8px, 1vh, 12px)
+  gap 5px
+  background rgba(9, 10, 32, .85)
+  backdrop-filter blur(5px)
+
+.dashboard-column .game-hud .hud-stat--score
+  grid-column 1 / -1
+  min-height 84px
+
+.dashboard-column .game-hud .hud-stat--bonus
+  grid-column 1 / -1
+  min-height 57px
+
+.dashboard-column .game-hud .hud-stat__number
+  margin-top auto
+  font-size clamp(21px, 2.3vw, 29px)
+
+.dashboard-column .game-hud .hud-stat__number--score
+  font-size clamp(27px, 2.7vw, 35px)
+
+.dashboard-column .level-meter
+  margin-top 1px
 
 .board-panel
+  grid-area board
   align-self stretch
+  width 100%
   height 100%
+  min-width 0
   min-height 0
   padding clamp(8px, 1.1vh, 14px)
 
@@ -57,15 +143,8 @@
   padding-bottom 8px
   margin-bottom 0
 
-.board-panel__bottom
-  flex 0 0 auto
-  min-width 0
-  padding-top 8px
-  margin-top 0
-
 .board-panel__well
-  // A size container makes cqw/cqh refer to the space *actually left* for
-  // the well, instead of guessing header and HUD heights with vh offsets.
+  // Container units represent actual free space after the panel heading.
   container-type size
   flex 1 1 0
   width 100%
@@ -73,94 +152,69 @@
   min-height 0
 
 .board-panel__well .tetcolor-board
-  // The board renders (width - 2) columns and (height - 1) rows.
-  // Reserve pixels for the frame/glow, keeping each cell perfectly square.
+  // Rendered columns = well width - 2, rows = well height - 1.
   --jstet-cell-size unquote('max(1px, min(38px, calc((100cqw - 14px) / var(--board-columns, 7)), calc((100cqh - 14px) / var(--board-rows, 18))))')
   flex 0 0 auto
   max-width 100%
   max-height 100%
 
-.game-hud
+.next-panel
+  grid-area preview
+  align-self start
   display flex
   flex-direction column
-  justify-content stretch
-  height 100%
-  min-height 0
-  gap clamp(6px, 1vh, 11px)
-
-.game-hud .hud-stat,
-.game-hud .hud-stat--score,
-.game-hud .hud-stat--bonus
-  flex 1 1 0
-  min-height 0
-  gap 5px
-  padding clamp(8px, 1.1vh, 13px)
-
-.game-hud .hud-stat__number
-  margin-top auto
-
-.next-panel,
-.guide-column
-  height 100%
-  min-height 0
-
-.next-panel
-  padding clamp(10px, 1.3vh, 17px)
+  justify-content space-between
+  width 100%
+  height auto
+  min-height clamp(130px, 24vh, 190px)
+  padding clamp(10px, 1.4vh, 17px)
 
 .next-panel .next-piece
-  --jstet-cell-size: clamp(16px, 2.5vh, 27px)
+  --jstet-cell-size: clamp(16px, 2.5vh, 26px)
   margin auto
 
-.guide-column
+// Explicit widths prevent Stylus from folding min() into the full viewport.
+.settings-backdrop
   display flex
-  flex-direction column
+  justify-content center
+  align-items center
+  padding 16px
+
+.arcade-dialog
+  flex 0 1 430px
+  width 430px
+  max-width 100%
+  min-width 0
+  height auto
+  max-height calc(100dvh - 32px)
   overflow-y auto
-  scrollbar-width thin
-  padding clamp(10px, 1.3vh, 16px)
+  padding 20px
+  border-radius 17px
 
-.guide-column .panel-heading
-  flex 0 0 auto
+.settings-group
+  gap 10px
+  margin-top 14px
+  padding-top 13px
 
-.guide-column p
-  font-size 12px
-  line-height 1.4
-  margin-top 9px
+.settings-group legend
+  margin-bottom 8px
 
-.guide-divider
-  margin 10px 0
+.settings-hint
+  font-size 11px
 
-.control-guide
-  gap 5px
+.dialog-actions
+  margin-top 15px
 
-.control-guide > div
-  padding-bottom 4px
+.game-state-overlay__body
+  width 320px
+  max-width 100%
 
-.cityscape-column
-  align-self stretch
-  height 100%
-  min-height 0
-
-// Large desktop: skyline / HUD / board / preview + help.
-@media (min-width: 1201px)
-  .game-layout
-    grid-template-areas 'skyline stats board preview' 'skyline stats board guide'
-    grid-template-columns minmax(0, 1.08fr) minmax(0, .65fr) minmax(0, 1.28fr) minmax(0, .98fr)
-    grid-template-rows minmax(0, 1fr) minmax(0, 1.55fr)
-    max-width 1360px
-
-// Laptops: reclaim the decorative column before the board becomes cramped.
+// A smaller cabinet keeps its decorative image and statistics together.
 @media (min-width: 921px) and (max-width: 1200px)
   .game-layout
-    grid-template-areas 'stats board preview' 'stats board guide'
-    grid-template-columns minmax(0, .75fr) minmax(0, 1.7fr) minmax(0, 1fr)
-    grid-template-rows minmax(0, 1fr) minmax(0, 1.55fr)
-    max-width 1100px
+    grid-template-columns minmax(190px, .77fr) minmax(0, 1.5fr) minmax(132px, .5fr)
 
-  .cityscape-column
-    display none
-
-// Tablet and phone: prioritize a compact scoreboard, playable board,
-// then permanently visible touch controls. Keyboard help is redundant here.
+// Tablets and phones: statistics in a row, board in the center, controls below.
 @media (max-width: 920px)
   .jstet-app
     padding 6px
@@ -168,70 +222,80 @@
   .arcade-console
     padding 9px
 
-  .game-layout
-    grid-template-areas 'stats preview' 'board board' 'touch touch'
-    grid-template-columns minmax(0, 1fr) minmax(88px, .25fr)
-    grid-template-rows auto minmax(0, 1fr) auto
-    gap 7px
-    justify-items stretch
-    padding-top 7px
-
-  .cityscape-column,
-  .guide-column
-    display none
-
   .arcade-header
     gap 7px
     padding-bottom 7px
 
-  .game-hud
-    display grid
-    grid-template-columns repeat(3, minmax(0, 1fr))
-    align-content start
+  .game-layout
+    grid-template-areas 'dashboard preview' 'board board' 'touch touch'
+    grid-template-columns minmax(0, 1fr) minmax(82px, .27fr)
+    grid-template-rows auto minmax(0, 1fr) auto
+    gap 7px
+    padding-top 7px
+    justify-items stretch
+
+  .dashboard-column
+    position static
     height auto
-    gap 6px
+    overflow visible
+    border 0
+    border-radius 0
+    background transparent
+    box-shadow none
 
-  .game-hud .hud-stat,
-  .game-hud .hud-stat--score,
-  .game-hud .hud-stat--bonus
-    grid-column auto
-    min-height 57px
-    padding 7px 8px
-    gap 4px
+  .dashboard-column::after,
+  .dashboard-column .cityscape-column
+    display none
 
-  .game-hud .hud-stat__number,
-  .game-hud .hud-stat__number--score
-    font-size clamp(18px, 2.8vw, 24px)
+  .dashboard-column .game-hud
+    position static
+    display flex
+    align-items stretch
+    width 100%
+    height auto
+    padding 0
+    gap 5px
 
-  .level-meter
+  .dashboard-column .game-hud .hud-stat,
+  .dashboard-column .game-hud .hud-stat--score,
+  .dashboard-column .game-hud .hud-stat--bonus
+    flex 1 1 0
+    min-width 0
+    min-height 52px
+    padding 6px
+    gap 5px
+    border-radius 9px
+
+  .dashboard-column .game-hud .hud-stat__number,
+  .dashboard-column .game-hud .hud-stat__number--score
+    font-size clamp(15px, 2.8vw, 24px)
+
+  .dashboard-column .level-meter
     display none
 
   .next-panel
     height auto
     min-height 0
-    padding 7px 9px
+    padding 6px 8px
 
   .next-panel .panel-heading
     font-size 11px
 
   .next-panel .next-piece
-    --jstet-cell-size: clamp(13px, 2.5vw, 21px)
-    margin 3px auto 0
+    --jstet-cell-size: clamp(12px, 2.5vw, 20px)
+    margin 4px auto 0
 
   .board-panel
     justify-self center
-    width 100%
     max-width 540px
     padding 7px
 
   .board-panel__top
     padding-bottom 6px
 
-  .board-panel__bottom
-    display none
-
   .touch-pad
     position static
+    z-index 8
     display flex
     width 100%
     max-width 540px
@@ -249,23 +313,7 @@
     flex-basis 100px
     min-height 99px
 
-  .arcade-footer
-    display none
-
-  .jstet-app.is-lab
-    height auto
-    min-height 100dvh
-    overflow visible
-
-  .is-lab .arcade-console
-    height auto
-    min-height 0
-    overflow visible
-
-  .is-lab .arcade-footer
-    display flex
-
-// Narrow portrait: a two-row header and one-line HUD, not four stacked cards.
+// A narrow portrait header still holds all three modes without scrolling.
 @media (max-width: 640px) and (orientation: portrait)
   .jstet-app
     padding 5px
@@ -277,19 +325,18 @@
   .arcade-header
     display grid
     grid-template-columns minmax(0, 1fr) auto
-    gap 5px 8px
-    align-items center
+    gap 5px 6px
     padding-bottom 5px
 
   .arcade-brand
     min-width 0
-    gap 6px
+    gap 4px
 
   .arcade-brand__name
-    font-size clamp(19px, 5.5vw, 26px)
+    font-size clamp(17px, 5vw, 25px)
 
   .arcade-brand__mark
-    transform scale(.75)
+    transform scale(.72)
     transform-origin left center
     margin-right -6px
 
@@ -299,46 +346,47 @@
     padding 2px
 
   .mode-switch__button
-    min-height 29px
-    padding 5px 8px
-    font-size 11px
+    min-height 28px
+    padding 5px 6px
+    font-size 10px
 
   .header-actions
-    grid-column 1 / -1
     order initial
-    width 100%
+    grid-column 1 / -1
     flex 0 0 auto
-    gap 6px
+    width 100%
+    gap 5px
 
   .header-actions .arcade-button
     flex 1 1 0
     min-width 0
     min-height 34px
-    padding 5px 6px
-    font-size 11px
+    padding 5px 4px
     border-radius 9px
+    font-size clamp(10px, 2.8vw, 12px)
+    white-space nowrap
 
   .game-layout
-    grid-template-columns minmax(0, 1fr) minmax(73px, .27fr)
+    grid-template-columns minmax(0, 1fr) minmax(73px, .3fr)
     gap 5px
     padding-top 5px
 
-  .game-hud
+  .dashboard-column .game-hud
     gap 4px
 
-  .game-hud .hud-stat,
-  .game-hud .hud-stat--score,
-  .game-hud .hud-stat--bonus
-    min-height 48px
-    padding 5px 6px
+  .dashboard-column .game-hud .hud-stat,
+  .dashboard-column .game-hud .hud-stat--score,
+  .dashboard-column .game-hud .hud-stat--bonus
+    min-height 46px
+    padding 5px 4px
     border-radius 8px
 
-  .game-hud .hud-stat__number,
-  .game-hud .hud-stat__number--score
-    font-size clamp(15px, 4.5vw, 19px)
+  .dashboard-column .game-hud .hud-stat__number,
+  .dashboard-column .game-hud .hud-stat__number--score
+    font-size clamp(13px, 3.4vw, 18px)
 
   .hud-stat__label,
-  .game-hud .panel-heading
+  .dashboard-column .game-hud .panel-heading
     font-size 9px
 
   .next-panel
@@ -358,8 +406,8 @@
     font-size 9px
 
   .touch-pad
-    padding 5px
     gap 7px
+    padding 5px
     border-radius 11px
 
   .touch-pad__directions
@@ -380,50 +428,51 @@
   .touch-pad__drop-icon
     font-size 26px
 
-// Short landscape: put the board beside the controls, never above them.
+// On a short landscape screen use an adjacent touch pad rather than scrolling.
 @media (max-width: 920px) and (max-height: 520px) and (orientation: landscape)
   .arcade-header
     display flex
     flex-wrap nowrap
-    gap 9px
+    gap 6px
 
   .arcade-brand
     flex 0 1 auto
 
   .arcade-brand__name
-    font-size 20px
+    font-size 19px
 
   .mode-switch
     order initial
 
   .mode-switch__button
-    min-height 30px
-    padding 4px 8px
+    min-height 29px
+    padding 4px 6px
+    font-size 10px
 
   .header-actions
     order initial
     flex 1 1 auto
     width auto
-    gap 5px
+    gap 4px
 
   .header-actions .arcade-button
-    min-height 31px
-    padding 4px 6px
-    font-size 11px
+    min-height 30px
+    padding 4px
+    font-size 10px
 
   .game-layout
-    grid-template-areas 'board stats' 'board preview' 'board touch'
-    grid-template-columns minmax(0, 1.3fr) minmax(220px, 1fr)
-    grid-template-rows auto auto minmax(0, 1fr)
+    grid-template-areas 'board dashboard' 'board touch'
+    grid-template-columns minmax(0, 1.3fr) minmax(215px, 1fr)
+    grid-template-rows auto minmax(0, 1fr)
 
   .board-panel
     max-width none
 
-  .game-hud .hud-stat,
-  .game-hud .hud-stat--score,
-  .game-hud .hud-stat--bonus
+  .dashboard-column .game-hud .hud-stat,
+  .dashboard-column .game-hud .hud-stat--score,
+  .dashboard-column .game-hud .hud-stat--bonus
     min-height 43px
-    padding 4px 6px
+    padding 4px
 
   .next-panel
     display none
@@ -439,15 +488,14 @@
     min-height 84px
     flex-basis 70px
 
-// Very short portrait screens cannot fit readable cells and controls at once.
-// Prefer a usable scrollable board over cutting the bottom rows off.
+// If controls and readable cells cannot fit, allow scrolling rather than clipping.
 @media (max-width: 640px) and (max-height: 560px) and (orientation: portrait)
-  .jstet-app
+  .jstet-app:not(.is-lab)
     height auto
     min-height 100dvh
     overflow visible
 
-  .arcade-console
+  .jstet-app:not(.is-lab) .arcade-console
     height auto
     overflow visible
 
@@ -459,4 +507,3 @@
   .touch-pad
     position sticky
     bottom unquote('max(5px, env(safe-area-inset-bottom))')
-    z-index 8
