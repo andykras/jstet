@@ -1,5 +1,9 @@
 // Audio is driven by game events, so keyboard and touch controls share the same effects.
-export function attachSounds(bus, { enabled = true, basePath = import.meta.env?.BASE_URL || './', createAudio = path => new Audio(path) } = {}) {
+export function attachSounds(bus, {
+  enabled = true,
+  basePath = import.meta.env?.BASE_URL || './',
+  createAudio = path => new Audio(path)
+} = {}) {
   const makeVoices = (file, volume, count = 1) =>
     Array.from({ length: count }, () => {
       const audio = createAudio(basePath + 'sounds/' + file)
