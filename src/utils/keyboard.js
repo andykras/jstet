@@ -1,7 +1,4 @@
 // Ignore player controls when browser/UI elements own keyboard focus.
-// Only truly modal dialogs (aria-modal="true") capture keys. The non-modal
-// game-state overlay (role="dialog" with aria-modal="false") must not trap
-// game keys: pausing sends focus to its Resume action, and P has to resume.
 export const shouldIgnoreGameInput = target => {
   if (!target) return false
   const name = String(target.tagName || '').toUpperCase()
@@ -11,5 +8,5 @@ export const shouldIgnoreGameInput = target => {
     name === 'TEXTAREA' ||
     name === 'SELECT' ||
     target.isContentEditable === true ||
-    Boolean(target.closest && target.closest('[aria-modal="true"]'))
+    Boolean(target.closest && target.closest('[role="dialog"], [aria-modal="true"]'))
 }

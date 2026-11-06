@@ -7,7 +7,7 @@ const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'ut
 test('Arcade cityscape is a local scalable striped-sunset illustration', () => {
   const art = read('src/components/CityscapeArt.vue')
   const app = read('src/App.vue')
-  for (const token of ['viewBox="0 0 800 480"', 'city-sun-stripes', 'city-lit', 'city-water']) {
+  for (const token of ['viewBox="0 0 320 800"', 'city-striped-disc', 'city-windows', 'city-water']) {
     assert.ok(art.includes(token), token)
   }
   assert.ok(app.includes('<CityscapeArt class="cityscape-column"'))
@@ -52,4 +52,24 @@ test('visual motion honors OS preference, player setting and pause', () => {
   }
   assert.ok(shell.includes('.jstet-app.reduce-motion'), '.jstet-app.reduce-motion')
   assert.ok(app.includes("'is-paused': status === 'paused'"))
+})
+
+test('portrait skyline includes a proportional sunset and dense waterfront', () => {
+  const art = read('src/components/CityscapeArt.vue')
+  assert.ok(art.includes('viewBox="0 0 320 800"'))
+  assert.ok(art.includes('cy="441" r="104"'))
+  assert.ok(art.includes('frontBuildings'))
+  assert.ok(art.includes('backBuildings'))
+  assert.ok(art.includes('city-windows'))
+})
+
+test('reference refinement improves card balance without changing the board renderer', () => {
+  const style = read('src/styles/arcade-stage4.styl')
+  const app = read('src/App.vue')
+  assert.ok(style.includes('grid-template-columns minmax(245px, 315px)'))
+  assert.ok(style.includes('.game-hud .hud-stat'))
+  assert.ok(style.includes('.guide-example'))
+  assert.ok(app.includes('CONNECT THREE'))
+  assert.ok(app.includes('FILL A LINE'))
+  assert.ok(read('src/components/themes/tetcolor.vue').includes('getWellValue'))
 })

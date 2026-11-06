@@ -385,3 +385,157 @@ kbd
 @supports not (backdrop-filter: blur(12px))
   .settings-backdrop
     background rgba(4, 7, 20, 0.95)
+
+// Reference-composition refinement: compact cards, portrait skyline and a tighter playfield.
+@media (min-width: 1201px)
+  .game-layout
+    grid-template-columns minmax(245px, 315px) minmax(154px, 187px) minmax(306px, 367px) minmax(226px, 290px)
+    justify-content center
+    align-items start
+    gap clamp(12px, 1.35vw, 18px)
+
+  .cityscape-column
+    min-height min(82dvh, 748px)
+    align-self stretch
+
+  .board-panel
+    align-self start
+
+.game-hud
+  display grid
+  align-content start
+  gap 12px
+  padding 0
+  min-height 0
+  border 0
+  background transparent
+  box-shadow none
+
+.game-hud .hud-stat
+  display flex
+  flex-direction column
+  gap 11px
+  min-width 0
+  min-height 106px
+  padding 14px 16px
+  border 1px solid rgba(255, 168, 81, 0.67)
+  border-radius 15px
+  background linear-gradient(155deg, #1a1230, #080b23 85%)
+  box-shadow inset 0 1px rgba(255, 209, 135, 0.12), 0 0 17px rgba(230, 115, 69, 0.11)
+
+.game-hud .hud-stat--score
+  min-height 135px
+
+.game-hud .hud-stat--bonus
+  min-height 108px
+  border-color rgba(241, 102, 190, 0.68)
+
+.game-hud .hud-stat__number--score
+  font-size clamp(28px, 3vw, 38px)
+
+.game-hud .hud-stat__number
+  margin-top auto
+
+.cityscape-column
+  object-fit cover
+  border-color rgba(252, 113, 164, 0.91)
+  box-shadow 0 0 0 2px rgba(249, 139, 201, 0.16),
+             0 0 28px rgba(235, 70, 159, 0.21),
+             inset 0 0 15px rgba(237, 98, 194, 0.2)
+
+.next-panel
+  min-height 200px
+  justify-content space-between
+
+.next-panel .panel-heading
+  font-size 17px
+  letter-spacing 0.12em
+
+.next-panel .next-piece
+  --jstet-cell-size: 30px
+  margin 14px auto
+  filter drop-shadow(0 0 8px rgba(64, 229, 255, 0.27))
+
+.guide-column
+  min-height 310px
+  border-color rgba(255, 149, 88, 0.63)
+
+.guide-column .panel-heading
+  font-size 17px
+  letter-spacing 0.09em
+  text-shadow 0 0 13px rgba(255, 183, 99, 0.18)
+
+.guide-example
+  display flex
+  justify-content center
+  align-items center
+  gap 4px
+  width 100%
+  min-height 64px
+  margin-top 17px
+  border 1px solid rgba(234, 132, 238, 0.29)
+  border-radius 12px
+  background radial-gradient(ellipse at center, rgba(236, 84, 175, 0.16), rgba(12, 13, 37, 0.69))
+
+.guide-example__block
+  width 25px
+  height 25px
+  border 1px solid rgba(255, 212, 250, 0.43)
+  border-radius 4px
+  background var(--cell-2, #ec64f8)
+  box-shadow inset 0 2px rgba(255, 255, 255, 0.25), 0 0 11px rgba(233, 97, 244, 0.35)
+
+.guide-example__block--classic
+  width 20px
+  height 20px
+  background var(--cell-4, #fffe73)
+
+.guide-example__caption
+  display block
+  margin-top 9px
+  font-size 10px
+  font-weight 800
+  color var(--hud-amber)
+  text-align center
+  letter-spacing 0.14em
+
+.guide-column p
+  margin-top 13px
+
+@media (max-width: 1200px)
+  .game-hud .hud-stat
+    min-height 106px
+    padding 12px
+
+@media (max-width: 920px)
+  .game-hud
+    align-content stretch
+    min-height 0
+
+  .game-hud .hud-stat
+    min-height 0
+    padding 10px 12px
+    gap 5px
+
+  .game-hud .hud-stat--score
+    min-height 0
+
+  .next-panel
+    min-height 0
+
+  .next-panel .next-piece
+    --jstet-cell-size: 23px
+    margin 8px auto
+
+  .guide-column
+    min-height 0
+
+@media (max-width: 480px)
+  .game-hud .hud-stat
+    padding 8px 10px
+
+  .next-panel .next-piece
+    --jstet-cell-size: 19px
+
+  .guide-column
+    min-height 0

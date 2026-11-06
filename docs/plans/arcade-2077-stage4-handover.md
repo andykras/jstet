@@ -1,6 +1,6 @@
 # Arcade 2077 — Stage 4: Visual System and Game States
 
-> Status: **STAGE 4 COMPLETE - local QA passed 2026-11-06 on `feat/arcade-2077-ui`; visual milestone awaits user approval; PR stays Draft**  
+> Status: **TECHNICAL QA PASSED 2026-11-06; VISUAL REFINEMENT + USER APPROVAL PENDING; PR stays Draft**  
 > Branch: `feat/arcade-2077-ui` · [Draft PR #7](https://github.com/andykras/jstet/pull/7)  
 > Approved reference: [Arcade Console — variant C](./arcade-2077-ui-reference.avif)  
 > Previous acceptance: [Stage 3](./arcade-2077-stage3-handover.md)
@@ -112,3 +112,29 @@ Environment: macOS, Node v22.23.2, npm 10.9.8, headless Chrome 157.0.8103.38 via
 ### Screenshots
 
 - `arcade-desktop.png` (1440x900 Arcade/TetColor), `arcade-prism.png`, `arcade-paused.png`, `arcade-gameover.png`, `arcade-classic.png`, `arcade-classic-mobile.png` (390x844), `arcade-clearing-paused.png`.
+
+## 6. Visual reference comparison and follow-up refinement
+
+The 1440×900 `arcade-desktop.png` captured during the first Stage 4 QA pass was compared to the approved Arcade Console / variant C.
+
+**Comparison (2026-11-06): technical quality passed, visual fidelity not yet accepted.** The initial implementation had an oversized cropped sunset, insufficient high-rise skyline/reflection detail, a single very tall HUD panel with large blank regions, an overly wide board container around a narrow playfield, and an underdeveloped right sidebar. It should not be declared visually approved based on the earlier browser QA.
+
+### Corrective work (same PR #7)
+
+- Rebuild `CityscapeArt.vue` as a **portrait** 320×800 SVG with a correctly proportioned segmented sun, dense high-rise silhouette, stars and waterfront reflections.
+- Rebalance the four-column desktop grid to emphasize the playable field and avoid excessive side margins.
+- Split the score/level/blocks/bonus HUD into individual bounded cards while keeping their live Vuex values, and preserve a compact mobile layout.
+- Add a clearly **illustrative** mode-specific match/line example to the help panel (not a second next-piece preview or a new game feature).
+- Update the structural tests to cover the portrait SVG and layout/card refinements. No scoring, input, timers, game-state rules or `Object.freeze` changes.
+- Retain the prior full browser evidence as the initial baseline rather than overwriting or mislabeling it.
+
+### Required re-review (still pending)
+
+- [ ] Run the expanded unit suite and production build; compare ESLint to the five pre-existing findings.
+- [ ] Capture new **Arcade theme from clean preferences**, at desktop 1440×900 **while the board has a meaningful number of settled cells**. Capture a second clean-start screenshot. Record which is which; do not treat a synthetic filled well as an ordinary run.
+- [ ] Compare desktop side-by-side to the approved image for composition, city visibility, color/contrast, board ratio, HUD density and right-side utility.
+- [ ] Check Classic at 1440×900 and both modes at 1200/1180 widths, 390×844, 320×700 and short landscape: no overflows or loss of game field.
+- [ ] Verify Arcade and Prism palettes, settings confirmation, Paused/Game Over overlays, key focus, reduced motion and PWA offline reload.
+- [ ] Record screenshots with commit SHA/browser and measured UI/perf observations in this handover; request **explicit user approval** for the new composition.
+
+**Do not start Stage 5 until Stage 4 has visual approval.** Continue in `feat/arcade-2077-ui` and leave PR #7 OPEN + Draft.
