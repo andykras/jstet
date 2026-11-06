@@ -192,7 +192,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
-**Status:** [x] Re-review recorded 2026-11-06 on the refined composition; **explicit user approval requested**. See [Stage 4 handoff](./arcade-2077-stage4-handover.md#6-visual-reference-comparison-and-follow-up-refinement).
+**Status:** [ ] Visual direction **approved by user** after historic TetColor palette correction; complete post-color-pass technical regression checks alongside Stage 5 QA before formal Gate 4 closure. See [Stage 4 handoff](./arcade-2077-stage4-handover.md#6-visual-reference-comparison-and-follow-up-refinement).
 
 - [x] Define scoped Stylus/CSS tokens and night-sky arcade cabinet visual styling with a local SVG striped sunset, skyline and reflections.
 - [x] Polish Arcade and retain the distinct Prism palette without changing core gameplay, board geometry or engine data.
@@ -203,20 +203,22 @@ Each completed stage gets one or more **focused commits in the same implementati
 - [x] Validated fidelity and accessibility at desktop, narrow mobile and landscape viewports using real browser screenshots (7 captures).
 - [x] Ran full unit suite (31/31), lint (only the 5 pre-existing errors), production build, PWA and live-game paint/memory checks.
 
-**Gate 4:** **Re-review evidence recorded** 2026-11-06 (refined layout, overlays, focus, motion, perf and PWA); **user approval requested before closing Stage 4.**
+**Gate 4:** Visual direction approved by user after the classic TetColor palette restoration. Previous refined-build QA passed (33/33), but the later color-pass code still needs its own build and browser confirmation. **Close Gate 4 only after that evidence is captured in Stage 5 QA**; no retrospective pass claims.
 
 ### Stage 5 — Mobile, controls, accessibility, Lab
 
-**Status:** [ ] Not started
+**Status:** [ ] Implementation committed — **real touch gameplay, browser and accessibility QA pending**. See [Stage 5 handoff](./arcade-2077-stage5-handover.md).
 
-- Implement touch controls using the same commands as the keyboard; ensure press/release and cancellation work.
-- Verify layout and gameplay at 320px, 375px, 768px and desktop widths, including short-height landscape and safe areas.
-- Expose keyboard control reference and correct focus/tab behavior; modals have Escape/close and focus return.
-- Add an unobtrusive, deliberate Lab entry for legacy/naive and any existing diagnostic features.
-- Keep legacy number-key themes and diagnostic commands functioning only in the Lab context.
-- Do not promise full mobile equivalence until physical or browser-emulated touch play has been exercised.
+- [x] Touch D-pad, rotate, soft/hard Drop button use the existing gameBus/engine; short presses are held through a game-frame boundary, continuous presses retain keyboard repeat, and all cancellation paths release controls.
+- [x] Responsive touch layout for <=920px, sticky controls on small phones, side-by-side field/controls in short landscape, safe-area clearance.
+- [x] Preserve keyboard help and existing modal Escape/focus/return; ignore physical Space/Enter global shortcut while native touch-pad buttons own activation.
+- [x] Developer Lab remains behind a deliberate collapsed disclosure, with direct selectors for all four classic skins, clearing animations and soft/hard drop; keys 1–4/A/S still function inside Lab.
+- [x] Legacy New Game resets the well even when paused; focused Lab controls do not also trigger game input.
+- [x] Add six executable touch ownership/pulse tests and five structural UI/Lab contracts.
+- [ ] Verify touch-only gameplay at 320px/375px/390px/768px and in short landscape, including repeated switching, pause, game over and real touch/pointer cancellation.
+- [ ] Run the full unit suite, lint/build/PWA, browser accessibility/performance smoke and the Stage 4 historic-color regression checks.
 
-**Gate 5:** Full touch run is possible without a keyboard; normal play contains no internal/dev controls; accessibility smoke passed.
+**Gate 5:** **Pending local QA.** Full touch-only run without a keyboard, safe gesture cancellation, correct Lab behavior, zero internal controls in player UI, responsive/accessibility smoke and post-color-pass regression evidence.
 
 ### Stage 6 — Final verification and release readiness
 
