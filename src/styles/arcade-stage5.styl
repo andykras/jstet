@@ -1,0 +1,187 @@
+// On-screen controls use the same command bus as physical arrow keys.
+// Only the controls disable touch panning; the rest of the page still scrolls.
+.touch-pad
+  grid-area touch
+  display none
+  justify-content center
+  align-items center
+  gap clamp(12px, 4vw, 28px)
+  width min(100%, 440px)
+  margin 0 auto
+  padding 12px
+  border 1px solid rgba(242, 138, 102, 0.48)
+  border-radius 18px
+  background linear-gradient(145deg, rgba(30, 19, 57, 0.97), rgba(10, 13, 34, 0.97))
+  touch-action pan-y
+
+.touch-pad__directions
+  display grid
+  grid-template-columns repeat(3, minmax(50px, 58px))
+  grid-template-rows repeat(2, 55px)
+  gap 7px
+
+.touch-pad__key,
+.touch-pad__drop
+  display flex
+  justify-content center
+  align-items center
+  border 1px solid rgba(245, 155, 121, 0.8)
+  border-radius 13px
+  color #fff0d5
+  background linear-gradient(145deg, #392754, #1b1b40)
+  font inherit
+  font-size 27px
+  font-weight 800
+  user-select none
+  touch-action none
+  -webkit-tap-highlight-color transparent
+  cursor pointer
+
+  &:active:not(:disabled)
+    border-color #ffe29d
+    background #73518a
+
+  &:focus-visible
+    outline 3px solid var(--hud-amber, #ffbe4f)
+    outline-offset 2px
+
+  &:disabled
+    opacity 0.4
+    cursor not-allowed
+
+.touch-pad__key--left
+  grid-column 1
+  grid-row 2
+
+.touch-pad__key--right
+  grid-column 3
+  grid-row 2
+
+.touch-pad__key--rotate
+  grid-column 2
+  grid-row 1
+
+.touch-pad__key--down
+  grid-column 2
+  grid-row 2
+
+.touch-pad__drop
+  flex-direction column
+  gap 3px
+  flex 0 0 95px
+  min-height 117px
+  background linear-gradient(150deg, #ffda83, #f9a447)
+  color #2b1631
+  font-size 15px
+  letter-spacing 0.08em
+  box-shadow 0 0 15px rgba(255, 143, 64, 0.23)
+
+  &:active:not(:disabled)
+    background #fff0b5
+
+.touch-pad__drop-icon
+  font-size 35px
+  line-height 1
+
+@media (max-width: 920px)
+  .game-layout
+    grid-template-areas 'stats preview' 'board board' 'touch touch' 'guide guide'
+    grid-template-rows auto auto auto auto
+
+  .touch-pad
+    position sticky
+    // NOTE: literal CSS max() — Stylus must not evaluate env() at compile time.
+    bottom unquote('max(6px, env(safe-area-inset-bottom))')
+    z-index 8
+    display flex
+    box-shadow 0 -8px 26px rgba(3, 3, 18, 0.35)
+
+@media (max-width: 370px)
+  .touch-pad
+    gap 12px
+    padding 9px
+
+  .touch-pad__directions
+    grid-template-columns repeat(3, 50px)
+    grid-template-rows repeat(2, 50px)
+    gap 6px
+
+  .touch-pad__drop
+    flex-basis 72px
+    min-height 107px
+    font-size 12px
+
+@media (prefers-reduced-motion: reduce)
+  .touch-pad__key,
+  .touch-pad__drop
+    transition none
+
+// The Lab controls are presentation only; stakan.vue owns its historical state.
+.legacy-options
+  display flex
+  justify-content center
+  align-items center
+  flex-wrap wrap
+  gap 14px
+  width min(100%, 760px)
+  margin 8px auto 22px
+  padding 15px
+  border 1px solid rgba(237, 168, 103, 0.48)
+  border-radius 14px
+  background rgba(23, 18, 47, 0.95)
+
+.legacy-options__field
+  display flex
+  align-items center
+  gap 8px
+  color #f3e2ff
+  font-size 13px
+
+  select
+    min-height 36px
+    padding 5px 8px
+    border 1px solid rgba(216, 169, 247, 0.48)
+    border-radius 7px
+    color #fff
+    background #10152f
+    font inherit
+
+  input
+    accent-color #ffc563
+    width 18px
+    height 18px
+
+.legacy-options .arcade-button
+  min-height 36px
+
+.lab-layout
+  max-width 100%
+  overflow-x auto
+  -webkit-overflow-scrolling touch
+
+@media (max-width: 920px) and (max-height: 500px) and (orientation: landscape)
+  .game-layout
+    grid-template-areas 'stats stats' 'board touch' 'guide guide'
+    grid-template-columns minmax(0, 1fr) minmax(220px, 290px)
+
+  .touch-pad
+    position sticky
+    top 8px
+    bottom auto
+    align-self start
+    gap 10px
+    padding 8px
+
+  .touch-pad__directions
+    grid-template-columns repeat(3, 48px)
+    grid-template-rows repeat(2, 48px)
+    gap 5px
+
+  .touch-pad__drop
+    flex-basis 69px
+    min-height 101px
+    font-size 12px
+
+@media (max-width: 370px)
+  .jstet-app
+    --jstet-cell-size: clamp(16px, 2.85vh, 20px)

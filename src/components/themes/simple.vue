@@ -34,6 +34,7 @@
 import { mapGetters } from 'vuex'
 
 export default {
+  name: 'SimpleBoard',
   computed: {
     ...mapGetters(['getWellValue', 'getDimensions', 'getNextValue', 'getSize'])
   },

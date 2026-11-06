@@ -1,0 +1,55 @@
+// Shared between the active well and next-piece preview.
+// The six TetColor block colors match the historical renderer exactly.
+// Only the playable well uses the classic background/edge override.
+.game-cell
+  box-sizing border-box
+  flex 0 0 var(--jstet-cell-size)
+  width var(--jstet-cell-size)
+  height var(--jstet-cell-size)
+  background var(--cell-background, #10182f)
+
+  &.item
+    border 1px solid var(--cell-border, rgba(8, 13, 34, 0.9))
+
+    &.left
+      border-left none
+
+    &.bottom
+      border-bottom none
+
+  &.empty
+    border 0
+    box-shadow var(--cell-empty-shadow, inset 0 0 0 0.5px rgba(104, 126, 182, 0.14))
+
+    &.right
+      border-right 1px solid var(--cell-empty-edge, rgba(18, 23, 47, 0.8))
+
+    &.top
+      border-top 1px solid var(--cell-empty-edge, rgba(18, 23, 47, 0.8))
+
+  &.N1
+    background var(--cell-1, #89fb6e)
+
+  &.N2
+    background var(--cell-2, #ec64f8)
+
+  &.N3
+    background var(--cell-3, #ec615c)
+
+  &.N4
+    background var(--cell-4, #fffe73)
+
+  &.N5
+    background var(--cell-5, #5458f6)
+
+  &.N6
+    background var(--cell-6, #89fcfd)
+
+  &.N7
+    background var(--cell-7, #ffac65)
+
+  &.N-2
+    background #000ba4
+
+  &.N-1
+    background #abc

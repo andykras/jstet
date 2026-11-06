@@ -1,9 +1,11 @@
 import { events } from '@/utils/events'
+import { attachGameCommands } from '@/utils/gameCommands'
+import defaults, { resolveRunOptions } from '@/game/options'
 import store from '@/store'
 import { next } from '@/game/next'
 import { put } from '@/game/put'
-import { clearAllLines, clearOneLine, getSolidLines } from '@/game/tetris'
-import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock } from '@/game/tetcolor'
+import { clearAllLines, clearOneLine, getSolidLines, resetSolidLines } from '@/game/tetris'
+import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock, resetThreeBlocks } from '@/game/tetcolor'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -17,51 +19,107 @@ let $three = new Set()
 $three.sorted = []
 
 export function setup(bus) {
-  events.init(), ($bus = bus)
-  ;['rotate', 'left', 'right', 'down'].forEach(e => ['start', 'stop'].forEach(t => $bus.on(e + ':' + t, _ => events.emit(e + ':' + t))))
-  $bus.on('start', _ => game.start())
-  $bus.on('pause', _ => (game.paused = !game.paused))
-  $bus.on('drop', hard => (hard ? dropDown() : game.drop++))
-  $bus.on('fill', _ => (game.singleBlock = !game.singleBlock))
-  $bus.on('next', _ => (item = next(item.N)))
-  // $bus.on('next', _ => next(item.N))
+  if ($bus) throw new Error('Game engine already connected')
+  $bus = bus
+  const detach = attachGameCommands(bus, {
+    input(type) {
+      if (game.started && !game.paused) events.emit(type)
+    },
+    start: values => game.start(values),
+    pause: () => game.togglePause(),
+    drop(hard) {
+      if (!game.started || game.paused) return
+      if (hard) dropDown()
+      else game.drop++
+    },
+    fill() {
+      if (game.debug && game.started && !game.paused) game.singleBlock = !game.singleBlock
+    },
+    next() {
+      if (!game.debug || !game.started || game.paused) return
+      item = next(item.N)
+      bus.emit('update', item)
+    }
+  })
+
+  return () => {
+    game.stop()
+    detach()
+    $bus = null
+  }
 }
 
 export const game = {
-  // TODO: move to options
-  maxLevel: 9,
-  levelTime: 60,
-  scorePart: 10,
-  bonusSize: 500,
-  singleBlock: true,
-  tetcolor: true,
+  ...defaults,
+  status: 'idle',
+  started: false,
+  paused: false,
+  debug: false,
+
+  // Configuring a run never mutates the shared defaults or Vuex hot-path data.
+  configure(values) {
+    const resolved = resolveRunOptions(values)
+    Object.assign(this, resolved)
+    return resolved
+  },
+
+  releaseControls() {
+    events.init()
+  },
+
+  togglePause() {
+    if (!this.started) return
+    const now = performance.now()
+    if (this.paused) this.startedTime += now - this.pausedAt
+    else this.pausedAt = now
+    this.paused = !this.paused
+    this.releaseControls()
+    this.status = this.paused ? 'paused' : 'running'
+    $bus.emit('status', this.status)
+  },
+
+  stop() {
+    cancelAnimationFrame(this.id)
+    this.id = null
+    this.started = false
+    this.paused = false
+    this.releaseControls()
+    if (this.status !== 'idle') {
+      this.status = 'idle'
+      if ($bus) $bus.emit('status', this.status)
+    }
+  },
 
   levelSpeed: level => Math.floor(speed.start - 150 * level + 4.3 * level * level),
   clearSpeed: _ => (game.tetcolor ? speed.three : game.singleBlock ? speed.clear : 2 * speed.clear),
   speed: _ => (game.scheduled ? speed.scheduled : game.drop > 0 ? speed.drop / game.drop : game.levelSpeed(game.level)),
 
-  start() {
+  start(values = store.state.options || defaults) {
     cancelAnimationFrame(this.id)
-
+    this.configure(values)
+    this.releaseControls()
     $cells = store.state.cells
     $pieces = store.state.pieces
+    $lines = resetSolidLines()
+    $three = resetThreeBlocks()
 
     this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
     this.intervals = {}
     this.started = true
+    this.status = 'running'
 
     item = next(next().N)
-    // next(rand())
-    // next(item.N)
-
     this.startedTime = performance.now()
-    this.id = requestAnimationFrame(this.loop.bind(this))
-
-    $bus.emit('level', game.level)
-    $bus.emit('score', game.score)
-
     this.performance_measure_counter = 0
     this.performance_measure_delta = 0
+    this.id = requestAnimationFrame(this.loop.bind(this))
+
+    $bus.emit('status', this.status)
+    $bus.emit('level', this.level)
+    $bus.emit('lines', this.totalLines)
+    $bus.emit('score', this.score)
+    $bus.emit('bonus', this.bonus)
+    $bus.emit('update', item)
   },
 
   interval(delta) {
@@ -81,8 +139,18 @@ export const game = {
     }
     this.performance_measure_counter++
 
-    if (!game.started) return $bus.emit('done')
+    if (!game.started) {
+      this.releaseControls()
+      this.status = 'gameOver'
+      $bus.emit('status', this.status)
+      return $bus.emit('done')
+    }
     this.currentTime = performance.now()
+    // Paused time does not count toward gravity, clearing or level progression.
+    if (this.paused) {
+      this.id = requestAnimationFrame(this.loop.bind(this))
+      return
+    }
 
     if (!game.paused && game.level < game.maxLevel - 1 && this.interval(game.levelTime * 1000)) {
       $bus.emit('level', ++game.level)
@@ -111,8 +179,11 @@ export const game = {
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
-      game.totalLines += game.singleBlock ? clearOneLine() : clearAllLines()
+      const cleared = game.singleBlock ? clearOneLine() : clearAllLines()
+      game.totalLines += cleared
+      game.score += cleared * game.scorePart * 10 * (game.level + 1)
       $bus.emit('lines', game.totalLines)
+      $bus.emit('score', game.score)
     }
 
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
@@ -265,7 +336,8 @@ const dropDown = _ => {
 //   const h = $cells.height
 //   const w = $cells.width
 
-//   const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) => $cells[y + ly][x + lx] == $cells[y][x] && $cells[y][x] == $cells[y + ry][x + rx]
+//   const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) =>
+//     $cells[y + ly][x + lx] == $cells[y][x] && $cells[y + ry][x + rx] == $cells[y][x]
 
 //   for (let y = 1; y < h - 1; ++y) {
 //     for (let x = 1; x < w - 1; ++x) {

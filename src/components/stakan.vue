@@ -1,5 +1,32 @@
 <template>
-  <div class="main">
+  <div class="legacy-screen">
+    <section class="legacy-options"
+             aria-label="Legacy engine options">
+      <label class="legacy-options__field">
+        <span>Skin</span>
+        <select v-model.number="theme"
+                aria-label="Legacy visual skin">
+          <option :value="1">1 · Symbols</option>
+          <option :value="2">2 · ASCII</option>
+          <option :value="3">3 · Text</option>
+          <option :value="4">4 · Colors</option>
+        </select>
+      </label>
+      <label class="legacy-options__field">
+        <input type="checkbox"
+               v-model="linesAnimated">
+        Animate line clears (A)
+      </label>
+      <label class="legacy-options__field">
+        <input type="checkbox"
+               v-model="dropSoft">
+        Soft drop (S)
+      </label>
+      <button type="button"
+              class="arcade-button"
+              @click="newGame">New Game</button>
+    </section>
+    <div class="main">
     <div class="info">
       <div>Lines: {{totalLines}}</div>
       <div class="stakan next">
@@ -51,10 +78,13 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { shouldIgnoreGameInput } from '@/utils/keyboard.js'
+
 const border = 9
 const space = 0
 const h = 20
@@ -80,7 +110,7 @@ const emptyCells = _ => {
 }
 
 export default {
-  name: 'stakan',
+  name: 'LegacyStakan',
   data() {
     const tets = []
     const z = 0
@@ -220,7 +250,11 @@ export default {
       theme: 1,
       totalLines: 0,
       linesCutting: false,
-      linesAnimated: true
+      linesAnimated: true,
+      dropFrame: null,
+      clearFrame: null,
+      clearDelay: null,
+      disposed: false
     }
   },
   created() {
@@ -230,6 +264,8 @@ export default {
     window.addEventListener('keypress', this.keypress)
   },
   unmounted() {
+    this.disposed = true
+    this.cancelEffects()
     clearInterval(this.loop)
     clearInterval(this.posDecrement)
     window.removeEventListener('keydown', this.keydown)
@@ -241,6 +277,17 @@ export default {
     this.nextTet = Math.floor(Math.random() * this.tets.length)
   },
   methods: {
+    isLabControl(target) {
+      return Boolean(target && target.closest && target.closest('.legacy-options, button'))
+    },
+    cancelEffects() {
+      cancelAnimationFrame(this.dropFrame)
+      cancelAnimationFrame(this.clearFrame)
+      clearTimeout(this.clearDelay)
+      this.dropFrame = this.clearFrame = this.clearDelay = null
+      this.dropping = false
+      this.linesCutting = false
+    },
     getSymbol(x, y, T, R) {
       const pieceOnly = T !== undefined
       const val = pieceOnly ? this.getPiece(T, x, y, R) : this.getValue(x, y)
@@ -286,7 +333,10 @@ export default {
     },
 
     newGame() {
-      if (this.loop != null) this.cells = emptyCells()
+      clearInterval(this.loop)
+      clearInterval(this.posDecrement)
+      this.cancelEffects()
+      this.cells = emptyCells()
 
       this.totalLines = 0
       this.gameActive = true
@@ -303,7 +353,8 @@ export default {
       }, 10)
     },
     keydown(e) {
-      if (this.linesCutting) return
+      if (shouldIgnoreGameInput(e.target) || this.isLabControl(e.target) || this.linesCutting) return
+      if (!['KeyP', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return
       e.preventDefault()
       if (!this.gameActive) return this.newGame()
 
@@ -321,6 +372,7 @@ export default {
           this.dropping = true
           let start = performance.now()
           const step = _ => {
+            if (this.disposed) return
             const curr = performance.now()
             if (curr - start > 10) {
               start = curr
@@ -329,10 +381,11 @@ export default {
               this.render()
               if (!check) {
                 this.dropping = false
+                this.dropFrame = null
                 return
               }
             }
-            requestAnimationFrame(step)
+            this.dropFrame = requestAnimationFrame(step)
           }
           step()
         } else {
@@ -349,6 +402,8 @@ export default {
       iskeydown = true
     },
     keyup(e) {
+      if (shouldIgnoreGameInput(e.target) || this.isLabControl(e.target)) return
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyS'].includes(e.code) && !/^[0-9]$/.test(e.key)) return
       e.preventDefault()
       // ticks = performance.now()
       iskeydown = false
@@ -360,7 +415,9 @@ export default {
       if (e.key == 's') this.dropSoft = !this.dropSoft
     },
     keypress(e) {
-      e.preventDefault()
+      if (!shouldIgnoreGameInput(e.target) && !this.isLabControl(e.target) && e.code === 'Space') {
+        e.preventDefault()
+      }
     },
     getSize(T) {
       return this.tets[T].length
@@ -396,6 +453,7 @@ export default {
               let start = performance.now()
               this.linesCutting = true
               const step = _ => {
+                if (this.disposed) return
                 const curr = performance.now()
                 if (curr - start > 80) {
                   start = curr
@@ -407,16 +465,19 @@ export default {
                   this.totalLines++
                   if (!lines.length) {
                     this.linesCutting = false
+                    this.clearFrame = null
                     return
                   }
                 }
-                requestAnimationFrame(step)
+                this.clearFrame = requestAnimationFrame(step)
               }
               step()
             }
 
             if (lines.length && !this.linesAnimated) {
-              setTimeout(_ => {
+              this.clearDelay = setTimeout(_ => {
+                this.clearDelay = null
+                if (this.disposed) return
                 this.totalLines += lines.length
                 let cur = lines.pop()
                 for (let y = cur + 1; y < h; y++) {

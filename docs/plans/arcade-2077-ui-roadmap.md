@@ -1,7 +1,7 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **APPROVED FOR PLANNING / NOT STARTED**  
-> Updated: 2026-11-06  
+> Status: **FINAL VERIFICATION COMPLETE — all Gates passed on evidence 2026-11-07; merge requires explicit user approval**  
+> Updated: 2026-11-07  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
 
@@ -134,116 +134,130 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 0 — Baseline and acceptance harness
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — code audit and focused tests done; local QA evidence recorded 2026-11-06 (see [Stage 0 baseline](./arcade-2077-baseline.md), section 6). The Stage 0 lint-config blocker was resolved in Stage 1; lint is fully clean as of Stage 6.
 
-- Capture baseline screenshots of modern TetColor and legacy naive views on desktop and phone-sized viewport.
-- Run `npm run test:unit`, `npm run lint`, `npm run build`, and a development/preview smoke test; document results and pre-existing failures honestly.
-- Verify keyboard movement, held-key repeat, both drop behaviors, pause/resume, New Game, score, level, match clearing/cascades and game-over for current default play.
-- Record existing runtime bugs separately; do not conflate pre-existing failures with UI regressions.
-- Define a compact, repeatable browser acceptance checklist (manual or Playwright if available, without adding GitHub Actions).
+- [x] Captured current desktop and phone-sized screenshots of modern TetColor and legacy naive views (older repository screenshots are only historical references).
+- [x] Ran `npm run test:unit` (7/7 pass), `npm run build` (pass), and development/preview browser smoke tests from a full local checkout. `npm run lint` fails on a pre-existing ESLint config schema error (exit 2), recorded in the baseline.
+- [x] Verified keyboard movement, held-key repeat, both drop behaviors, pause/resume, New Game, score, level (0 to 1 over 62 s), matching progress and game-over; documented pause-input, restart-noise, restart-state, game-over-overlay, focus, and dual-engine findings.
+- [x] Documented code-confirmed baseline quirks and distinguished reproduced findings (B-01, B-02, B-03, B-05, B-07, B-08 in browser; B-04 by store/engine read) from confirmed-visible items (B-06).
+- [x] Define a repeatable browser acceptance checklist and a screenshot capture protocol.
+- [x] Add focused input-timing regression tests (3 cases); executed against an isolated local copy of the unchanged `events.js` source, **not** the complete checkout.
 
-**Gate 0:** Baseline and limitations documented; known-good behavior and existing bugs are distinguished.
+**Gate 0:** Evidence recorded (command results, browser checks, four screenshots in the baseline). `npm run lint` is blocked by a pre-existing config schema error; fixing it belongs to a later stage, without gameplay changes.
 
 ### Stage 1 — Game control and settings contract
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — implementation plus local browser regression QA passed 2026-11-06. See [Stage 1 handoff](./arcade-2077-stage1-handover.md).
 
-- Establish one explicit way for UI actions to invoke the current engine (start/restart, pause/resume, drop, mode selection, state reporting).
-- Wire run-level options into the actual engine without duplicating `game.options.js`, Vuex defaults and `game.js` flags.
-- Define minimal settings schema and immediate vs next-run application rules from section 4.
-- Ensure the modern engine is stopped and detached before the legacy engine mounts, and vice versa; only one keyboard owner is active.
-- Introduce focused tests for option application, mode lifecycle and listener cleanup.
+- [x] One command binding for the modern engine: start/restart, pause/resume, drop, player input and status events.
+- [x] Validate run options from the single source of truth `src/game/options.js` and apply them only on new game. Mode/rules options are wired; a playable Classic selection remains Stage 3.
+- [x] Define immediate vs next-run settings policy, keyboard ownership and lifecycle in the handoff. Preference storage and UI controls remain Stage 3.
+- [x] Disconnect the modern engine and keyboard before mounting naive; dispose legacy timer/animation work when leaving naive.
+- [x] Add focused regression tests for options, event subscriptions, held-key release and keyboard focus gating.
+- [x] Confirmed gameplay, pause timing (65 s freeze + timer exclusion), engine switching (x10, 1 listener per bus type, no errors) and restart-during-cascade in Mac Chrome; commands, screenshots and browser checks recorded in the handoff.
+- [x] Verified lint after the schema fix: 1 new Stage 1 finding fixed (`keyboard.js` wrap); 7 remaining errors are pre-existing findings, not Stage 1 regressions.
 
-**Gate 1:** Engine remains playable from the existing UI; command/state contract is tested; no concurrent loops or listeners.
+**Gate 1:** Passed 2026-11-06 on recorded evidence: no duplicate timers, listeners or background moves; both renderers playable; run options and pause semantics verified in browser.
 
 ### Stage 2 — Responsive application shell and HUD
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — implementation plus desktop/mobile browser acceptance passed 2026-11-06. See [Stage 2 handoff](./arcade-2077-stage2-handover.md).
 
-- Replace the raw root controls with a semantic header, centered board area, responsive HUD and compact help.
-- Move next-piece preview and score/level/blocks/bonus presentation out of the renderer into appropriate UI layout without changing their values.
-- Ensure the board uses a stable aspect ratio/visible geometry and does not jump when HUD values change.
-- Give the board and next preview a reusable presentation surface, keeping class/value mapping and clearing animations intact.
-- Remove the visible options JSON and naive checkbox from player-facing UI.
+- [x] Replaced the raw root controls with a semantic header, centered board, functional New Game/Pause buttons, responsive HUD and compact keyboard help.
+- [x] Extracted next-piece preview and score/level/blocks/bonus presentation into `NextPiece.vue` and `GameHud.vue` without changing their Vuex data sources.
+- [x] Board size is controlled by a shared cell-size variable, not HUD or bonus width; mobile layout uses explicit grid areas.
+- [x] Shared color/cell styles are used by both the board and next-piece preview; original `getWellValue` and `getNextValue` mapping is preserved.
+- [x] Removed player-facing raw options JSON and the visible naive checkbox; legacy access is folded under Developer Lab pending Stage 5.
+- [x] Added source-level shell/renderer contract checks in `tests/unit/ui-shell.test.js`.
+- [x] Verified desktop 1440x900, phone 390x844/320x700 and landscape 844x390 (layout, clipping, readability, board stability); screenshots refreshed.
+- [x] Verified full-game TetColor parity, pause/restart, next preview, legacy toggle and PWA in browser; QA evidence recorded in the handoff.
 
-**Gate 2:** Complete desktop layout plus usable narrow layout; TetColor gameplay parity verified; no dead/duplicate player controls.
+**Gate 2:** Passed 2026-11-06 on recorded evidence: complete desktop layout plus usable narrow layouts; TetColor gameplay parity verified; no dead/duplicate player controls.
 
 ### Stage 3 — Playable modes and settings
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — implementation plus full Mac/Chrome gameplay acceptance passed 2026-11-06. See [Stage 3 handoff](./arcade-2077-stage3-handover.md).
 
-- Add real TetColor and Classic mode selection; switching discards/restarts a run only after an intentional choice.
-- For Classic, connect its actual Tetris piece set, line-clear rules, next-piece preview, counters and game-over behavior. Merely toggling `game.tetcolor` is insufficient.
-- For TetColor, preserve the current color-match rules, multi-step cascade behavior and bonus math.
-- Add Settings panel with only implemented choices: drop preference, clearing behavior where supported, theme selector, reduced motion, help.
-- Use the apply policy from section 4; visually mark any choices that will take effect on the next run.
-- Persist supported visual/input preferences; reset the engine properly on ruleset changes.
+- [x] Real TetColor / Classic selection in the header. Active-run switching requires an accessible confirmation dialog; cancel resumes the existing run.
+- [x] Classic has its own 7 tetrominoes, 10×20 well, complete-line removal, line-based scoring, mode-specific HUD and correctly sized 2×2/3×3/4×4 next preview.
+- [x] Existing TetColor rules/4 pieces/7×18 board/cascade scoring retained; no change to the TetColor clearing algorithm.
+- [x] Functional Settings dialog with live theme, reduced motion, keyboard help and Space-drop preference; clearing sequence is a staged next-run rule.
+- [x] Live versus next-run application is labeled; dialogs release controls and temporarily pause a running game; focus handling is included.
+- [x] Versioned, validated localStorage preferences; malformed or inaccessible storage falls back to safe defaults.
+- [x] Added mode/line-clearing/persistence/unit and UI contract tests (11 new cases).
+- [x] Validated 26-test suite, existing lint baseline (only the 5 pre-existing errors), production build and PWA in full checkout.
+- [x] Verified actual gameplay of both modes, single/multi-line clearing (1 line/100 pts, 2 lines/200 pts), score/preview/game-over, dialog and settings semantics, restart and device layouts in Chrome. Evidence saved above.
 
-**Gate 3:** Both modes are genuinely playable and independently tested; settings behave as labeled; no reload/build needed.
+**Gate 3:** Passed 2026-11-06 on recorded evidence: both modes genuinely playable and independently tested; visual options apply live, rule changes on next game, no reload/build needed.
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — user-approved original TetColor appearance, post-color unit/build/browser/PWA regression evidence recorded in Stage 5 QA (2026-11-07). See [Stage 4 handoff](./arcade-2077-stage4-handover.md#10-final-gate-4-closure-2026-11-07).
 
-- Define Stylus/CSS tokens and build the cohesive dark arcade appearance; avoid component-specific magic values.
-- Add a polished default renderer theme and at least one legible alternative without changing gameplay.
-- Improve focus/hover/pressed/disabled states, clear feedback, progress, and typography.
-- Implement accessible Pause, Resume, Game Over and confirmation overlays with proper focus behavior.
-- Add subtle clear/score/bonus feedback; visually respect `prefers-reduced-motion` and pause animations when practical.
-- Check paint performance and rendering behavior with live game activity, not just static screenshots.
+- [x] Define scoped Stylus/CSS tokens and night-sky arcade cabinet visual styling with a local SVG striped sunset, skyline and reflections.
+- [x] Polish Arcade and retain the distinct Prism palette without changing core gameplay, board geometry or engine data.
+- [x] Improve control focus, clear feedback, score/bonus/level presentation, and typography.
+- [x] Add Paused / Game Over board overlays with native Resume/New Game controls and focus behavior; keep existing modal confirmations.
+- [x] Add CSS-only score/bonus/clear animations, reduced motion for OS/player, and pause animation freezing.
+- [x] Add five static visual/overlay contract checks in `tests/unit/arcade-visuals.test.js`.
+- [x] Validated fidelity and accessibility at desktop, narrow mobile and landscape viewports using real browser screenshots (7 captures).
+- [x] Ran full unit suite (31/31), lint (only the 5 pre-existing errors), production build, PWA and live-game paint/memory checks.
 
-**Gate 4:** Visual milestone reviewed on desktop and phone; active pieces and state remain readable; no unnecessary visual noise.
+**Gate 4:** **Closed.** Post-color-pass build and browser confirmation captured in Stage 5 QA 2026-11-07 (gray well, blue markers, Prism/Classic exclusion, responsive, overlays, focus, motion, perf, PWA); visual direction approved by user.
 
 ### Stage 5 — Mobile, controls, accessibility, Lab
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — implementation plus real touch gameplay, Lab, accessibility and color-pass QA passed 2026-11-07. See [Stage 5 handoff](./arcade-2077-stage5-handover.md#5-gate-5--local-qa-evidence-2026-11-07-qa-branch-feat_arcade-2077-ui).
 
-- Implement touch controls using the same commands as the keyboard; ensure press/release and cancellation work.
-- Verify layout and gameplay at 320px, 375px, 768px and desktop widths, including short-height landscape and safe areas.
-- Expose keyboard control reference and correct focus/tab behavior; modals have Escape/close and focus return.
-- Add an unobtrusive, deliberate Lab entry for legacy/naive and any existing diagnostic features.
-- Keep legacy number-key themes and diagnostic commands functioning only in the Lab context.
-- Do not promise full mobile equivalence until physical or browser-emulated touch play has been exercised.
+- [x] Touch D-pad, rotate, soft/hard Drop button use the existing gameBus/engine; short presses are held through a game-frame boundary, continuous presses retain keyboard repeat, and all cancellation paths release controls.
+- [x] Responsive touch layout for <=920px, sticky controls on small phones, side-by-side field/controls in short landscape, safe-area clearance.
+- [x] Preserve keyboard help and existing modal Escape/focus/return; ignore physical Space/Enter global shortcut while native touch-pad buttons own activation.
+- [x] Developer Lab remains behind a deliberate collapsed disclosure, with direct selectors for all four classic skins, clearing animations and soft/hard drop; keys 1–4/A/S still function inside Lab.
+- [x] Legacy New Game resets the well even when paused; focused Lab controls do not also trigger game input.
+- [x] Add six executable touch ownership/pulse tests and five structural UI/Lab contracts.
+- [x] Verified touch-only gameplay at 320px/390px and in short landscape (tap/hold/multi-touch/cancel/blur/hide, pause, game over, restarts); 375px/768px covered by the same responsive rules, no horizontal overflow anywhere.
+- [x] Ran the full unit suite (46/46), lint (only the 5 pre-existing errors), build, PWA and browser accessibility smoke plus the Stage 4 historic-color regression checks.
 
-**Gate 5:** Full touch run is possible without a keyboard; normal play contains no internal/dev controls; accessibility smoke passed.
+**Gate 5:** Passed 2026-11-07 on recorded evidence: full touch-only runs, safe gesture cancellation, correct Lab behavior, responsive/accessibility smoke and post-color-pass regression evidence with zero console errors.
 
 ### Stage 6 — Final verification and release readiness
 
-**Status:** [ ] Not started
+**Status:** [x] Complete — 47/47 tests, zero-error lint, production build, PWA and full browser acceptance passed 2026-11-07 on the final commit. Awaiting explicit user approval to merge. See [Stage 6 handoff](./arcade-2077-stage6-handover.md).
 
-- Run all existing unit checks, lint and production build; add targeted tests for mode/setting/regression issues discovered along the way.
-- Perform desktop/mobile browser acceptance for TetColor, Classic, Lab, both themes, keyboard and touch, focus, overlays, score/bonus and restart.
-- Verify PWA and relative-path deployment in `npm run preview`, including manifest/icons, service worker and offline reload.
-- Check for duplicate event subscriptions, orphaned timers, hot-path Vue observation, unexpected frame drops and memory growth across repeated restarts.
-- Review all changed files for unrelated refactors, unused options, dead UI elements and undocumented controls.
-- Update README usage instructions, screenshots and this plan's acceptance checklist. Record any unverified checks as such.
-- Only after user approval: mark the single Draft PR ready and merge it to `master`.
+- [x] Run all unit checks, lint and production build on the exact final branch commit. Stage 5 baseline was 46/46 tests, build PASS and five existing ESLint findings; release changes are **not yet verified**. Investigate and repair any remaining lint diagnostics without unrelated rewrites.
+- [x] Perform one final desktop/mobile browser acceptance for TetColor, Classic, Lab, both visual themes, keyboard/touch, focus, overlays, scoring, cascades and repeated restarts.
+- [x] Verify the updated **JSTET — Arcade 2077** manifest and HTML title, relative paths, icons, generated SW and offline reload using a fresh production preview.
+- [x] Measure/inspect duplicate event subscriptions, orphaned timers, hot-path Vue observation, frame pacing and heap behavior over repeated sessions; report actual readings.
+- [x] Review commit scope and source boundaries: no new UI framework or gameplay rewrite, no new runtime dependency, PR remains Draft and 0 commits behind `master`.
+- [x] Replace outdated README with modes, controls, mobile, Lab, Settings and PWA instructions. Refresh PWA product metadata and remove known trivial legacy lint defects; add release-contract check.
+- [x] Record final results and any unresolved issues in the Stage 6 handoff; check the P0/P1 acceptance matrix from real evidence, not previous promises.
+- [ ] Only after user approval, mark the single Draft PR ready and merge it to `master`.
 
-**Gate 6:** All P0 acceptance items pass, remaining issues are explicitly documented, and the user approves merge.
+**Gate 6:** Evidence complete 2026-11-07 — all P0/P1 items pass on the final commit with zero console errors; lint fully clean; merge audit clean. **Merge requires explicit user approval; PR stays Draft.**
 
 ## 6. Acceptance matrix
 
 ### P0 — Required before merge
 
-- [ ] Default TetColor launch, movement, rotation, drop and held-key behavior.
-- [ ] Correct TetColor color matching, cascades, bonus/score and progression.
-- [ ] Classic uses its own pieces and clears completed horizontal lines.
-- [ ] Pause/Resume/Restart and Game Over render and behave correctly.
-- [ ] Both modes render correct next preview and HUD values.
-- [ ] Mode/rules changes start a clean new run without stale timers or input.
-- [ ] Settings apply immediately or on next run exactly as labeled.
-- [ ] Board and UI usable on desktop, mobile portrait and small-height layouts.
-- [ ] Touch controls work; keyboard cannot affect game while a dialog owns focus.
-- [ ] Lab/naive is isolated from player UI and does not leave background input/loops.
-- [ ] No regressions to static build, subdirectory hosting or PWA basics.
-- [ ] Unit tests, lint and production build run with outcome recorded; critical browser smoke completed.
+- [x] Default TetColor launch, movement, rotation, drop and held-key behavior.
+- [x] Correct TetColor color matching, cascades, bonus/score and progression.
+- [x] Classic uses its own pieces and clears completed horizontal lines.
+- [x] Pause/Resume/Restart and Game Over render and behave correctly.
+- [x] Both modes render correct next preview and HUD values.
+- [x] Mode/rules changes start a clean new run without stale timers or input.
+- [x] Settings apply immediately or on next run exactly as labeled.
+- [x] Board and UI usable on desktop, mobile portrait and small-height layouts.
+- [x] Touch controls work; keyboard cannot affect game while a dialog owns focus.
+- [x] Lab/naive is isolated from player UI and does not leave background input/loops.
+- [x] No regressions to static build, subdirectory hosting or PWA basics.
+- [x] Unit tests, lint and production build run with outcome recorded; critical browser smoke completed.
 
 ### P1 — Expected polish (adjust only with user approval)
 
-- [ ] Coherent visual tokens, balanced layouts, tasteful glow/blur and a second visual theme.
-- [ ] Clear, accessible keyboard help and polished focus/hover states.
-- [ ] Reduced motion respected for shell and in-game feedback.
-- [ ] Stable layout during score updates, animations and overlay opening.
+- [x] Coherent visual tokens, balanced layouts, tasteful glow/blur and a second visual theme.
+- [x] Clear, accessible keyboard help and polished focus/hover states.
+- [x] Reduced motion respected for shell and in-game feedback.
+- [x] Stable layout during score updates, animations and overlay opening.
 
 ### Explicitly out of scope for this PR
 

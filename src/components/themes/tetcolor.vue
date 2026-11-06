@@ -1,32 +1,17 @@
 <template>
-  <div class="main">
-    <div class="info">
-      <div>Blocks: {{$store.state.lines}}</div>
-      <div class="stakan next">
-        <div v-for="y in 3"
-             :key="y"
-             class="row">
-          <div v-for="x in 3"
-               :key="x"
-               :class="getNextClass(x, y)">
-          </div>
+  <div class="tetcolor-board"
+       role="img"
+       aria-label="Playing field">
+    <div v-for="y in getDimensions.height"
+         :key="y"
+         class="tetcolor-board__row">
+      <template v-for="x in getDimensions.width">
+        <div v-if="!isBorder(x, y)"
+             :key="x"
+             class="game-cell"
+             :class="getThemeClass(x, y)">
         </div>
-      </div>
-      <div>Level: {{$store.state.level+1}}</div>
-      <div>Score: {{$store.state.score}}</div>
-      <div v-show="$store.state.bonus">Bonus: {{$store.state.bonus}}</div>
-    </div>
-    <div class="stakan">
-      <div v-for="y in getDimensions.height"
-           :key="y"
-           class="row">
-        <template v-for="x in getDimensions.width"
-                  :key="x">
-          <div v-if="!isBorder(x, y)"
-               :class="getThemeClass(x, y)">
-          </div>
-        </template>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -35,8 +20,9 @@
 import { mapGetters } from 'vuex'
 
 export default {
+  name: 'TetcolorBoard',
   computed: {
-    ...mapGetters(['getWellValue', 'getDimensions', 'getNextValue'])
+    ...mapGetters(['getWellValue', 'getDimensions'])
   },
   methods: {
     getThemeClass(x, y) {
@@ -56,131 +42,24 @@ export default {
         top: val == 0 && valU != 0
       }
     },
-    getNextClass(x, y) {
-      const val = this.getNextValue(x, y)
-      const valL = this.getNextValue(x - 1, y)
-      const valD = this.getNextValue(x, y - 1)
-      return {
-        ['N' + val]: val >= 0,
-        item: val != 0,
-        left: val != 0 && valL != 0,
-        bottom: val != 0 && valD != 0
-      }
-    },
     isBorder(x, y) {
       const w = this.getDimensions.width
       return y == 1 || x == 1 || x == w
     }
-  },
-  created() {}
+  }
 }
 </script>
 
 <style lang="stylus" scoped>
-.main {
-  text-align: center
-  display: flex
-  // margin: auto
-  // flex-direction: row
-  justify-content: center
+.tetcolor-board
+  display flex
+  flex-direction column-reverse
+  width max-content
+  overflow hidden
+  border 1px solid rgba(255, 195, 115, 0.7)
+  background #0a1026
+  box-shadow 0 0 0 3px rgba(244, 160, 56, 0.14), 0 12px 38px rgba(2, 3, 18, 0.55)
 
-  .info {
-    display: flex
-    padding: 1rem
-    flex-direction: column
-    min-width: 7rem
-    align-items: center
-
-    &> div {
-      padding-bottom: 0.3rem
-    }
-  }
-
-  .stakan {
-    display: flex
-    flex-direction: column-reverse
-    border: 5px groove #c0eac1
-    border: 4px double #42c339
-
-    .row {
-      display: flex
-
-      & > div {
-        height: 25px
-        width: 25px
-        background-color: #AAAAAA
-        font-family: 'Helvetica Neue'
-        font-weight: 900
-        font-size: 20px
-        box-sizing: border-box
-
-        &.item {
-          border: 1px solid $border-color
-
-          &.left {
-            border-left: none
-          }
-
-          &.bottom {
-            border-bottom: none
-          }
-        }
-
-        &.empty {
-          border: none
-
-          &.right {
-            border-right: 1px solid $border-color
-          }
-
-          &.top {
-            border-top: 1px solid $border-color
-          }
-        }
-
-        &.N1 {
-          background-color: #89FB6E
-        }
-
-        &.N2 {
-          background-color: #EC64F8
-        }
-
-        &.N3 {
-          background-color: #EC615C
-        }
-
-        &.N4 {
-          background-color: #FFFE73
-        }
-
-        &.N5 {
-          background-color: #5458F6
-        }
-
-        &.N6 {
-          background-color: #89FCFD
-        }
-
-        &.N-2 {
-          background-color: #000BA4
-        }
-
-        &.N-1 {
-          background-color: #abc
-        }
-      }
-    }
-  }
-
-  .next {
-    border: none
-
-    .row {
-      .N0 {
-        background: transparent
-      }
-    }
-  }
-}
+  &__row
+    display flex
 </style>

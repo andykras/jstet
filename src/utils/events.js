@@ -8,7 +8,9 @@ function gameEvent(first, next) {
       value = 1
     },
     stop() {
-      value -= 2
+      value = 0
+      time = 0
+      delta = firstDelta
     },
     active(currentTime) {
       if (value === 0 || (time && time + delta > currentTime)) return false
@@ -17,15 +19,6 @@ function gameEvent(first, next) {
       if (value < 2) value++
       return true
     }
-  }
-}
-
-function simpleEvent() {
-  let value = false
-  return {
-    start: _ => (value = true),
-    stop: _ => (value = false),
-    active: _ => value
   }
 }
 
