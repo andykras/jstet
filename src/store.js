@@ -9,6 +9,7 @@ export default createStore({
     score: 0,
     bonus: 0,
     level: 0,
+    status: 'idle',
     options: null
   },
   mutations: {
@@ -36,6 +37,9 @@ export default createStore({
     },
     setOptions(state, options) {
       state.options = options
+    },
+    setStatus(state, status) {
+      state.status = status
     }
   },
   getters: {
