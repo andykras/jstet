@@ -22,15 +22,6 @@ function gameEvent(first, next) {
   }
 }
 
-function simpleEvent() {
-  let value = false
-  return {
-    start: _ => (value = true),
-    stop: _ => (value = false),
-    active: _ => value
-  }
-}
-
 export const events = {
   emit(type) {
     const [event, action] = type.split(':')

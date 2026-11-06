@@ -336,7 +336,8 @@ const dropDown = _ => {
 //   const h = $cells.height
 //   const w = $cells.width
 
-//   const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) => $cells[y + ly][x + lx] == $cells[y][x] && $cells[y][x] == $cells[y + ry][x + rx]
+//   const check = (x, y, ly = 0, lx = 0, ry = 0, rx = 0) =>
+//     $cells[y + ly][x + lx] == $cells[y][x] && $cells[y + ry][x + rx] == $cells[y][x]
 
 //   for (let y = 1; y < h - 1; ++y) {
 //     for (let x = 1; x < w - 1; ++x) {

@@ -110,7 +110,7 @@ const emptyCells = _ => {
 }
 
 export default {
-  name: 'stakan',
+  name: 'LegacyStakan',
   data() {
     const tets = []
     const z = 0
