@@ -10,10 +10,10 @@
       <output class="hud-stat__number">{{ level + 1 }}</output>
     </div>
     <div class="hud-stat">
-      <span class="hud-stat__label">Blocks</span>
+      <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
-    <div v-if="bonus > 0"
+    <div v-if="mode === 'tetcolor' && bonus > 0"
          class="hud-stat hud-stat--bonus">
       <span class="hud-stat__label">Bonus</span>
       <output class="hud-stat__number">+{{ bonus }}</output>
@@ -26,6 +26,9 @@ import { mapState } from 'vuex'
 
 export default {
   name: 'GameHud',
+  props: {
+    mode: { type: String, default: 'tetcolor' }
+  },
   computed: {
     ...mapState({
       score: state => state.score,
@@ -33,6 +36,9 @@ export default {
       blocks: state => state.lines,
       bonus: state => state.bonus
     }),
+    progressLabel() {
+      return this.mode === 'classic' ? 'Lines' : 'Blocks'
+    },
     formattedScore() {
       return this.score.toLocaleString('en-US')
     }

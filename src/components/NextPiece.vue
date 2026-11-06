@@ -5,10 +5,10 @@
     <div class="next-piece"
          role="img"
          aria-label="Next falling blocks">
-      <div v-for="y in 3"
+      <div v-for="y in previewSize"
            :key="y"
            class="next-piece__row">
-        <div v-for="x in 3"
+        <div v-for="x in previewSize"
              :key="x"
              class="game-cell"
              :class="getNextClass(x, y)">
@@ -24,7 +24,10 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'NextPiece',
   computed: {
-    ...mapGetters(['getNextValue'])
+    ...mapGetters(['getNextValue', 'getSize']),
+    previewSize() {
+      return this.getSize || 3
+    }
   },
   methods: {
     getNextClass(x, y) {

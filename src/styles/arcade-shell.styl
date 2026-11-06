@@ -23,6 +23,13 @@ body
   --panel-border: rgba(135, 120, 190, 0.44)
   --arcade-orange: #ffc358
   --arcade-violet: #d477ff
+  --cell-1: #89fb6e
+  --cell-2: #ec64f8
+  --cell-3: #ec615c
+  --cell-4: #fffe73
+  --cell-5: #5458f6
+  --cell-6: #89fcfd
+  --cell-7: #ffac65
   min-height 100dvh
   padding clamp(8px, 1.8vw, 28px)
   font-family Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif
@@ -564,3 +571,205 @@ kbd
 @media (prefers-reduced-motion: reduce)
   .arcade-button
     transition none
+
+
+.jstet-app.theme-prism
+  --arcade-orange: #91d7ff
+  --arcade-violet: #8d9aff
+  --cell-1: #7de2cc
+  --cell-2: #b892ff
+  --cell-3: #ff8fba
+  --cell-4: #ffc87c
+  --cell-5: #6d99ff
+  --cell-6: #8bd6ff
+  --cell-7: #ffc5a0
+
+  .arcade-console
+    border-color rgba(120, 162, 250, 0.58)
+    background linear-gradient(155deg, #141c37, #091129 75%)
+
+  .mode-indicator
+    border-color rgba(135, 207, 255, 0.48)
+    background rgba(80, 156, 226, 0.1)
+    color #bce8ff
+
+  .mode-indicator__dot
+    background #91d7ff
+    box-shadow 0 0 12px #6dc8ff
+
+  .arcade-button--primary
+    border-color #b1eaff
+    background linear-gradient(145deg, #b9ecff, #83bafd)
+    color #101e38
+
+  .panel-heading,
+  .hud-stat__number--score
+    color #b2e6ff
+
+  .board-panel
+    border-color rgba(112, 167, 245, 0.42)
+
+.jstet-app.reduce-motion *,
+.jstet-app.reduce-motion *::before,
+.jstet-app.reduce-motion *::after
+  animation-duration 0.01ms !important
+  animation-iteration-count 1 !important
+  transition-duration 0.01ms !important
+  scroll-behavior auto !important
+
+.mode-switch
+  display inline-flex
+  flex 0 0 auto
+  padding 3px
+  border 1px solid rgba(178, 145, 239, 0.4)
+  border-radius 13px
+  background rgba(15, 18, 40, 0.75)
+
+.mode-switch__button
+  min-height 33px
+  padding 7px 11px
+  border 0
+  border-radius 9px
+  background transparent
+  color #b7a9cc
+  font inherit
+  font-size 12px
+  font-weight 700
+  cursor pointer
+
+  &[aria-pressed='true']
+    background rgba(247, 178, 77, 0.2)
+    color #ffda94
+
+  &:focus-visible
+    outline 2px solid var(--arcade-orange)
+    outline-offset 2px
+
+.settings-backdrop
+  position fixed
+  inset 0
+  z-index 100
+  display flex
+  justify-content center
+  align-items center
+  padding 16px
+  background rgba(4, 7, 20, 0.79)
+  backdrop-filter blur(12px)
+
+.arcade-dialog
+  width min(100%, 490px)
+  max-height min(90dvh, 750px)
+  overflow-y auto
+  padding clamp(18px, 3vw, 26px)
+  border 1px solid rgba(224, 155, 255, 0.42)
+  border-radius 20px
+  background linear-gradient(150deg, #242044, #10162f)
+  box-shadow 0 30px 100px rgba(0, 0, 0, 0.5)
+  color #f9f4ff
+
+  &:focus
+    outline none
+
+  h2
+    margin 0
+    font-size clamp(21px, 4vw, 27px)
+
+  p
+    color #d2c4e7
+    line-height 1.6
+
+.dialog-header,
+.dialog-actions
+  display flex
+  justify-content space-between
+  align-items center
+  gap 12px
+
+.dialog-actions
+  justify-content flex-end
+  margin-top 21px
+
+.dialog-close
+  border 0
+  background transparent
+  color #efe0ff
+  font-size 25px
+  cursor pointer
+
+.settings-group
+  display grid
+  gap 14px
+  margin 21px 0 0
+  padding 17px 0 0
+  border 0
+  border-top 1px solid rgba(195, 154, 248, 0.2)
+
+  legend
+    float left
+    width 100%
+    padding 0
+    margin-bottom 12px
+    color #ffc968
+    font-size 12px
+    font-weight 800
+    letter-spacing 0.1em
+    text-transform uppercase
+
+.settings-field
+  display flex
+  align-items center
+  justify-content space-between
+  flex-wrap wrap
+  gap 12px
+  font-size 14px
+
+  select
+    min-width 160px
+    max-width 100%
+    min-height 37px
+    padding 6px 10px
+    border 1px solid rgba(181, 155, 236, 0.54)
+    border-radius 8px
+    background #11172f
+    color #f9f4ff
+    font inherit
+
+.settings-check
+  display flex
+  align-items center
+  gap 10px
+  cursor pointer
+  font-size 14px
+
+  input
+    accent-color #ffc968
+    width 18px
+    height 18px
+
+.settings-hint
+  margin 0
+  font-size 12px
+  line-height 1.5
+
+.settings-note
+  padding 10px 12px
+  border 1px solid rgba(255, 192, 89, 0.28)
+  border-radius 9px
+  background rgba(255, 180, 84, 0.07)
+  color #ffdba0
+  font-size 12px
+
+@media (max-width: 920px)
+  .mode-switch
+    order 3
+
+  .header-actions
+    order 4
+
+@media (max-width: 480px)
+  .mode-switch
+    width 100%
+    order 3
+
+  .mode-switch__button
+    flex 1
