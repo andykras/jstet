@@ -1,4 +1,4 @@
-import store from '@/store'
+import store from '../store.js'
 
 const $lines = []
 
@@ -17,11 +17,14 @@ let w = null //$cells.width
 
 export const clearOneLine = _ => {
   $cells = store.state.cells, h = $cells.height, w = $cells.width
-  for (let y = $lines.pop(); y < h - 1; y++) {
+  const line = $lines.pop()
+  if (line === undefined) return 0
+  for (let y = line; y < h - 1; y++) {
     for (let x = 1; x < w - 1; ++x) {
       $cells[y][x] = $cells[y + 1][x]
     }
   }
+  for (let x = 1; x < w - 1; ++x) $cells[h - 1][x] = empty
   return 1
 }
 

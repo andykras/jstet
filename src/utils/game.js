@@ -179,8 +179,11 @@ export const game = {
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
-      game.totalLines += game.singleBlock ? clearOneLine() : clearAllLines()
+      const cleared = game.singleBlock ? clearOneLine() : clearAllLines()
+      game.totalLines += cleared
+      game.score += cleared * game.scorePart * 10 * (game.level + 1)
       $bus.emit('lines', game.totalLines)
+      $bus.emit('score', game.score)
     }
 
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)

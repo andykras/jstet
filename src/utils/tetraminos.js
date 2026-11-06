@@ -1,4 +1,4 @@
-import Piece from '@/utils/piece.js'
+import Piece from './piece.js'
 
 export function createTetColor3(rotates, z) {
   return new Piece(
@@ -132,6 +132,17 @@ export function createSShape(rotates, z = 0) {
       [z, 3, 3],
       [3, 3, z],
       [z]
+    ],
+    rotates
+  )
+}
+
+export function createTShape(rotates, z = 0) {
+  return new Piece(
+    [
+      [z, 5, z],
+      [5, 5, 5],
+      [z, z, z]
     ],
     rotates
   )
