@@ -57,10 +57,9 @@ test('visual motion honors OS preference, player setting and pause', () => {
 test('portrait skyline includes a proportional sunset and dense waterfront', () => {
   const art = read('src/components/CityscapeArt.vue')
   assert.ok(art.includes('viewBox="0 0 320 800"'))
-  assert.ok(art.includes('cy="441" r="104"'))
-  assert.ok(art.includes('frontBuildings'))
-  assert.ok(art.includes('backBuildings'))
-  assert.ok(art.includes('city-windows'))
+  for (const token of ['cy="441"', 'r="104"', 'frontBuildings', 'backBuildings', 'city-windows']) {
+    assert.ok(art.includes(token), token)
+  }
 })
 
 test('reference refinement improves card balance without changing the board renderer', () => {

@@ -1,6 +1,6 @@
 # Arcade 2077 — Stage 4: Visual System and Game States
 
-> Status: **TECHNICAL QA PASSED 2026-11-06; VISUAL REFINEMENT + USER APPROVAL PENDING; PR stays Draft**  
+> Status: **RE-REVIEW COMPLETE 2026-11-06 on `feat/arcade-2077-ui` — refined composition verified in browser; explicit user approval requested; PR stays Draft**  
 > Branch: `feat/arcade-2077-ui` · [Draft PR #7](https://github.com/andykras/jstet/pull/7)  
 > Approved reference: [Arcade Console — variant C](./arcade-2077-ui-reference.avif)  
 > Previous acceptance: [Stage 3](./arcade-2077-stage3-handover.md)
@@ -128,13 +128,26 @@ The 1440×900 `arcade-desktop.png` captured during the first Stage 4 QA pass was
 - Update the structural tests to cover the portrait SVG and layout/card refinements. No scoring, input, timers, game-state rules or `Object.freeze` changes.
 - Retain the prior full browser evidence as the initial baseline rather than overwriting or mislabeling it.
 
-### Required re-review (still pending)
+### Re-review evidence — refined composition (2026-11-06)
 
-- [ ] Run the expanded unit suite and production build; compare ESLint to the five pre-existing findings.
-- [ ] Capture new **Arcade theme from clean preferences**, at desktop 1440×900 **while the board has a meaningful number of settled cells**. Capture a second clean-start screenshot. Record which is which; do not treat a synthetic filled well as an ordinary run.
-- [ ] Compare desktop side-by-side to the approved image for composition, city visibility, color/contrast, board ratio, HUD density and right-side utility.
-- [ ] Check Classic at 1440×900 and both modes at 1200/1180 widths, 390×844, 320×700 and short landscape: no overflows or loss of game field.
-- [ ] Verify Arcade and Prism palettes, settings confirmation, Paused/Game Over overlays, key focus, reduced motion and PWA offline reload.
-- [ ] Record screenshots with commit SHA/browser and measured UI/perf observations in this handover; request **explicit user approval** for the new composition.
+Environment: macOS, Node v22.23.2, npm 10.9.8, headless Chrome 157.0.8103.38 via CDP, QA harness in git-ignored `qa-local/`. Commands: `npm install` clean, `test:unit` 33/33 (one new test initially asserted a single-line SVG coordinate string that the formatter had split across lines; fixed to assert the three attributes separately), `npm run lint` exit 1 with only the 5 pre-existing errors, `npm run build` exit 0.
 
-**Do not start Stage 5 until Stage 4 has visual approval.** Continue in `feat/arcade-2077-ui` and leave PR #7 OPEN + Draft.
+- New Arcade desktop captures are labeled by run type: `arcade-clean.png` is a fresh load (0 settled cells, running), `arcade-populated.png` is the same session after real hard-drop play (25 settled cells, still running, score/lines from genuine play — not a synthetic filled well).
+- Refined shell verified against variant C direction: portrait skyline column with proportional striped sun, dense high-rise silhouette with lit windows and water reflections; HUD split into SCORE / LEVEL (9-segment meter, 1 active) / BLOCKS cards; guide column with illustrative CONNECT THREE example; centered amber-framed 7x18/126-cell board; TetColor/Classic switch, New Game, Pause, Settings all visible, no raw JSON.
+- Classic desktop: 10x20/200 cells, LINES label, correct 2x2/3x3/4x4-class previews (O + S shown), FILL A LINE example; Classic mobile 390x844 has no overflow.
+- Responsive: 1200/1180 hide the skyline with no empty tracks or clipping; 390x844, 320x700, 844x390 in both modes — no horizontal scroll, no HUD/preview overlap, keys work, pause overlay fits and focuses Resume.
+- Settings dialog and mode confirmation re-captured on the refined shell; live Arcade/Prism switch recolours real blocks (N6 `rgb(137,252,253)` to `rgb(139,214,255)`, restored on switch back); cancel keeps the running game.
+- Gameplay spot checks on the refined build: pause overlay with focus ring, overlay New Game, header pause/resume via P, TetColor + Classic game overs with matching final scores and clean restarts, lab switch round-trip, settings tab trap — zero console errors.
+- PWA preview on the refined build: relative assets, manifest + both icons 200, Service Worker controls the page, offline reload renders board, HUD and the SVG cityscape with zero non-network errors.
+- Perf sample on the refined build (9.2 s active play): 6.4 layouts/s, 7.5 recalcs/s, heap +419 KB (no leak claim; headless reports no real frames so FPS is not claimed).
+
+## 7. Gate 4 (re-review)
+
+**Evidence recorded 2026-11-06; explicit user approval requested.** Do not start Stage 5 until the user approves the new composition. Keep PR #7 OPEN + Draft.
+
+- [x] Run the expanded unit suite and production build; compare ESLint to the five pre-existing findings.
+- [x] Capture new **Arcade theme from clean preferences**, at desktop 1440×900 **while the board has a meaningful number of settled cells**. Capture a second clean-start screenshot. Record which is which; do not treat a synthetic filled well as an ordinary run.
+- [x] Compare desktop side-by-side to the approved image for composition, city visibility, color/contrast, board ratio, HUD density and right-side utility.
+- [x] Check Classic at 1440×900 and both modes at 1200/1180 widths, 390×844, 320×700 and short landscape: no overflows or loss of game field.
+- [x] Verify Arcade and Prism palettes, settings confirmation, Paused/Game Over overlays, key focus, reduced motion and PWA offline reload.
+- [x] Record screenshots with commit SHA/browser and measured UI/perf observations in this handover; request **explicit user approval** for the new composition.

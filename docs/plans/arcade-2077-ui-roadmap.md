@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–4 complete with browser QA (visual milestone awaits user approval); Stage 5 not started**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–4 with browser QA (Stage 4 re-review recorded, user approval requested); Stage 5 not started**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -192,7 +192,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
-**Status:** [ ] Technical QA passed 2026-11-06; **visual refinement in progress / re-review required**. The first browser screenshot was compared to the approved variant C and did not meet the intended visual fidelity. See [Stage 4 handoff](./arcade-2077-stage4-handover.md).
+**Status:** [x] Re-review recorded 2026-11-06 on the refined composition; **explicit user approval requested**. See [Stage 4 handoff](./arcade-2077-stage4-handover.md#6-visual-reference-comparison-and-follow-up-refinement).
 
 - [x] Define scoped Stylus/CSS tokens and night-sky arcade cabinet visual styling with a local SVG striped sunset, skyline and reflections.
 - [x] Polish Arcade and retain the distinct Prism palette without changing core gameplay, board geometry or engine data.
@@ -203,7 +203,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 - [x] Validated fidelity and accessibility at desktop, narrow mobile and landscape viewports using real browser screenshots (7 captures).
 - [x] Ran full unit suite (31/31), lint (only the 5 pre-existing errors), production build, PWA and live-game paint/memory checks.
 
-**Gate 4:** **Technical browser acceptance passed** on 2026-11-06 (layout, overlays, focus, motion, perf and PWA recorded), but **visual approval is pending**. The first screenshot was materially less polished than the approved reference. Re-capture the refinements and obtain explicit user approval before closing Stage 4.
+**Gate 4:** **Re-review evidence recorded** 2026-11-06 (refined layout, overlays, focus, motion, perf and PWA); **user approval requested before closing Stage 4.**
 
 ### Stage 5 — Mobile, controls, accessibility, Lab
 
