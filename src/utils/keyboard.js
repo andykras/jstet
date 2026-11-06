@@ -2,8 +2,8 @@
 export const shouldIgnoreGameInput = target => {
   if (!target) return false
   const name = String(target.tagName || '').toUpperCase()
-  const editableInput = name === 'INPUT' &&
-    !['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'file', 'image'].includes(String(target.type || 'text').toLowerCase())
+  const ignoredTypes = ['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'file', 'image']
+  const editableInput = name === 'INPUT' && !ignoredTypes.includes(String(target.type || 'text').toLowerCase())
   return editableInput ||
     name === 'TEXTAREA' ||
     name === 'SELECT' ||

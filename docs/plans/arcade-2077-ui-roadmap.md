@@ -147,17 +147,17 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 1 — Game control and settings contract
 
-**Status:** [ ] Implementation committed — **local browser regression QA pending**. See [Stage 1 handoff](./arcade-2077-stage1-handover.md).
+**Status:** [x] Complete — implementation plus local browser regression QA passed 2026-11-06. See [Stage 1 handoff](./arcade-2077-stage1-handover.md).
 
 - [x] One command binding for the modern engine: start/restart, pause/resume, drop, player input and status events.
 - [x] Validate run options from the single source of truth `src/game/options.js` and apply them only on new game. Mode/rules options are wired; a playable Classic selection remains Stage 3.
 - [x] Define immediate vs next-run settings policy, keyboard ownership and lifecycle in the handoff. Preference storage and UI controls remain Stage 3.
 - [x] Disconnect the modern engine and keyboard before mounting naive; dispose legacy timer/animation work when leaving naive.
 - [x] Add focused regression tests for options, event subscriptions, held-key release and keyboard focus gating.
-- [ ] Confirm gameplay, pause timing, switching and restart/cascades in Mac Chrome; record commands, screenshots and browser checks.
-- [ ] Verify and resolve any unexpected lint findings after the schema fix.
+- [x] Confirmed gameplay, pause timing (65 s freeze + timer exclusion), engine switching (x10, 1 listener per bus type, no errors) and restart-during-cascade in Mac Chrome; commands, screenshots and browser checks recorded in the handoff.
+- [x] Verified lint after the schema fix: 1 new Stage 1 finding fixed (`keyboard.js` wrap); 7 remaining errors are pre-existing findings, not Stage 1 regressions.
 
-**Gate 1:** **Pending independent local QA.** No duplicate timers, listeners or background moves; both renderers still playable, run options and pause semantics verified in browser.
+**Gate 1:** Passed 2026-11-06 on recorded evidence: no duplicate timers, listeners or background moves; both renderers playable; run options and pause semantics verified in browser.
 
 ### Stage 2 — Responsive application shell and HUD
 
