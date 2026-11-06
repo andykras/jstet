@@ -167,6 +167,7 @@ export const game = {
       if ($three.sorted.length === 0) {
         $three.clear()
         if (($three = getThreeBlock()).size) {
+          $bus.emit('sound:clear')
           game.bonus += Math.round((game.bonusSize + 0.5 * game.bonus) / 100) * 100
           game.score += game.bonus
           $bus.emit('bonus', game.bonus)
@@ -260,8 +261,14 @@ const update = (X, Y, R) => {
     if (game.scheduled) return
 
     if (put(item)) {
-      if (game.tetcolor) $three = getThreeBlock()
-      else $lines = getSolidLines({ asc: game.singleBlock, item })
+      $bus.emit('sound:drop')
+      if (game.tetcolor) {
+        $three = getThreeBlock()
+        if ($three.size) $bus.emit('sound:clear')
+      } else {
+        $lines = getSolidLines({ asc: game.singleBlock, item })
+        if ($lines.length) $bus.emit('sound:clear')
+      }
 
       $bus.emit('bonus', 0)
       item = next(item.N)
