@@ -90,7 +90,8 @@
 
   .touch-pad
     position sticky
-    bottom max(6px, env(safe-area-inset-bottom))
+    // NOTE: literal CSS max() — Stylus must not evaluate env() at compile time.
+    bottom unquote('max(6px, env(safe-area-inset-bottom))')
     z-index 8
     display flex
     box-shadow 0 -8px 26px rgba(3, 3, 18, 0.35)

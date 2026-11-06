@@ -47,7 +47,9 @@ body
   border-radius clamp(16px, 2.2vw, 30px)
   background radial-gradient(ellipse at 20% 100%, rgba(111, 38, 105, 0.18), transparent 42%), linear-gradient(148deg, #12132e, #090e25 75%)
   box-shadow 0 12px 52px rgba(0, 0, 0, 0.38), inset 0 1px rgba(255, 255, 255, 0.09)
-  overflow hidden
+  // NOTE: clip (not hidden) preserves rounded-corner masking without
+  // creating a scroll container, so the sticky mobile touch pad keeps working.
+  overflow clip
 
 .arcade-console > *
   position relative

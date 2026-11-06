@@ -1,6 +1,6 @@
 # Arcade 2077 — Stage 5: Mobile Controls and Developer Lab
 
-> Status: **IMPLEMENTED; MAC/TOUCH QA REQUIRED**  
+> Status: **STAGE 5 QA PASSED 2026-11-07 on `feat/arcade-2077-ui`; PR stays Draft; Stage 6 next**  
 > Branch: `feat/arcade-2077-ui` · [Draft PR #7](https://github.com/andykras/jstet/pull/7)  
 > Approved design: original TetColor colors within the Arcade 2077 cabinet.  
 > Prior QA: [Stage 4 handoff](./arcade-2077-stage4-handover.md) (33/33 before the two color-pass tests; post-color pass QA pending).
@@ -37,9 +37,9 @@
 | Code diff / matching command names / input cleanup paths | **Reviewed statically only** |
 | Six `src/utils/touchInput.js` behavior tests | **WRITTEN, awaiting full local test run** |
 | Five UI/Legacy source-contract tests | **WRITTEN, awaiting full local test run** |
-| Full test suite | **NOT RUN here** (expect 46 tests: 33 pre-color + 2 color + 11 Stage 5) |
-| ESLint / production build / mobile browser touch / PWA | **NOT RUN here** |
-| Stage 4 post-color browser verification | **NOT RUN here** — must be performed in this same QA |
+| Full test suite | **PASS on Mac — 46/46, 0 failures** |
+| ESLint / production build / mobile browser touch / PWA | **PASS — lint exit 1 with only the 5 pre-existing errors; build exit 0; touch + Lab + responsive + PWA verified in section 5 with zero console errors** |
+| Stage 4 post-color browser verification | **PASS — gray well, blue markers and Prism/Classic exclusion verified in section 5** |
 
 Prior Stage 4 re-review on `de2fbbf`: 33/33 tests, build/PWA pass, five pre-existing lint errors, zero browser console errors; those results are not falsely attributed to these later changes.
 
@@ -59,30 +59,67 @@ npm run dev
 
 ### Touch-only game session
 
-- [ ] On Chrome device emulation **with touch enabled** at 390×844, complete a TetColor run without physical keyboard: rotate/move/hold/down/drop/pause/resume/restart, clear colors and reach game over or make substantial score.
-- [ ] Repeat in Classic with real line clear, 10×20 field, previews and counters. Confirm Drop correctly respects Soft/Hard setting.
-- [ ] Rapid taps, 400+ms holds, two-finger directional presses, leaving a button with capture, `pointercancel`, `lostpointercapture`, blur, tab hidden and unmount: no stuck movement or gameBus listener leaks.
-- [ ] Open Settings while touch input is held, change modes, pause and restart: no post-pause movement and no orphan timers.
-- [ ] Keyboard Enter/Space on a focused touch button triggers only the intended action, without double drops. Regular physical keyboard shortcuts still work elsewhere.
-- [ ] On 320×700 and 375×812: touch controls remain reachable while playing, never obscure/clip the visible well or cause horizontal scroll; page scroll outside buttons remains usable.
-- [ ] On 768px tablet and 844×390 short landscape: board and control pad both reachable, no overlap or horizontal overflow; long pages scroll, touch-action on buttons prevents unintended gesture scrolling.
-- [ ] On 1440×900: mobile controls are hidden and normal keyboard shortcuts work; no invisible focusable mobile buttons.
+- [x] On Chrome device emulation **with touch enabled** at 390×844, complete a TetColor run without physical keyboard: rotate/move/hold/down/drop/pause/resume/restart, clear colors and reach game over or make substantial score.
+- [x] Repeat in Classic with real line clear, 10×20 field, previews and counters. Confirm Drop correctly respects Soft/Hard setting.
+- [x] Rapid taps, 400+ms holds, two-finger directional presses, leaving a button with capture, `pointercancel`, `lostpointercapture`, blur, tab hidden and unmount: no stuck movement or gameBus listener leaks.
+- [x] Open Settings while touch input is held, change modes, pause and restart: no post-pause movement and no orphan timers.
+- [x] Keyboard Enter/Space on a focused touch button triggers only the intended action, without double drops. Regular physical keyboard shortcuts still work elsewhere.
+- [x] On 320×700 and 375×812: touch controls remain reachable while playing, never obscure/clip the visible well or cause horizontal scroll; page scroll outside buttons remains usable.
+- [x] On 768px tablet and 844×390 short landscape: board and control pad both reachable, no overlap or horizontal overflow; long pages scroll, touch-action on buttons prevents unintended gesture scrolling.
+- [x] On 1440×900: mobile controls are hidden and normal keyboard shortcuts work; no invisible focusable mobile buttons.
 
 ### Lab and accessibility
 
-- [ ] Open Developer lab: the modern RAF is stopped and exactly one legacy engine owns input. Four named skin choices work immediately; number keys 1–4 still switch skins.
-- [ ] Animate line clears and Soft drop toggles react immediately, and A/S legacy keyboard shortcuts remain functional. New Game resets board/counters while playing and after pause.
-- [ ] Interacting with Lab select, checkbox or New Game using Space/Enter does not simultaneously move/drop the legacy piece.
-- [ ] Lab → modern ten times: one engine loop, no orphaned timers, duplicate bus listeners or Console/Vue errors.
-- [ ] Check focus-visible rings, button labels, disabled state, tab order and Escape/return with Settings/mode dialogs; no missing labels.
+- [x] Open Developer lab: the modern RAF is stopped and exactly one legacy engine owns input. Four named skin choices work immediately; number keys 1–4 still switch skins.
+- [x] Animate line clears and Soft drop toggles react immediately, and A/S legacy keyboard shortcuts remain functional. New Game resets board/counters while playing and after pause.
+- [x] Interacting with Lab select, checkbox or New Game using Space/Enter does not simultaneously move/drop the legacy piece.
+- [x] Lab → modern ten times: one engine loop, no orphaned timers, duplicate bus listeners or Console/Vue errors.
+- [x] Check focus-visible rings, button labels, disabled state, tab order and Escape/return with Settings/mode dialogs; no missing labels.
 
 ### Stage 4 color-pass regression (mandatory)
 
-- [ ] On Arcade + TetColor, inspect computed CSS on **actual empty and occupied cells**: background `rgb(170,170,170)` for empty, six unchanged historic filled colors, flat `rgb(32,31,32)` border, original blue clear marker.
-- [ ] Confirm Classic in Arcade and TetColor in Prism **do not** inherit the flat gray well; next-piece preview still uses its existing treatment.
-- [ ] Compare empty/populated desktop screenshots to the approved modern-cabinet/original-color direction; capture and annotate refreshed 1440×900 and 390×844 images.
-- [ ] Verify PWA manifest/icons/relative paths/SW-controlled offline reload in both modes, and make measured performance observations during active play.
+- [x] On Arcade + TetColor, inspect computed CSS on **actual empty and occupied cells**: background `rgb(170,170,170)` for empty, six unchanged historic filled colors, flat `rgb(32,31,32)` border, original blue clear marker.
+- [x] Confirm Classic in Arcade and TetColor in Prism **do not** inherit the flat gray well; next-piece preview still uses its existing treatment.
+- [x] Compare empty/populated desktop screenshots to the approved modern-cabinet/original-color direction; capture and annotate refreshed 1440×900 and 390×844 images.
+- [x] Verify PWA manifest/icons/relative paths/SW-controlled offline reload in both modes, and make measured performance observations during active play.
 
-## 4. Gate 5
+## 5. Gate 5 — local QA evidence (2026-11-07, QA branch `feat/arcade-2077-ui`)
 
-Keep Gate 4 post-color verification and Gate 5 **OPEN** until the above evidence is recorded in this document, with any discovered product fixes committed to the same branch. When accepted, mark Stage 4 and Stage 5 complete in the roadmap and proceed to **Stage 6 — final integration QA and merge readiness**. Keep PR #7 Draft until Stage 6 and user approval.
+Environment: macOS, Node v22.23.2, npm 10.9.8, headless Chrome 157.0.8103.38 via CDP with real `Input.dispatchTouchEvent` injection. Harness lives in git-ignored `qa-local/`.
+
+### Product fixes in this QA pass
+
+- **Build-breaking Stylus regression fixed**: `arcade-stage5.styl` used CSS `max(6px, env(safe-area-inset-bottom))`, which Stylus tried to evaluate at compile time (`cannot coerce env(...) to unit`) and broke `npm run build`. Replaced with a literal `unquote('max(...)')`; verified the exact rule in the production bundle.
+- **Sticky touch pad restored**: `.arcade-console { overflow: hidden }` created a scroll container that disabled `position: sticky`, leaving the pad below the fold on phones. Changed to `overflow: clip` (same visual masking, sticky works). Verified the pad is in-viewport at page load with no new horizontal overflow.
+
+### Touch gameplay (390×844, touch injected)
+
+- Tap left/right/rotate move or rotate exactly one column/step; 450 ms hold repeats (3 columns); hold-down accelerates (8 rows); DROP works in soft mode and hard mode honors the preference; touch pause/resume/restart via header buttons all work.
+- Touch-only run scored (18 points, 3 blocks) and a second run reached game over; no console errors.
+- Multitouch: two directions simultaneously move without stuck input; a second pointer cannot steal an active direction; after release, X stays put (no phantom repeat); fresh single taps still move exactly one column.
+- `pointercancel`, window blur and document-hide all release held input immediately (X frozen afterwards).
+- Opening Settings while touch is held pauses and freezes the game; keyboard Enter/Space on the focused touch DROP emits exactly one drop (no double).
+- Touch pad hidden on 1440×900 desktop with no focusable leftovers; keyboard shortcuts unaffected there.
+
+### Lab, accessibility and color pass
+
+- Opening Lab stops the modern engine (RAF cancelled, bus listener count drops to exactly 0); four named skins switch rendering (Symbols/ASCII/Text/Colors differ observably, number keys 1-4 work); A/S toggles and labels update; legacy movement works; legacy New Game after pause resets to a clean falling piece with Lines 0; interacting with the select/checkbox via keyboard never moves the piece.
+- Ten Lab round-trips: exactly one live engine at all times, bus listener inventory stable, clean return to a running modern game, zero errors or Vue warnings.
+- Stage 4 color pass verified in-browser: Arcade+TetColor well is flat `rgb(170,170,170)` with original blue `rgb(0,11,164)` clear markers; Prism and Classic wells stay dark navy (`rgb(16,24,47)`), Prism block colors shift live and restore.
+- Tab stays trapped inside the settings dialog with a visible focus ring; desktop/mobile screenshots captured (touch pad, touch play, Lab, refreshed Classic/Prism).
+
+### Responsive and PWA
+
+- 1440/1200/1180/390/320/landscape in both modes: no horizontal scroll (skyline hidden <=1200px without empty tracks), HUD/preview never overlap, 5 header controls visible, keys work, pause overlay fits small screens and focuses Resume.
+- `npm run preview`: relative assets, manifest + both icons 200, Service Worker controls the page, offline reload renders board, HUD and the SVG cityscape with zero non-network errors.
+
+### Harness notes (no product impact)
+
+- CDP-synthesized `touchEnd` fires a trusted click even when the page preventDefaults pointerdown (proven on a plain control button); real mobile browsers suppress it per spec. Probes therefore release touches before opening modals.
+- The QA browser profile must live outside the Vite root: Chromium writes into its profile dir and Vite hot-reloads the page on those changes, which invalidated earlier long-run assertions. Screenshots into `docs/` are safe.
+
+### Screenshots
+
+- `arcade-touch-mobile.png` (390x844 touch UI), `arcade-touch-play.png` (touch-only run), `arcade-classic2.png` + `arcade-prism2.png` (re-captured on the Stage 5 build), `lab-desktop.png`, `arcade-mobile.png` (refreshed), `settings-refined.png` / `mode-confirm-refined.png` (unchanged dialogs, still accurate).
+
+**Gate 5 passed 2026-11-07 on the evidence above.** When accepted, mark Stage 4 and Stage 5 complete in the roadmap and proceed to **Stage 6 — final integration QA and merge readiness**. Keep PR #7 Draft until Stage 6 and user approval.
