@@ -1,0 +1,61 @@
+# TEMPLATE / REVIEW ONLY — DO NOT INCLUDE VERBATIM.
+# Adapt to the verified kraspeed lighttpd config, include order and ACME webroot.
+# HTTPS: https://tetcolor.andykras.org
+#
+# Use a new include AFTER the existing WordPress / Mirra vhosts. The shared
+# :443 socket MUST already exist and be configured by an earlier include.
+# Replace BOTH __TLS_...__ placeholders after installing a real hostname cert.
+# Never touch mirra.oracle101.ru's API proxy, :443 default cert or PHP.
+#
+# IMPORTANT: the existing ACME challenge route must remain available on HTTP.
+# The operator must confirm its alias/document-root mapping; an immutable
+# /srv/tetcolor/releases/*/dist must NOT be used as the renewal webroot.
+#
+# Before enabling: back up config; sudo lighttpd -tt -f /etc/lighttpd/lighttpd.conf
+# Apply with sudo systemctl restart lighttpd (NOT reload / SIGHUP).
+
+$HTTP["host"] == "tetcolor.andykras.org" {
+    server.document-root = "/srv/tetcolor/dist"
+    index-file.names = ( "index.html" )
+
+    # Static Vite bundle: no PHP, FastCGI or backend.
+    fastcgi.server = ()
+    fastcgi.map-extensions = ()
+
+    # Prevent inherited broad host-matching WordPress rewrite rules.
+    url.rewrite = ()
+    url.rewrite-final = ()
+
+    # TetColor has one application route; missing assets SHOULD return 404.
+    # No SPA history catch-all that would return index.html for a missing JS file.
+
+    # Preserve any existing ACME HTTP-01 alias/config (verified in preflight).
+    $HTTP["scheme"] == "http" {
+        $HTTP["url"] !~ "^/\\.well-known/acme-challenge/" {
+            url.redirect = ( "^/(.*)$" => "https://tetcolor.andykras.org/$1" )
+        }
+    }
+
+    # Manifest and service worker must revalidate, especially after a release swap.
+    $HTTP["url"] =~ "^/(index\\.html|manifest\\.json|service-worker\\.js)$" {
+        setenv.add-response-header = ( "Cache-Control" => "no-cache" )
+    }
+    $HTTP["url"] == "/" {
+        setenv.add-response-header = ( "Cache-Control" => "no-cache" )
+    }
+    $HTTP["url"] =~ "^/assets/" {
+        setenv.add-response-header = ( "Cache-Control" => "public, max-age=31536000, immutable" )
+    }
+    $HTTP["url"] == "/manifest.json" {
+        mimetype.assign = ( "" => "application/manifest+json; charset=utf-8" )
+    }
+}
+
+# Host-specific TLS on Mirra's existing shared SSL socket. Adjust the verified
+# SNI pattern and key permissions to match the live lighttpd version.
+$SERVER["socket"] == ":443" {
+    $HTTP["host"] == "tetcolor.andykras.org" {
+        ssl.pemfile = "__TLS_FULLCHAIN_PEM__"
+        ssl.privkey = "__TLS_PRIVATE_KEY_PEM__"
+    }
+}
