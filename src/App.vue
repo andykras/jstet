@@ -10,30 +10,30 @@
           <span class="arcade-brand__name">JSTET</span>
         </div>
 
-        <div v-if="!naiveImplementation"
-             class="mode-switch"
+        <div class="mode-switch"
              role="group"
              aria-label="Game mode">
           <button ref="modeTetcolor"
                   type="button"
                   class="mode-switch__button"
-                  :aria-pressed="mode === 'tetcolor'"
+                  :aria-pressed="!naiveImplementation && mode === 'tetcolor'"
                   @click="requestMode('tetcolor')">
             TetColor
           </button>
           <button ref="modeClassic"
                   type="button"
                   class="mode-switch__button"
-                  :aria-pressed="mode === 'classic'"
+                  :aria-pressed="!naiveImplementation && mode === 'classic'"
                   @click="requestMode('classic')">
             Classic
           </button>
-        </div>
-        <div v-else
-             class="mode-indicator"
-             aria-label="Current mode">
-          <span class="mode-indicator__dot"
-                aria-hidden="true"></span>Legacy Lab
+          <button ref="modeLegacy"
+                  type="button"
+                  class="mode-switch__button"
+                  :aria-pressed="naiveImplementation"
+                  @click="requestMode('legacy')">
+            Legacy
+          </button>
         </div>
 
         <div v-if="!naiveImplementation"
@@ -41,37 +41,34 @@
           <button type="button"
                   class="arcade-button arcade-button--primary"
                   @click="createStakan">
-            New Game
+            New Game (N)
           </button>
           <button type="button"
                   class="arcade-button"
                   :disabled="status !== 'running' && status !== 'paused'"
                   @click="togglePause">
-            {{ status === 'paused' ? 'Resume' : 'Pause' }}
+            {{ status === 'paused' ? 'Resume (P)' : 'Pause (P)' }}
           </button>
           <button ref="settingsTrigger"
                   type="button"
                   class="arcade-button"
                   @click="openSettings">
-            Settings
+            Settings (S)
           </button>
         </div>
-        <button v-else
-                type="button"
-                class="arcade-button"
-                @click="naive = false">
-          Back to game
-        </button>
       </header>
 
       <main v-if="!naiveImplementation"
             class="game-layout"
             :aria-label="modeTitle + ' game'"
             :style="boardGeometry">
-        <CityscapeArt class="cityscape-column"
-                      aria-hidden="true" />
-        <GameHud class="stats-column"
-                 :mode="mode" />
+        <aside class="dashboard-column"
+               aria-label="Game statistics">
+          <CityscapeArt class="cityscape-column"
+                        aria-hidden="true" />
+          <GameHud class="stats-column"
+                   :mode="mode" />
+        </aside>
 
         <section class="board-panel"
                  :class="'board-panel--' + mode"
@@ -86,12 +83,8 @@
           <div class="board-panel__well">
             <tetcolor />
           </div>
-          <div class="board-panel__bottom">
-            <span>{{ mode === 'classic' ? 'Clear full lines' : 'Color match' }}</span>
-            <span>{{ hard ? 'Hard drop' : 'Soft drop' }} <kbd>S</kbd></span>
-          </div>
           <Transition name="state-overlay">
-            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen && !pendingMode"
+            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen"
                  class="game-state-overlay"
                  role="dialog"
                  aria-modal="false"
@@ -108,12 +101,12 @@
                           type="button"
                           class="arcade-button arcade-button--primary"
                           @click="status === 'paused' ? togglePause() : createStakan()">
-                    {{ status === 'paused' ? 'Resume' : 'New Game' }}
+                    {{ status === 'paused' ? 'Resume (P)' : 'New Game (N)' }}
                   </button>
                   <button v-if="status === 'paused'"
                           type="button"
                           class="arcade-button"
-                          @click="createStakan">New Game</button>
+                          @click="createStakan">New Game (N)</button>
                 </div>
               </div>
             </div>
@@ -124,44 +117,14 @@
                        :hard="hard" />
         <NextPiece class="preview-column" />
 
-        <aside v-if="preferences.showHelp"
-               class="arcade-panel guide-column"
-               aria-label="How to play and keyboard controls">
-          <h2 class="panel-heading">{{ modeTitle }}</h2>
-          <p class="guide-column__objective">{{ mode === 'classic' ? 'FILL A LINE' : 'CONNECT THREE' }}</p>
-          <p>{{ modeDescription }}</p>
-          <div class="guide-divider"></div>
-          <h3>Controls</h3>
-          <dl class="control-guide">
-            <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Move</dd></div>
-            <div><dt><kbd>↑</kbd></dt><dd>Rotate</dd></div>
-            <div><dt><kbd>↓</kbd></dt><dd>Down</dd></div>
-            <div><dt><kbd>Space</kbd></dt><dd>Drop</dd></div>
-            <div><dt><kbd>P</kbd></dt><dd>Pause</dd></div>
-          </dl>
-        </aside>
       </main>
 
       <main v-else
             class="lab-layout"
             aria-label="Legacy game laboratory">
-        <p class="lab-layout__notice">Legacy implementation — development view</p>
         <stakan />
       </main>
 
-      <footer class="arcade-footer">
-        <p v-if="!naiveImplementation && preferences.showHelp"
-           class="arcade-footer__help"><kbd>S</kbd> Drop mode · <kbd>Y</kbd> New Game · <kbd>P</kbd> Pause</p>
-        <span v-else>{{ naiveImplementation ? 'Legacy game laboratory' : modeTitle }}</span>
-        <details class="lab-entry">
-          <summary>Developer lab</summary>
-          <label>
-            <input type="checkbox"
-                   v-model="naive">
-            Legacy engine
-          </label>
-        </details>
-      </footer>
     </div>
 
     <div v-if="settingsOpen"
@@ -196,12 +159,6 @@
                    @change="persistPreferences">
             Reduced motion
           </label>
-          <label class="settings-check">
-            <input type="checkbox"
-                   v-model="preferences.showHelp"
-                   @change="persistPreferences">
-            Show keyboard help
-          </label>
         </fieldset>
 
         <fieldset class="settings-group">
@@ -212,7 +169,6 @@
                    @change="persistPreferences">
             Hard drop on Space
           </label>
-          <p class="settings-hint">Applies immediately. Press S to toggle during a game.</p>
         </fieldset>
 
         <fieldset class="settings-group">
@@ -237,27 +193,6 @@
       </section>
     </div>
 
-    <div v-if="pendingMode"
-         class="settings-backdrop"
-         @click.self="cancelMode">
-      <section ref="dialog"
-               class="arcade-dialog"
-               role="dialog"
-               aria-modal="true"
-               aria-labelledby="mode-confirm-heading"
-               tabindex="-1">
-        <h2 id="mode-confirm-heading">Start {{ pendingModeTitle }}?</h2>
-        <p>Your current game will be discarded. A new {{ pendingModeTitle }} game will start immediately.</p>
-        <div class="dialog-actions">
-          <button type="button"
-                  class="arcade-button"
-                  @click="cancelMode">Keep playing</button>
-          <button type="button"
-                  class="arcade-button arcade-button--primary"
-                  @click="confirmMode">Start {{ pendingModeTitle }}</button>
-        </div>
-      </section>
-    </div>
   </div>
 </template>
 
@@ -286,8 +221,6 @@ export default {
       preferences,
       pendingSingleBlock: options.singleBlock,
       settingsOpen: false,
-      pendingMode: null,
-      modalWasRunning: false,
       modernDispose: null,
       modernHandlers: []
     }
@@ -315,14 +248,6 @@ export default {
     modeTitle() {
       return this.mode === 'classic' ? 'Classic' : 'TetColor'
     },
-    pendingModeTitle() {
-      return this.pendingMode === 'classic' ? 'Classic' : 'TetColor'
-    },
-    modeDescription() {
-      return this.mode === 'classic'
-        ? 'Stack falling tetrominoes and clear complete horizontal lines.'
-        : 'Connect three or more matching blocks horizontally, vertically or diagonally.'
-    },
     activeSingleBlock() {
       return this.$store.state.options ? this.$store.state.options.singleBlock : options.singleBlock
     }
@@ -336,7 +261,7 @@ export default {
     status(value) {
       if (value !== 'paused' && value !== 'gameOver') return
       this.$nextTick(() => {
-        if (!this.settingsOpen && !this.pendingMode && !this.naive && this.$refs.statePrimary) {
+        if (!this.settingsOpen && !this.naive && this.$refs.statePrimary) {
           this.$refs.statePrimary.focus()
         }
       })
@@ -364,8 +289,7 @@ export default {
     },
 
     pauseForDialog() {
-      this.modalWasRunning = this.status === 'running'
-      if (this.modalWasRunning) this.togglePause()
+      if (this.status === 'running') this.togglePause()
       game.releaseControls()
     },
 
@@ -376,7 +300,7 @@ export default {
     },
 
     openSettings() {
-      if (this.naiveImplementation || this.settingsOpen || this.pendingMode) return
+      if (this.naiveImplementation || this.settingsOpen) return
       this.pauseForDialog()
       this.settingsOpen = true
       this.focusDialog()
@@ -385,48 +309,27 @@ export default {
     closeSettings() {
       if (!this.settingsOpen) return
       this.settingsOpen = false
-      if (this.modalWasRunning && this.status === 'paused') this.togglePause()
-      this.modalWasRunning = false
+      // Closing settings leaves an active session paused until the player resumes.
       this.$nextTick(() => {
-        if (this.$refs.settingsTrigger) this.$refs.settingsTrigger.focus()
+        const target = this.$refs.statePrimary || this.$refs.settingsTrigger
+        if (target) target.focus()
       })
     },
 
     requestMode(mode) {
-      if (mode === this.mode || this.naiveImplementation || this.pendingMode || this.settingsOpen) return
-      if (this.status !== 'running' && this.status !== 'paused') {
-        this.mode = mode
-        this.createStakan()
+      if (this.settingsOpen || (mode === 'legacy' && this.naiveImplementation)) return
+      if (mode === 'legacy') {
+        this.naive = true
         return
       }
-      this.pauseForDialog()
-      this.pendingMode = mode
-      this.focusDialog()
-    },
-
-    cancelMode() {
-      if (!this.pendingMode) return
-      const origin = this.pendingMode
-      this.pendingMode = null
-      if (this.modalWasRunning && this.status === 'paused') this.togglePause()
-      this.modalWasRunning = false
-      this.$nextTick(() => {
-        const ref = origin === 'classic' ? this.$refs.modeClassic : this.$refs.modeTetcolor
-        if (ref) ref.focus()
-      })
-    },
-
-    confirmMode() {
-      if (!this.pendingMode) return
-      const selected = this.pendingMode
-      this.pendingMode = null
-      this.modalWasRunning = false
-      this.mode = selected
-      this.createStakan()
-      this.$nextTick(() => {
-        const ref = selected === 'classic' ? this.$refs.modeClassic : this.$refs.modeTetcolor
-        if (ref) ref.focus()
-      })
+      if (!this.naiveImplementation && this.mode === mode) return
+      this.mode = mode
+      if (this.naiveImplementation) {
+        // The watcher mounts a fresh modern session with this selected mode.
+        this.naive = false
+      } else {
+        this.createStakan()
+      }
     },
 
     trapDialogFocus(e) {
@@ -500,11 +403,10 @@ export default {
     },
 
     onKeyDown(e) {
-      if (this.settingsOpen || this.pendingMode) {
+      if (this.settingsOpen) {
         if (e.code === 'Escape') {
           e.preventDefault()
-          if (this.settingsOpen) this.closeSettings()
-          else this.cancelMode()
+          this.closeSettings()
         } else if (e.code === 'Tab') {
           this.trapDialogFocus(e)
         }
@@ -519,12 +421,9 @@ export default {
         ArrowUp: () => gameBus.emit('rotate:start'),
         ArrowLeft: () => gameBus.emit('left:start'),
         ArrowRight: () => gameBus.emit('right:start'),
-        KeyY: () => this.createStakan(),
+        KeyN: () => this.createStakan(),
         KeyP: () => gameBus.emit('pause'),
-        KeyS: () => {
-          this.hard = !this.hard
-          this.persistPreferences()
-        },
+        KeyS: () => this.openSettings(),
         Space: () => gameBus.emit('drop', this.hard)
       }
       const action = actions[e.code]
