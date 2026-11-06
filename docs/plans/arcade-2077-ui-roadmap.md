@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–1 complete; Stage 2 implemented, pending browser QA**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–2 complete with browser QA; Stage 3 not started**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -161,7 +161,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 2 — Responsive application shell and HUD
 
-**Status:** [ ] Implemented in branch — **desktop/mobile browser acceptance pending**. See [Stage 2 handoff](./arcade-2077-stage2-handover.md).
+**Status:** [x] Complete — implementation plus desktop/mobile browser acceptance passed 2026-11-06. See [Stage 2 handoff](./arcade-2077-stage2-handover.md).
 
 - [x] Replaced the raw root controls with a semantic header, centered board, functional New Game/Pause buttons, responsive HUD and compact keyboard help.
 - [x] Extracted next-piece preview and score/level/blocks/bonus presentation into `NextPiece.vue` and `GameHud.vue` without changing their Vuex data sources.
@@ -169,10 +169,10 @@ Each completed stage gets one or more **focused commits in the same implementati
 - [x] Shared color/cell styles are used by both the board and next-piece preview; original `getWellValue` and `getNextValue` mapping is preserved.
 - [x] Removed player-facing raw options JSON and the visible naive checkbox; legacy access is folded under Developer Lab pending Stage 5.
 - [x] Added source-level shell/renderer contract checks in `tests/unit/ui-shell.test.js`.
-- [ ] Verify desktop 1440×900, phone 390×844/320×700 and landscape 844×390 (layout, clipping, readability, board stability).
-- [ ] Verify full-game TetColor parity, pause/restart, next preview, legacy toggle and PWA in browser; record screenshots and QA evidence.
+- [x] Verified desktop 1440x900, phone 390x844/320x700 and landscape 844x390 (layout, clipping, readability, board stability); screenshots refreshed.
+- [x] Verified full-game TetColor parity, pause/restart, next preview, legacy toggle and PWA in browser; QA evidence recorded in the handoff.
 
-**Gate 2:** **Pending local browser QA.** Complete desktop layout plus usable narrow layout; TetColor gameplay parity verified; no dead/duplicate player controls.
+**Gate 2:** Passed 2026-11-06 on recorded evidence: complete desktop layout plus usable narrow layouts; TetColor gameplay parity verified; no dead/duplicate player controls.
 
 ### Stage 3 — Playable modes and settings
 

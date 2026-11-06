@@ -1,6 +1,6 @@
 # Arcade 2077 — Stage 2: Responsive Shell and HUD
 
-> Status: **IMPLEMENTED — LOCAL BROWSER ACCEPTANCE PENDING**  
+> Status: **STAGE 2 COMPLETE - local QA passed 2026-11-06 on `feat/arcade-2077-ui`; PR stays Draft**  
 > Branch: `feat/arcade-2077-ui` · PR [#7](https://github.com/andykras/jstet/pull/7) (**Draft**)  
 > Reference design: [Arcade Console — variant C](./arcade-2077-ui-reference.avif)  
 > Roadmap: [Stage 2](./arcade-2077-ui-roadmap.md#stage-2--responsive-application-shell-and-hud)
@@ -34,9 +34,9 @@ The UI now provides a functional player shell without changing the core gameplay
 | --- | --- |
 | Source diff: game engine, store and rules unchanged by Stage 2 | **PASS — static** |
 | Component composition: one board, one HUD and one preview; no raw JSON | **PASS — static** |
-| `tests/unit/ui-shell.test.js` static contract checks | **ADDED — needs full repository run** |
-| Full unit suite / lint / Vite build | **NOT RUN** in this environment |
-| Desktop/mobile browser layout + gameplay + PWA | **NOT RUN** in this environment |
+| `tests/unit/ui-shell.test.js` static contract checks | **PASS** on Mac as part of the full suite below |
+| Full unit suite / lint / Vite build | **PASS with notes** - 15/15 tests; lint exit 1 with only the 5 pre-existing errors (single-word component names, `v-for` template key, unused legacy helper, commented-out long line); build exit 0 (JS 112.60 kB, CSS 13.07 kB, PWA worker generated) |
+| Desktop/mobile browser layout + gameplay + PWA | **PASS** - evidence in section 6, zero console errors on every page |
 
 Stage 1 was independently validated on macOS in Chrome 156 before this change. Stage 2 still requires its own runtime and visual QA.
 
@@ -83,4 +83,38 @@ Baseline note: Stage 1 recorded **12 passing tests** and **7 pre-existing lint e
 
 ## 5. Gate 2 decision
 
-Leave Gate 2 pending until the command results, browser gameplay outcomes and screenshots have been recorded in this document. Then mark Stage 2 **[x] Complete** in the roadmap, commit/push to the **same branch** and start Stage 3. Keep the single PR #7 Draft.
+**Gate 2 passed 2026-11-06.** Evidence below; screenshots refreshed in `docs/plans/baseline/screenshots/`. One shell defect found and fixed in this branch (collapsed lab disclosure leaked its checkbox through an author `display:flex` rule; now scoped to `[open]`). The 5 remaining lint errors are pre-existing. Touch gameplay remains Stage 5 work. Proceed to Stage 3 in the same branch. Keep PR #7 Draft until Stage 6 approval. No GitHub Actions or intermediate merge.
+
+## 6. Local QA evidence (2026-11-06, QA branch `feat/arcade-2077-ui`)
+
+Environment: macOS, Node v22.23.2, npm 10.9.8, headless Google Chrome 156.0.8078.80 via CDP. Commands: `npm install` clean, `test:unit` 15/15, `lint` exit 1 (5 pre-existing errors only), `build` exit 0. Gameplay algorithms untouched by Stage 2 except the already-reviewed Stage 1 lifecycle work.
+
+### Desktop 1440x900
+
+- Header shows exactly two buttons (New Game enabled; Pause enabled while running) plus a Readme-grade mode indicator (`TetColor`), a `PLAYING` status pill and the compact `S/Y/P` help line. No Settings, audio, Classic or Hold controls anywhere.
+- HUD outputs are exactly `0 / 1 / 0` (score, 1-based level, blocks); bonus block absent at 0 and no raw options JSON in the player view.
+- Board: 19 rows rendering 126 playable cells (18 x 7, bottom border row empty), uniform 33.3 px cells, rect 597,201 235x601, center x=715 vs viewport center 720 (5 px left of exact center inside the three-column layout). Colors and clearing markers unchanged.
+- Next preview grid values exactly equal the store next piece (`[0,0,0,5,1,0,0,0,0]`, match true).
+- Arrows, rotation, header New Game (resets to a clean run) and keys-after-button-click all work; header Pause freezes movement with status `paused`, Resume restores `running`; keyboard P/Y still work.
+- Layout stability: board rect stayed pixel-identical (597,201,235,601) across a full run to game over, and again with score forced to `123,456` plus a visible `+2000` bonus (no page horizontal growth, scroll width unchanged).
+- Lab disclosure renders closed; the checkbox is hidden until opened in real browsers. (Headless CDP reports a rect for closed-disclosure content even for a hand-written plain `<details>`, so that reading is a headless artifact, not page state. The author-CSS leak that WOULD have exposed it everywhere is fixed in this branch.)
+- Opening the lab and enabling Legacy engine stops the modern RAF (`started=false`, status `idle`); naive movement verified by piece bounding-box tracking (minX 751 to 701 on two Left presses; an earlier whole-grid diff read was polluted by the next-piece preview and re-done properly). Back-to-game restores a clean running modern game; the bus holds exactly 1 listener per type (19 total), zero console errors.
+
+### Mobile and short viewport
+
+- 390x844: board 212x542 visible and centered, header buttons visible and usable, HUD and Next stacked above the board without overlap, no horizontal scroll, arrows move the piece, zero console errors.
+- 320x700: no horizontal scroll (320/320), no HUD/preview overlap, header buttons visible.
+- 844x390 landscape: board 114x290 reachable by vertical scroll, no horizontal overflow or clipped controls, keys work.
+- Touch gameplay is not implemented (no touch handlers in the shell); documented, not marked passing - Stage 5 scope.
+
+### Production
+
+- `npm run preview`: relative asset paths, manifest 200, Service Worker controls the page after reload, offline reload renders board and HUD with no non-network console errors.
+
+### Screenshots (refreshed for the Stage 2 shell)
+
+- `docs/plans/baseline/screenshots/modern-desktop.png` (1440x900)
+- `docs/plans/baseline/screenshots/naive-desktop.png` (1440x900, legacy lab view)
+- `docs/plans/baseline/screenshots/modern-mobile.png` (390x844)
+- `docs/plans/baseline/screenshots/naive-mobile.png` (390x844)
+- `docs/plans/baseline/screenshots/modern-desktop-after-score.png` (supplementary: post-run layout stability)
