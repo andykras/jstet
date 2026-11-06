@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–2 complete with browser QA; Stage 3 implementation committed, QA pending**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–3 complete with browser QA; Stage 4 not started**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -176,7 +176,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 3 — Playable modes and settings
 
-**Status:** [ ] Implementation committed — **full Mac/Chrome gameplay acceptance pending**. See [Stage 3 handoff](./arcade-2077-stage3-handover.md).
+**Status:** [x] Complete — implementation plus full Mac/Chrome gameplay acceptance passed 2026-11-06. See [Stage 3 handoff](./arcade-2077-stage3-handover.md).
 
 - [x] Real TetColor / Classic selection in the header. Active-run switching requires an accessible confirmation dialog; cancel resumes the existing run.
 - [x] Classic has its own 7 tetrominoes, 10×20 well, complete-line removal, line-based scoring, mode-specific HUD and correctly sized 2×2/3×3/4×4 next preview.
@@ -185,10 +185,10 @@ Each completed stage gets one or more **focused commits in the same implementati
 - [x] Live versus next-run application is labeled; dialogs release controls and temporarily pause a running game; focus handling is included.
 - [x] Versioned, validated localStorage preferences; malformed or inaccessible storage falls back to safe defaults.
 - [x] Added mode/line-clearing/persistence/unit and UI contract tests (11 new cases).
-- [ ] Validate 26-test suite, existing lint baseline, production build and PWA in full checkout.
-- [ ] Verify actual gameplay of both modes, single/multi-line clearing, score/preview/game-over, dialog and settings semantics, restart and device layouts in Chrome. Save evidence.
+- [x] Validated 26-test suite, existing lint baseline (only the 5 pre-existing errors), production build and PWA in full checkout.
+- [x] Verified actual gameplay of both modes, single/multi-line clearing (1 line/100 pts, 2 lines/200 pts), score/preview/game-over, dialog and settings semantics, restart and device layouts in Chrome. Evidence saved above.
 
-**Gate 3:** **Pending local browser QA.** Both modes must be genuinely playable and independently tested. Visual/input options must apply live, rule changes on the next game, without reload/build.
+**Gate 3:** Passed 2026-11-06 on recorded evidence: both modes genuinely playable and independently tested; visual options apply live, rule changes on next game, no reload/build needed.
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
