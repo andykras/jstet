@@ -1,6 +1,6 @@
 <template>
   <div class="jstet-app"
-       :class="['theme-' + preferences.theme, { 'reduce-motion': preferences.reducedMotion, 'is-paused': status === 'paused' }]">
+       :class="['theme-' + preferences.theme, { 'reduce-motion': preferences.reducedMotion, 'is-paused': status === 'paused', 'is-lab': naiveImplementation }]">
     <div class="arcade-console">
       <header class="arcade-header">
         <div class="arcade-brand"
@@ -66,7 +66,8 @@
 
       <main v-if="!naiveImplementation"
             class="game-layout"
-            :aria-label="modeTitle + ' game'">
+            :aria-label="modeTitle + ' game'"
+            :style="boardGeometry">
         <CityscapeArt class="cityscape-column"
                       aria-hidden="true" />
         <GameHud class="stats-column"
@@ -302,6 +303,13 @@ export default {
   computed: {
     naiveImplementation() {
       return this.naive
+    },
+    boardGeometry() {
+      const { width, height } = this.$store.getters.getDimensions
+      return {
+        '--board-columns': Math.max(1, (width || 9) - 2),
+        '--board-rows': Math.max(1, (height || 19) - 1)
+      }
     },
     status() {
       return this.$store.state.status
@@ -553,4 +561,5 @@ export default {
 @import './styles/arcade-shell.styl'
 @import './styles/arcade-stage4.styl'
 @import './styles/arcade-stage5.styl'
+@import './styles/arcade-responsive.styl'
 </style>
