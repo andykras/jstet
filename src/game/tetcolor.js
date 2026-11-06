@@ -3,6 +3,13 @@ import store from '@/store'
 let $three = new Set()
 $three.sorted = []
 
+// Clearing state must not survive a new run or an engine switch.
+export const resetThreeBlocks = () => {
+  $three = new Set()
+  $three.sorted = []
+  return $three
+}
+
 let $cells = store.state.cells
 let h = null //$cells.height
 let w = null //$cells.width

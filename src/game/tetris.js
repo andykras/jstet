@@ -2,6 +2,12 @@ import store from '@/store'
 
 const $lines = []
 
+// The clearing functions share this array across calls and runs.
+export const resetSolidLines = () => {
+  $lines.length = 0
+  return $lines
+}
+
 const border = -2
 const empty = 0
 

@@ -37,3 +37,17 @@ test('down uses 60 ms repeat delay', () => {
   events.emit('down:stop')
   assert.equal(events.down.active(1200), false)
 })
+
+test('releasing an unheld key never arms a phantom repeat', () => {
+  events.init()
+  events.emit('right:stop')
+  assert.equal(events.right.active(1000), false)
+  events.emit('right:start')
+  assert.equal(events.right.active(1010), true)
+  events.emit('right:stop')
+  assert.equal(events.right.active(1400), false)
+  events.emit('right:start')
+  assert.equal(events.right.active(2000), true)
+  assert.equal(events.right.active(2299), false)
+  assert.equal(events.right.active(2300), true)
+})
