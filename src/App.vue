@@ -119,6 +119,8 @@
           </Transition>
         </section>
 
+        <TouchControls :status="status"
+                       :hard="hard" />
         <NextPiece class="preview-column" />
 
         <aside v-if="preferences.showHelp"
@@ -270,6 +272,7 @@ import { mapMutations } from 'vuex'
 import GameHud from '@/components/GameHud.vue'
 import CityscapeArt from '@/components/CityscapeArt.vue'
 import NextPiece from '@/components/NextPiece.vue'
+import TouchControls from '@/components/TouchControls.vue'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
 import { setup, game } from '@/utils/game.js'
@@ -279,7 +282,7 @@ import options, { resolveRunOptions } from '@/game/options.js'
 
 export default {
   name: 'JstetApp',
-  components: { GameHud, NextPiece, CityscapeArt },
+  components: { GameHud, NextPiece, CityscapeArt, TouchControls },
   data() {
     const preferences = loadPreferences()
     return {
@@ -506,6 +509,9 @@ export default {
         }
         return
       }
+      // Space/Enter on a focused touch button should activate that button, not also drop a piece.
+      if (e.target && e.target.closest && e.target.closest('.touch-pad') &&
+        (e.code === 'Space' || e.code === 'Enter')) return
       if (!this.modernDispose || e.repeat || e.altKey || e.ctrlKey || e.metaKey || shouldIgnoreGameInput(e.target)) return
       const actions = {
         ArrowDown: () => gameBus.emit('down:start'),
@@ -546,4 +552,5 @@ export default {
 <style lang="stylus">
 @import './styles/arcade-shell.styl'
 @import './styles/arcade-stage4.styl'
+@import './styles/arcade-stage5.styl'
 </style>
