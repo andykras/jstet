@@ -13,7 +13,10 @@ export default defineConfig({
       // Keep the existing manifest and registration callback handling.
       manifest: false,
       filename: 'service-worker.js',
-      injectRegister: false
+      injectRegister: false,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3}']
+      }
     })
   ],
   resolve: {
