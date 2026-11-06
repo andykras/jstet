@@ -56,6 +56,20 @@ The historical `npm run serve` alias also starts Vite.
 
 The site is a static build in `dist/`. Vite uses the relative base `./`, allowing deployment at a subdirectory path. `public/manifest.json` and icons are copied to the build, and `vite-plugin-pwa` generates `service-worker.js`; registration remains in `src/registerServiceWorker.js`. Service workers require HTTPS or localhost. Verify offline reload using the **production preview**, not only the development server.
 
+### Hosting on kraspeed
+
+The production deployment target is `https://tetcolor.andykras.org` through kraspeed's **existing lighttpd** and a dedicated hostname certificate. See the [deployment plan](docs/plans/tetcolor-kraspeed-deployment.md) and [local-agent handoff](docs/plans/tetcolor-kraspeed-agent-handoff.md) before touching DNS/TLS.
+
+From a clean approved `master` on the **Mac** (after the vhost and TLS are provisioned):
+
+```sh
+bash scripts/preflight-kraspeed.sh  # read-only inventory; safe before provisioning
+bash scripts/deploy-kraspeed.sh     # build/test/lint on Mac, rsync dist/, atomic release
+bash scripts/rollback-kraspeed.sh   # swap back to a previously validated release
+```
+
+The scripts require working `ssh kraspeed` access and existing `sudo -n` on the server. No Node.js service is needed on kraspeed. **Do not run deploy/rollback until the live-host preflight and infrastructure configuration are approved.**
+
 ## Implementation notes
 
 - The primary engine lives in `src/utils/game.js` and `src/game/*`. It emits state through `mitt` into Vuex, while the UI renders the board, next piece and HUD.
