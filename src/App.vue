@@ -73,6 +73,7 @@
                  :mode="mode" />
 
         <section class="board-panel"
+                 :class="'board-panel--' + mode"
                  aria-label="Playing field">
           <div class="board-panel__top">
             <span class="panel-eyebrow">PLAYFIELD / 01</span>

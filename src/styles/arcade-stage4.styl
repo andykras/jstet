@@ -539,3 +539,19 @@ kbd
 
   .guide-column
     min-height 0
+
+// Authentic TetColor well, recovered from the pre-Arcade renderer.
+// Its 1990s palette is already defined in arcade-shell.styl:
+// #89fb6e, #ec64f8, #ec615c, #fffe73, #5458f6 and #89fcfd.
+// Scope to Arcade + TetColor: Classic and Prism retain their dark board.
+.jstet-app.theme-arcade .board-panel--tetcolor
+  --cell-background: #aaaaaa
+  --cell-border: #201f20
+  --cell-empty-edge: #201f20
+  --cell-empty-shadow: none
+
+  .game-cell.item
+    box-shadow none
+
+  .game-cell.N-2
+    background #000ba4

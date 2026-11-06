@@ -72,3 +72,34 @@ test('reference refinement improves card balance without changing the board rend
   assert.ok(app.includes('FILL A LINE'))
   assert.ok(read('src/components/themes/tetcolor.vue').includes('getWellValue'))
 })
+
+test('Arcade TetColor restores the original gray well and flat 1990s cell borders', () => {
+  const styles = read('src/styles/arcade-stage4.styl')
+  const cells = read('src/styles/game-cells.styl')
+  const shell = read('src/styles/arcade-shell.styl')
+  const app = read('src/App.vue')
+
+  assert.ok(app.includes(':class="\'board-panel--\' + mode"'))
+  assert.ok(styles.includes('.jstet-app.theme-arcade .board-panel--tetcolor'))
+  for (const token of ['--cell-background: #aaaaaa', '--cell-border: #201f20',
+    '--cell-empty-edge: #201f20', '--cell-empty-shadow: none']) {
+    assert.ok(styles.includes(token), token)
+  }
+  for (const color of ['#89fb6e', '#ec64f8', '#ec615c', '#fffe73', '#5458f6', '#89fcfd']) {
+    assert.ok(shell.includes(color), color)
+  }
+  assert.ok(cells.includes('background var(--cell-background, #10182f)'))
+  assert.ok(cells.includes('border 1px solid var(--cell-border'))
+  assert.ok(styles.includes('.game-cell.N-2'))
+  assert.ok(styles.includes('background #000ba4'))
+})
+
+test('Prism, Classic and next preview do not inherit the classic TetColor well', () => {
+  const app = read('src/App.vue')
+  const styles = read('src/styles/arcade-stage4.styl')
+  const shell = read('src/styles/arcade-shell.styl')
+  assert.ok(app.includes("'board-panel--' + mode"))
+  assert.ok(styles.includes('.jstet-app.theme-arcade .board-panel--tetcolor'))
+  assert.ok(shell.includes('.jstet-app.theme-prism'))
+  assert.ok(shell.includes('.next-piece .game-cell:not(.item)'))
+})
