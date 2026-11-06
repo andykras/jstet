@@ -1,5 +1,32 @@
 <template>
-  <div class="main">
+  <div class="legacy-screen">
+    <section class="legacy-options"
+             aria-label="Legacy engine options">
+      <label class="legacy-options__field">
+        <span>Skin</span>
+        <select v-model.number="theme"
+                aria-label="Legacy visual skin">
+          <option :value="1">1 · Symbols</option>
+          <option :value="2">2 · ASCII</option>
+          <option :value="3">3 · Text</option>
+          <option :value="4">4 · Colors</option>
+        </select>
+      </label>
+      <label class="legacy-options__field">
+        <input type="checkbox"
+               v-model="linesAnimated">
+        Animate line clears (A)
+      </label>
+      <label class="legacy-options__field">
+        <input type="checkbox"
+               v-model="dropSoft">
+        Soft drop (S)
+      </label>
+      <button type="button"
+              class="arcade-button"
+              @click="newGame">New Game</button>
+    </section>
+    <div class="main">
     <div class="info">
       <div>Lines: {{totalLines}}</div>
       <div class="stakan next">
@@ -50,6 +77,7 @@
           <span v-html="getSymbol(x, y)"></span>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -249,6 +277,9 @@ export default {
     this.nextTet = Math.floor(Math.random() * this.tets.length)
   },
   methods: {
+    isLabControl(target) {
+      return Boolean(target && target.closest && target.closest('.legacy-options, button'))
+    },
     cancelEffects() {
       cancelAnimationFrame(this.dropFrame)
       cancelAnimationFrame(this.clearFrame)
@@ -302,11 +333,10 @@ export default {
     },
 
     newGame() {
-      const wasActive = this.loop != null
       clearInterval(this.loop)
       clearInterval(this.posDecrement)
       this.cancelEffects()
-      if (wasActive) this.cells = emptyCells()
+      this.cells = emptyCells()
 
       this.totalLines = 0
       this.gameActive = true
@@ -323,7 +353,7 @@ export default {
       }, 10)
     },
     keydown(e) {
-      if (shouldIgnoreGameInput(e.target) || this.linesCutting) return
+      if (shouldIgnoreGameInput(e.target) || this.isLabControl(e.target) || this.linesCutting) return
       if (!['KeyP', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return
       e.preventDefault()
       if (!this.gameActive) return this.newGame()
@@ -372,7 +402,7 @@ export default {
       iskeydown = true
     },
     keyup(e) {
-      if (shouldIgnoreGameInput(e.target)) return
+      if (shouldIgnoreGameInput(e.target) || this.isLabControl(e.target)) return
       if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyS'].includes(e.code) && !/^[0-9]$/.test(e.key)) return
       e.preventDefault()
       // ticks = performance.now()
@@ -385,7 +415,9 @@ export default {
       if (e.key == 's') this.dropSoft = !this.dropSoft
     },
     keypress(e) {
-      if (!shouldIgnoreGameInput(e.target) && e.code === 'Space') e.preventDefault()
+      if (!shouldIgnoreGameInput(e.target) && !this.isLabControl(e.target) && e.code === 'Space') {
+        e.preventDefault()
+      }
     },
     getSize(T) {
       return this.tets[T].length
