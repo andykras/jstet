@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–3 complete with browser QA; Stage 4 implemented, awaiting visual QA**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–4 complete with browser QA (visual milestone awaits user approval); Stage 5 not started**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -192,7 +192,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
-**Status:** [ ] Implemented in branch — **desktop/mobile browser QA and visual acceptance pending**. See [Stage 4 handoff](./arcade-2077-stage4-handover.md).
+**Status:** [x] Complete — implementation plus desktop/mobile browser QA passed 2026-11-06. Visual milestone awaits user approval. See [Stage 4 handoff](./arcade-2077-stage4-handover.md).
 
 - [x] Define scoped Stylus/CSS tokens and night-sky arcade cabinet visual styling with a local SVG striped sunset, skyline and reflections.
 - [x] Polish Arcade and retain the distinct Prism palette without changing core gameplay, board geometry or engine data.
@@ -200,10 +200,10 @@ Each completed stage gets one or more **focused commits in the same implementati
 - [x] Add Paused / Game Over board overlays with native Resume/New Game controls and focus behavior; keep existing modal confirmations.
 - [x] Add CSS-only score/bonus/clear animations, reduced motion for OS/player, and pause animation freezing.
 - [x] Add five static visual/overlay contract checks in `tests/unit/arcade-visuals.test.js`.
-- [ ] Validate fidelity and accessibility at desktop, narrow mobile and landscape viewports using real browser screenshots.
-- [ ] Run full unit suite, lint, production build, PWA and live-game paint/memory checks.
+- [x] Validated fidelity and accessibility at desktop, narrow mobile and landscape viewports using real browser screenshots (7 captures).
+- [x] Ran full unit suite (31/31), lint (only the 5 pre-existing errors), production build, PWA and live-game paint/memory checks.
 
-**Gate 4:** **Pending local acceptance.** Visual milestone must be reviewed on desktop and phone; board, overlays and motion remain readable without a gameplay performance regression.
+**Gate 4:** Passed on evidence 2026-11-06 (layout, overlays, focus, motion, perf, PWA all recorded); the visual milestone itself awaits user approval.
 
 ### Stage 5 — Mobile, controls, accessibility, Lab
 

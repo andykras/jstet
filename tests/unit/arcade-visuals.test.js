@@ -44,10 +44,12 @@ test('city layout and board geometry are separate at desktop and mobile widths',
 
 test('visual motion honors OS preference, player setting and pause', () => {
   const style = read('src/styles/arcade-stage4.styl')
+  const shell = read('src/styles/arcade-shell.styl')
   const app = read('src/App.vue')
-  for (const token of ['.jstet-app.reduce-motion', '@media (prefers-reduced-motion: reduce)',
+  for (const token of ['@media (prefers-reduced-motion: reduce)',
     '.jstet-app.is-paused .game-cell', '@keyframes clear-shimmer']) {
     assert.ok(style.includes(token), token)
   }
+  assert.ok(shell.includes('.jstet-app.reduce-motion'), '.jstet-app.reduce-motion')
   assert.ok(app.includes("'is-paused': status === 'paused'"))
 })
