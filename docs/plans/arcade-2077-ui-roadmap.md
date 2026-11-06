@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–2 complete with browser QA; Stage 3 not started**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–2 complete with browser QA; Stage 3 implementation committed, QA pending**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -176,16 +176,19 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 3 — Playable modes and settings
 
-**Status:** [ ] Not started
+**Status:** [ ] Implementation committed — **full Mac/Chrome gameplay acceptance pending**. See [Stage 3 handoff](./arcade-2077-stage3-handover.md).
 
-- Add real TetColor and Classic mode selection; switching discards/restarts a run only after an intentional choice.
-- For Classic, connect its actual Tetris piece set, line-clear rules, next-piece preview, counters and game-over behavior. Merely toggling `game.tetcolor` is insufficient.
-- For TetColor, preserve the current color-match rules, multi-step cascade behavior and bonus math.
-- Add Settings panel with only implemented choices: drop preference, clearing behavior where supported, theme selector, reduced motion, help.
-- Use the apply policy from section 4; visually mark any choices that will take effect on the next run.
-- Persist supported visual/input preferences; reset the engine properly on ruleset changes.
+- [x] Real TetColor / Classic selection in the header. Active-run switching requires an accessible confirmation dialog; cancel resumes the existing run.
+- [x] Classic has its own 7 tetrominoes, 10×20 well, complete-line removal, line-based scoring, mode-specific HUD and correctly sized 2×2/3×3/4×4 next preview.
+- [x] Existing TetColor rules/4 pieces/7×18 board/cascade scoring retained; no change to the TetColor clearing algorithm.
+- [x] Functional Settings dialog with live theme, reduced motion, keyboard help and Space-drop preference; clearing sequence is a staged next-run rule.
+- [x] Live versus next-run application is labeled; dialogs release controls and temporarily pause a running game; focus handling is included.
+- [x] Versioned, validated localStorage preferences; malformed or inaccessible storage falls back to safe defaults.
+- [x] Added mode/line-clearing/persistence/unit and UI contract tests (11 new cases).
+- [ ] Validate 26-test suite, existing lint baseline, production build and PWA in full checkout.
+- [ ] Verify actual gameplay of both modes, single/multi-line clearing, score/preview/game-over, dialog and settings semantics, restart and device layouts in Chrome. Save evidence.
 
-**Gate 3:** Both modes are genuinely playable and independently tested; settings behave as labeled; no reload/build needed.
+**Gate 3:** **Pending local browser QA.** Both modes must be genuinely playable and independently tested. Visual/input options must apply live, rule changes on the next game, without reload/build.
 
 ### Stage 4 — Arcade 2077 visual system and game states
 

@@ -18,7 +18,15 @@ export const normalizePreferences = value => {
 }
 
 // Preferences are stored only on explicit changes, never during the game loop.
-export function loadPreferences(storage = typeof localStorage === 'undefined' ? null : localStorage) {
+const availableStorage = () => {
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage
+  } catch (_) {
+    return null
+  }
+}
+
+export function loadPreferences(storage = availableStorage()) {
   if (!storage) return normalizePreferences(null)
   try {
     const raw = storage.getItem(KEY)
@@ -29,7 +37,7 @@ export function loadPreferences(storage = typeof localStorage === 'undefined' ? 
   }
 }
 
-export function savePreferences(preferences, storage = typeof localStorage === 'undefined' ? null : localStorage) {
+export function savePreferences(preferences, storage = availableStorage()) {
   if (!storage) return false
   try {
     storage.setItem(KEY, JSON.stringify({ version: 1, preferences: normalizePreferences(preferences) }))
