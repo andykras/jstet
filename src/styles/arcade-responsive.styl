@@ -13,6 +13,17 @@
   min-height 0
   padding clamp(10px, 1.5vmin, 18px)
 
+// The legacy laboratory stays scrollable on desktop and mobile.
+.jstet-app.is-lab
+  height auto
+  min-height 100dvh
+  overflow visible
+
+.is-lab .arcade-console
+  height auto
+  min-height 0
+  overflow visible
+
 .arcade-header
   flex 0 0 auto
   gap clamp(8px, 1.3vw, 20px)
