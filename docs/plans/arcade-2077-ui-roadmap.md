@@ -1,7 +1,7 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–5 with browser QA (Gates 0–5 passed); Stage 6 final verification next**  
-> Updated: 2026-11-06  
+> Status: **FINAL VERIFICATION — Gates 0–5 passed; Stage 6 QA and merge approval pending**  
+> Updated: 2026-11-07  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
 
@@ -222,17 +222,18 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 6 — Final verification and release readiness
 
-**Status:** [ ] Not started
+**Status:** [ ] Release documentation and source review committed — **final local integration QA and explicit merge approval pending**. See [Stage 6 handoff](./arcade-2077-stage6-handover.md).
 
-- Run all existing unit checks, lint and production build; add targeted tests for mode/setting/regression issues discovered along the way.
-- Perform desktop/mobile browser acceptance for TetColor, Classic, Lab, both themes, keyboard and touch, focus, overlays, score/bonus and restart.
-- Verify PWA and relative-path deployment in `npm run preview`, including manifest/icons, service worker and offline reload.
-- Check for duplicate event subscriptions, orphaned timers, hot-path Vue observation, unexpected frame drops and memory growth across repeated restarts.
-- Review all changed files for unrelated refactors, unused options, dead UI elements and undocumented controls.
-- Update README usage instructions, screenshots and this plan's acceptance checklist. Record any unverified checks as such.
-- Only after user approval: mark the single Draft PR ready and merge it to `master`.
+- [ ] Run all unit checks, lint and production build on the exact final branch commit. Stage 5 baseline was 46/46 tests, build PASS and five existing ESLint findings; release changes are **not yet verified**. Investigate and repair any remaining lint diagnostics without unrelated rewrites.
+- [ ] Perform one final desktop/mobile browser acceptance for TetColor, Classic, Lab, both visual themes, keyboard/touch, focus, overlays, scoring, cascades and repeated restarts.
+- [ ] Verify the updated **JSTET — Arcade 2077** manifest and HTML title, relative paths, icons, generated SW and offline reload using a fresh production preview.
+- [ ] Measure/inspect duplicate event subscriptions, orphaned timers, hot-path Vue observation, frame pacing and heap behavior over repeated sessions; report actual readings.
+- [x] Review commit scope and source boundaries: no new UI framework or gameplay rewrite, no new runtime dependency, PR remains Draft and 0 commits behind `master`.
+- [x] Replace outdated README with modes, controls, mobile, Lab, Settings and PWA instructions. Refresh PWA product metadata and remove known trivial legacy lint defects; add release-contract check.
+- [ ] Record final results and any unresolved issues in the Stage 6 handoff; check the P0/P1 acceptance matrix from real evidence, not previous promises.
+- [ ] Only after user approval, mark the single Draft PR ready and merge it to `master`.
 
-**Gate 6:** All P0 acceptance items pass, remaining issues are explicitly documented, and the user approves merge.
+**Gate 6:** **OPEN.** All P0 acceptance items must pass on the final commit; document remaining non-blocking issues and obtain explicit user approval before merging PR #7.
 
 ## 6. Acceptance matrix
 
