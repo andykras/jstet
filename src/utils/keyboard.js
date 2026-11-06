@@ -2,7 +2,11 @@
 export const shouldIgnoreGameInput = target => {
   if (!target) return false
   const name = String(target.tagName || '').toUpperCase()
-  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(name) ||
+  const editableInput = name === 'INPUT' &&
+    !['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'file', 'image'].includes(String(target.type || 'text').toLowerCase())
+  return editableInput ||
+    name === 'TEXTAREA' ||
+    name === 'SELECT' ||
     target.isContentEditable === true ||
     Boolean(target.closest && target.closest('[role="dialog"], [aria-modal="true"]'))
 }
