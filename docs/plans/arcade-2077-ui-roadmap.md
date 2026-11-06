@@ -192,7 +192,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
-**Status:** [ ] Visual direction **approved by user** after historic TetColor palette correction; complete post-color-pass technical regression checks alongside Stage 5 QA before formal Gate 4 closure. See [Stage 4 handoff](./arcade-2077-stage4-handover.md#6-visual-reference-comparison-and-follow-up-refinement).
+**Status:** [x] Complete — user-approved original TetColor appearance, post-color unit/build/browser/PWA regression evidence recorded in Stage 5 QA (2026-11-07). See [Stage 4 handoff](./arcade-2077-stage4-handover.md#10-final-gate-4-closure-2026-11-07).
 
 - [x] Define scoped Stylus/CSS tokens and night-sky arcade cabinet visual styling with a local SVG striped sunset, skyline and reflections.
 - [x] Polish Arcade and retain the distinct Prism palette without changing core gameplay, board geometry or engine data.

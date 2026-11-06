@@ -168,3 +168,9 @@ The updated board uses CSS custom-property overrides, not runtime loops or mutat
 ## 9. User visual approval and Stage 5 verification carry-over
 
 The user approved the modern cabinet with original TetColor colors and explicitly asked to continue. This approves the **visual direction**, not an unrun post-color production build. Stage 5 implementation has begun in the same Draft PR #7. The mandatory post-color verification is carried into [Stage 5 handoff](./arcade-2077-stage5-handover.md); Gate 4 remains technically open until test/build/Chrome proof is recorded.
+
+## 10. Final Gate 4 closure (2026-11-07)
+
+After the user's approval of the original TetColor color restoration, the Stage 5 Mac QA at `3430823` independently verified the final palette and previous visual work: **46/46 tests**, production build PASS, Arcade+TetColor empty cells `rgb(170, 170, 170)`, original `rgb(0, 11, 164)` clear markers, and Prism/Classic dark wells unchanged. Responsive checks, dialog overlays, reduced motion, touch, performance and PWA offline reload passed in Chrome 157 with zero console errors. See [Stage 5 recorded results](./arcade-2077-stage5-handover.md).
+
+**Gate 4: CLOSED** on that evidence. This closes the earlier pending statements in sections 8–9; they remain as a chronological record, not current blockers. Stage 6 still requires its own final commit QA before any merge.
