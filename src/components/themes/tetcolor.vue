@@ -5,9 +5,9 @@
     <div v-for="y in getDimensions.height"
          :key="y"
          class="tetcolor-board__row">
-      <template v-for="x in getDimensions.width"
-                :key="x">
+      <template v-for="x in getDimensions.width">
         <div v-if="!isBorder(x, y)"
+             :key="x"
              class="game-cell"
              :class="getThemeClass(x, y)">
         </div>

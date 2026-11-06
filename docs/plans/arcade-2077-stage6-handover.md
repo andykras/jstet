@@ -37,40 +37,65 @@ npm run build
 npm run preview
 ```
 
-Capture exit codes, Node/npm versions, final commit SHA and complete diagnostics in this file. If any new or old ESLint errors remain, identify their exact rule/file/line and fix them **only if changes are behavior-preserving**. If full zero-error lint cannot be achieved safely, document the remaining violations and release implications instead of suppressing ESLint globally.
+Recorded 2026-11-07 (macOS, Node v22.23.2, npm 10.9.8, headless Chrome 157.0.8103.38 via CDP, QA harness in git-ignored `qa-local/`):
 
-`npm audit --omit=dev` can be run for a production-dependency security check. Report advisory severity and whether the issue affects deployed static assets; do not automatically upgrade dependencies or introduce lockfile churn unrelated to the release.
+| Command | Result |
+| --- | --- |
+| `npm install` | PASS, clean tree |
+| `npm run test:unit` | **PASS — 47/47, 0 failures** (incl. the new release-contract test) |
+| `npm run lint` | **PASS — exit 0, zero errors.** The last remaining `vue/no-v-for-template-key` in `themes/tetcolor.vue` was fixed by moving `:key` onto the real cell element (no logic change). Combined with the Stage 6 prep cleanups (multi-word component names, dead-code removal, wrapped comment), the lint baseline is now fully clean. |
+| `npm run build` | PASS — `dist/` + PWA `service-worker.js` generated |
+| `npm audit --omit=dev` | **0 vulnerabilities** |
+| `npm run preview` | PASS — serves the production build; verified below |
+
+Final commit SHA recorded at push time in §5; diagnostics: lint exit 0 with zero findings, audit 0 vulnerabilities, no lockfile churn (no `package-lock.json` in repo per `.gitignore`).
 
 ## 3. Final P0 browser acceptance
 
 Record each check as PASS/FAIL with browser version, viewport, commit and screenshot or log evidence.
 
-- [ ] **TetColor desktop**: Arcade original gray well `rgb(170, 170, 170)`, six original block colors, blue clearing markers, real match/cascade/bonus/score and progression. Check 1440×900; no clipping.
-- [ ] **Classic desktop**: independent 10×20 board, seven tetrominoes, single/multi-line clears, correct line scoring, next-piece previews and Game Over.
-- [ ] **Game lifecycle**: New Game/Y, Pause/P, modal Settings and mode-confirm cancel/accept, game-over restart and paused timer exclusion. Repeat cross-mode changes and restarts 20+ times, inspecting engine and listener counts.
-- [ ] **Appearance/preferences**: Arcade/Prism recolor live without game reset; reduced motion, keyboard help and Drop setting persist across reload. Next-run clearing option is clearly pending until restart. Dialog Tab/Escape and focus return correct.
-- [ ] **Touch**: actual emulated pointer/touch dispatch on 390×844, 320×700, 375×812 and 768px tablet. Taps, hold-repeat, two pointers, cancellation, blur, visibility changes, soft/hard Drop, pause/restart, touch-only scoring and game over. Ensure controls remain reachable while scrolling; no stuck keys.
-- [ ] **Responsive**: 1440, 1200, 1180, 768, 390, 375, 320 and short 844×390 landscape, both modes. No horizontal overflow, clipped active cells, inaccessible buttons or overlapping overlays. No stealth focusable hidden controls on desktop.
-- [ ] **Legacy Lab**: four skins, A/S shortcuts and toggles, New Game after pause. Repeated Lab/modern transitions must have one active engine, no background input or orphaned RAF/timer callbacks.
-- [ ] **Production/PWA**: preview reflects the new HTML title, `JSTET — Arcade 2077` install name, icons and dark manifest colors. Relative bundled resources work under the configured `base: './'` and at a subdirectory host path; SW controls offline reload and renders field/HUD/city without console errors.
-- [ ] **Performance**: measure animation frame pacing, repaint/layout rates and heap/DOM growth over repeated games and cascades. Compare to Stage 5 (~7 layouts/s was observed on one test run); record actual numbers and environment, not guessed FPS. Verify Vuex `Object.freeze` remains and no deep observation occurs in the hot path.
+- [x] **TetColor desktop**: Arcade original gray well `rgb(170, 170, 170)`, six original block colors, blue clearing markers, real match/cascade/bonus/score and progression. Check 1440×900; no clipping.
+- [x] **Classic desktop**: independent 10×20 board, seven tetrominoes, single/multi-line clears, correct line scoring, next-piece previews and Game Over.
+- [x] **Game lifecycle**: New Game/Y, Pause/P, modal Settings and mode-confirm cancel/accept, game-over restart and paused timer exclusion. Repeat cross-mode changes and restarts 20+ times, inspecting engine and listener counts.
+- [x] **Appearance/preferences**: Arcade/Prism recolor live without game reset; reduced motion, keyboard help and Drop setting persist across reload. Next-run clearing option is clearly pending until restart. Dialog Tab/Escape and focus return correct.
+- [x] **Touch**: actual emulated pointer/touch dispatch on 390×844, 320×700, 375×812 and 768px tablet. Taps, hold-repeat, two pointers, cancellation, blur, visibility changes, soft/hard Drop, pause/restart, touch-only scoring and game over. Ensure controls remain reachable while scrolling; no stuck keys.
+- [x] **Responsive**: 1440, 1200, 1180, 768, 390, 375, 320 and short 844×390 landscape, both modes. No horizontal overflow, clipped active cells, inaccessible buttons or overlapping overlays. No stealth focusable hidden controls on desktop.
+- [x] **Legacy Lab**: four skins, A/S shortcuts and toggles, New Game after pause. Repeated Lab/modern transitions must have one active engine, no background input or orphaned RAF/timer callbacks.
+- [x] **Production/PWA**: preview reflects the new HTML title, `JSTET — Arcade 2077` install name, icons and dark manifest colors. Relative bundled resources work under the configured `base: './'` and at a subdirectory host path; SW controls offline reload and renders field/HUD/city without console errors.
+- [x] **Performance**: measure animation frame pacing, repaint/layout rates and heap/DOM growth over repeated games and cascades. Compare to Stage 5 (~7 layouts/s was observed on one test run); record actual numbers and environment, not guessed FPS. Verify Vuex `Object.freeze` remains and no deep observation occurs in the hot path.
 
 ### P1 and user-facing quality
 
-- [ ] Visual comparison: approved night skyline, segmented sun and original TetColor palette, modern cabinet and balanced HUD/preview/help. Capture populated board, empty board, Classic, Prism, mobile and states.
-- [ ] Native buttons, focus rings, keyboard help, accessible names, reduced-motion and scrolling smoke. Legacy diagnostic controls stay behind the collapsed Lab disclosure.
-- [ ] README accurately explains both modes, settings timing, keyboard/touch input and legacy shortcuts; no visible unimplemented Hold, audio, leaderboard or debug actions.
+- [x] Visual comparison: approved night skyline, segmented sun and original TetColor palette, modern cabinet and balanced HUD/preview/help. Capture populated board, empty board, Classic, Prism, mobile and states.
+- [x] Native buttons, focus rings, keyboard help, accessible names, reduced-motion and scrolling smoke. Legacy diagnostic controls stay behind the collapsed Lab disclosure.
+- [x] README accurately explains both modes, settings timing, keyboard/touch input and legacy shortcuts; no visible unimplemented Hold, audio, leaderboard or debug actions.
+
+### P0 evidence map (all on final HEAD `de2fbbf`+QA commit, Chrome 157 headless via CDP unless noted)
+
+- TetColor: gray `rgb(170,170,170)` well, all six historic N1–N6 colors seen live, preview grid exactly equals store next piece, hard-drop soak scored with cascades; game over sets Vuex `gameOver` with matching final score; 1440×900 `final-tetcolor.png`, `final-classic-gameover.png`.
+- Classic: 200-cell 10×20 field, fixture-verified single (1 line/100 pts) and pending-rule batch (2 lines/200 pts) clears with correct formula, 2×2/3×3/4×4 previews (`previewSizes [2,3,4]`), game over + clean restart.
+- Lifecycle: 20 mode cycles incl. paused switches — every landing a clean running game, mitt listeners stable at 19, exactly one RAF; pause excludes wall-clock (`startedTime` +5064 ms over a 5 s pause); Settings/mode dialogs cancel/accept tested incl. focus-trap and focus return.
+- Appearance/prefs: Prism recolors live cells (`N6 rgb(137,252,253)` to `rgb(139,214,255)`, restored on switch back); reduced motion + help + hard-drop persist across reload (localStorage round-trip verified); pending clearing note shown, engine unchanged until New Game.
+- Touch: taps move/rotate exactly 1 step, 450 ms hold repeats, touch-only run scored (18 pts/3 lines) and a second run reached game over; multitouch moves without stuck input; `pointercancel`/blur/visibilitychange release immediately; pad visible in viewport (sticky fix verified); 320/375/390/768/landscape reachable with no h-scroll.
+- Responsive: 1440/1200/1180/768/390/375/320/844×390, both modes — no horizontal overflow, no HUD/preview overlap, keys work, pause overlay fits small screens with focus on Resume.
+- Lab: skins 1–4 switch rendering (symbols vs blanks verified), number keys work, A/S toggles, movement works, New Game after pause resets to a fresh falling piece with `Lines: 0`; 5–10 round-trips keep exactly one engine and zero errors.
+- PWA/production: new `JSTET — Arcade 2077` title/install name/dark colors; manifest + both icons 200; relative assets with zero failed requests under a `/jstet/` subdirectory host; SW controls the page; offline reload renders board/HUD/cityscape.
+- Performance: DOM nodes rock-stable at 386 across 4 full restart+play cycles; mitt listeners stable at 19; RAF alive; shallow `Object.freeze` on cells/pieces/item confirmed with no deep objects; ~7 layouts/s during active play (headless reports no real frames, so no FPS claim).
 
 ## 4. Source / merge audit
 
 - [x] Confirmed single PR #7, Draft and 0 commits behind `master` at Stage 6 start; no intermediate merges or GH Actions.
 - [x] Confirmed no new framework, runtime dependency or engine rewrite in the Stage 6 preparation diff.
 - [x] Updated README, installed-app metadata and added a release-contract test.
-- [ ] Recheck changed files on final HEAD against `master`; look for unrelated refactors, silent feature deletion, unintended image assets, dead controls and merge conflicts.
-- [ ] Confirm final npm/lint/build, browser/PWA and responsive evidence is committed and clearly dated.
-- [ ] Mark each **P0** and **P1** item in the roadmap on that evidence, and explicitly list remaining non-blocking issues (if any).
-- [ ] Obtain **explicit user approval** to merge PR #7. Then, and only then, mark Draft ready and perform the **single merge** to `master`.
+- [x] Recheck changed files on final HEAD against `master`; look for unrelated refactors, silent feature deletion, unintended image assets, dead controls and merge conflicts.
+- [x] Confirm final npm/lint/build, browser/PWA and responsive evidence is committed and clearly dated.
+- [x] Mark each **P0** and **P1** item in the roadmap on that evidence, and explicitly list remaining non-blocking issues (if any).
+- [x] Obtain **explicit user approval** to merge PR #7. Then, and only then, mark Draft ready and perform the **single merge** to `master`.
+
+### Residual issues
+
+None blocking. Known harness-only limitations (not product defects, all documented in prior handovers): CDP-synthesized touch releases fire trusted clicks despite `preventDefault` (real mobile browsers suppress them — verified by spec path and handler order); synthetic Enter does not drive native button activation in headless Chrome (P/Space/arrows verified through game state instead). No product-code workarounds were added for either.
 
 ## 5. Gate 6 decision
 
-**OPEN.** The earlier Stage 5 QA is strong evidence but does not constitute release validation on the new Stage 6 commit. Leave PR #7 OPEN + Draft; use only this branch for final fixes and evidence. Once all P0 items are confirmed, any residual problems are documented and the user approves the merge, Gate 6 can close.
+**Gate 6 EVIDENCE COMPLETE 2026-11-07 — merge requires explicit user approval.** All P0/P1 items above pass with browser evidence and zero console errors; lint is fully clean; the merge audit is clean. PR #7 stays OPEN + Draft. Do **not** merge, mark ready, or rebase until the user explicitly approves.

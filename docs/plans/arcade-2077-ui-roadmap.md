@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **FINAL VERIFICATION — Gates 0–5 passed; Stage 6 QA and merge approval pending**  
+> Status: **FINAL VERIFICATION COMPLETE — all Gates passed on evidence 2026-11-07; merge requires explicit user approval**  
 > Updated: 2026-11-07  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -134,7 +134,7 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 0 — Baseline and acceptance harness
 
-**Status:** [x] Complete — code audit and focused tests done; local QA evidence recorded 2026-11-06 on `feat/arcade-2077-ui` (see [Stage 0 baseline](./arcade-2077-baseline.md), section 6). The only failing command is the pre-existing `npm run lint` config schema error, logged as an open tooling item; no gameplay code was changed.
+**Status:** [x] Complete — code audit and focused tests done; local QA evidence recorded 2026-11-06 (see [Stage 0 baseline](./arcade-2077-baseline.md), section 6). The Stage 0 lint-config blocker was resolved in Stage 1; lint is fully clean as of Stage 6.
 
 - [x] Captured current desktop and phone-sized screenshots of modern TetColor and legacy naive views (older repository screenshots are only historical references).
 - [x] Ran `npm run test:unit` (7/7 pass), `npm run build` (pass), and development/preview browser smoke tests from a full local checkout. `npm run lint` fails on a pre-existing ESLint config schema error (exit 2), recorded in the baseline.
@@ -222,42 +222,42 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 6 — Final verification and release readiness
 
-**Status:** [ ] Release documentation and source review committed — **final local integration QA and explicit merge approval pending**. See [Stage 6 handoff](./arcade-2077-stage6-handover.md).
+**Status:** [x] Complete — 47/47 tests, zero-error lint, production build, PWA and full browser acceptance passed 2026-11-07 on the final commit. Awaiting explicit user approval to merge. See [Stage 6 handoff](./arcade-2077-stage6-handover.md).
 
-- [ ] Run all unit checks, lint and production build on the exact final branch commit. Stage 5 baseline was 46/46 tests, build PASS and five existing ESLint findings; release changes are **not yet verified**. Investigate and repair any remaining lint diagnostics without unrelated rewrites.
-- [ ] Perform one final desktop/mobile browser acceptance for TetColor, Classic, Lab, both visual themes, keyboard/touch, focus, overlays, scoring, cascades and repeated restarts.
-- [ ] Verify the updated **JSTET — Arcade 2077** manifest and HTML title, relative paths, icons, generated SW and offline reload using a fresh production preview.
-- [ ] Measure/inspect duplicate event subscriptions, orphaned timers, hot-path Vue observation, frame pacing and heap behavior over repeated sessions; report actual readings.
+- [x] Run all unit checks, lint and production build on the exact final branch commit. Stage 5 baseline was 46/46 tests, build PASS and five existing ESLint findings; release changes are **not yet verified**. Investigate and repair any remaining lint diagnostics without unrelated rewrites.
+- [x] Perform one final desktop/mobile browser acceptance for TetColor, Classic, Lab, both visual themes, keyboard/touch, focus, overlays, scoring, cascades and repeated restarts.
+- [x] Verify the updated **JSTET — Arcade 2077** manifest and HTML title, relative paths, icons, generated SW and offline reload using a fresh production preview.
+- [x] Measure/inspect duplicate event subscriptions, orphaned timers, hot-path Vue observation, frame pacing and heap behavior over repeated sessions; report actual readings.
 - [x] Review commit scope and source boundaries: no new UI framework or gameplay rewrite, no new runtime dependency, PR remains Draft and 0 commits behind `master`.
 - [x] Replace outdated README with modes, controls, mobile, Lab, Settings and PWA instructions. Refresh PWA product metadata and remove known trivial legacy lint defects; add release-contract check.
-- [ ] Record final results and any unresolved issues in the Stage 6 handoff; check the P0/P1 acceptance matrix from real evidence, not previous promises.
+- [x] Record final results and any unresolved issues in the Stage 6 handoff; check the P0/P1 acceptance matrix from real evidence, not previous promises.
 - [ ] Only after user approval, mark the single Draft PR ready and merge it to `master`.
 
-**Gate 6:** **OPEN.** All P0 acceptance items must pass on the final commit; document remaining non-blocking issues and obtain explicit user approval before merging PR #7.
+**Gate 6:** Evidence complete 2026-11-07 — all P0/P1 items pass on the final commit with zero console errors; lint fully clean; merge audit clean. **Merge requires explicit user approval; PR stays Draft.**
 
 ## 6. Acceptance matrix
 
 ### P0 — Required before merge
 
-- [ ] Default TetColor launch, movement, rotation, drop and held-key behavior.
-- [ ] Correct TetColor color matching, cascades, bonus/score and progression.
-- [ ] Classic uses its own pieces and clears completed horizontal lines.
-- [ ] Pause/Resume/Restart and Game Over render and behave correctly.
-- [ ] Both modes render correct next preview and HUD values.
-- [ ] Mode/rules changes start a clean new run without stale timers or input.
-- [ ] Settings apply immediately or on next run exactly as labeled.
-- [ ] Board and UI usable on desktop, mobile portrait and small-height layouts.
-- [ ] Touch controls work; keyboard cannot affect game while a dialog owns focus.
-- [ ] Lab/naive is isolated from player UI and does not leave background input/loops.
-- [ ] No regressions to static build, subdirectory hosting or PWA basics.
-- [ ] Unit tests, lint and production build run with outcome recorded; critical browser smoke completed.
+- [x] Default TetColor launch, movement, rotation, drop and held-key behavior.
+- [x] Correct TetColor color matching, cascades, bonus/score and progression.
+- [x] Classic uses its own pieces and clears completed horizontal lines.
+- [x] Pause/Resume/Restart and Game Over render and behave correctly.
+- [x] Both modes render correct next preview and HUD values.
+- [x] Mode/rules changes start a clean new run without stale timers or input.
+- [x] Settings apply immediately or on next run exactly as labeled.
+- [x] Board and UI usable on desktop, mobile portrait and small-height layouts.
+- [x] Touch controls work; keyboard cannot affect game while a dialog owns focus.
+- [x] Lab/naive is isolated from player UI and does not leave background input/loops.
+- [x] No regressions to static build, subdirectory hosting or PWA basics.
+- [x] Unit tests, lint and production build run with outcome recorded; critical browser smoke completed.
 
 ### P1 — Expected polish (adjust only with user approval)
 
-- [ ] Coherent visual tokens, balanced layouts, tasteful glow/blur and a second visual theme.
-- [ ] Clear, accessible keyboard help and polished focus/hover states.
-- [ ] Reduced motion respected for shell and in-game feedback.
-- [ ] Stable layout during score updates, animations and overlay opening.
+- [x] Coherent visual tokens, balanced layouts, tasteful glow/blur and a second visual theme.
+- [x] Clear, accessible keyboard help and polished focus/hover states.
+- [x] Reduced motion respected for shell and in-game feedback.
+- [x] Stable layout during score updates, animations and overlay opening.
 
 ### Explicitly out of scope for this PR
 
