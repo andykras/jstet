@@ -372,3 +372,16 @@ kbd
     animation-duration 0.01ms !important
     animation-iteration-count 1 !important
     transition-duration 0.01ms !important
+
+.jstet-app.theme-prism .mode-switch__button[aria-pressed='true']
+  background linear-gradient(155deg, #c7f2ff, #87aefe)
+  color #111d39
+  box-shadow 0 0 12px rgba(111, 190, 251, 0.29)
+
+@supports not (backdrop-filter: blur(4px))
+  .game-state-overlay
+    background rgba(5, 6, 25, 0.96)
+
+@supports not (backdrop-filter: blur(12px))
+  .settings-backdrop
+    background rgba(4, 7, 20, 0.95)

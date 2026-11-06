@@ -1,6 +1,6 @@
 <template>
   <div class="jstet-app"
-       :class="['theme-' + preferences.theme, { 'reduce-motion': preferences.reducedMotion }]">
+       :class="['theme-' + preferences.theme, { 'reduce-motion': preferences.reducedMotion, 'is-paused': status === 'paused' }]">
     <div class="arcade-console">
       <header class="arcade-header">
         <div class="arcade-brand"
@@ -67,6 +67,8 @@
       <main v-if="!naiveImplementation"
             class="game-layout"
             :aria-label="modeTitle + ' game'">
+        <CityscapeArt class="cityscape-column"
+                      aria-hidden="true" />
         <GameHud class="stats-column"
                  :mode="mode" />
 
@@ -86,6 +88,34 @@
             <span>{{ mode === 'classic' ? 'Clear full lines' : 'Color match' }}</span>
             <span>{{ hard ? 'Hard drop' : 'Soft drop' }} <kbd>S</kbd></span>
           </div>
+          <Transition name="state-overlay">
+            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen && !pendingMode"
+                 class="game-state-overlay"
+                 role="dialog"
+                 aria-modal="false"
+                 aria-labelledby="game-state-heading">
+              <div class="game-state-overlay__body">
+                <p class="game-state-overlay__eyebrow">{{ status === 'paused' ? 'SESSION ON HOLD' : 'RUN COMPLETE' }}</p>
+                <h2 id="game-state-heading">{{ status === 'paused' ? 'PAUSED' : 'GAME OVER' }}</h2>
+                <p v-if="status === 'gameOver'"
+                   class="game-state-overlay__summary">Final score <strong>{{ $store.state.score.toLocaleString('en-US') }}</strong></p>
+                <p v-else
+                   class="game-state-overlay__summary">Your board is ready whenever you are.</p>
+                <div class="game-state-overlay__actions">
+                  <button ref="statePrimary"
+                          type="button"
+                          class="arcade-button arcade-button--primary"
+                          @click="status === 'paused' ? togglePause() : createStakan()">
+                    {{ status === 'paused' ? 'Resume' : 'New Game' }}
+                  </button>
+                  <button v-if="status === 'paused'"
+                          type="button"
+                          class="arcade-button"
+                          @click="createStakan">New Game</button>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </section>
 
         <NextPiece class="preview-column" />
@@ -229,6 +259,7 @@
 <script>
 import { mapMutations } from 'vuex'
 import GameHud from '@/components/GameHud.vue'
+import CityscapeArt from '@/components/CityscapeArt.vue'
 import NextPiece from '@/components/NextPiece.vue'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
@@ -239,7 +270,7 @@ import options, { resolveRunOptions } from '@/game/options.js'
 
 export default {
   name: 'JstetApp',
-  components: { GameHud, NextPiece },
+  components: { GameHud, NextPiece, CityscapeArt },
   data() {
     const preferences = loadPreferences()
     return {
@@ -288,6 +319,14 @@ export default {
     naive(value) {
       if (value) this.stopModern()
       else this.startModern()
+    },
+    status(value) {
+      if (value !== 'paused' && value !== 'gameOver') return
+      this.$nextTick(() => {
+        if (!this.settingsOpen && !this.pendingMode && !this.naive && this.$refs.statePrimary) {
+          this.$refs.statePrimary.focus()
+        }
+      })
     }
   },
 

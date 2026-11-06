@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–3 complete with browser QA; Stage 4 not started**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–3 complete with browser QA; Stage 4 implemented, awaiting visual QA**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -192,16 +192,18 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 4 — Arcade 2077 visual system and game states
 
-**Status:** [ ] Not started
+**Status:** [ ] Implemented in branch — **desktop/mobile browser QA and visual acceptance pending**. See [Stage 4 handoff](./arcade-2077-stage4-handover.md).
 
-- Define Stylus/CSS tokens and build the cohesive dark arcade appearance; avoid component-specific magic values.
-- Add a polished default renderer theme and at least one legible alternative without changing gameplay.
-- Improve focus/hover/pressed/disabled states, clear feedback, progress, and typography.
-- Implement accessible Pause, Resume, Game Over and confirmation overlays with proper focus behavior.
-- Add subtle clear/score/bonus feedback; visually respect `prefers-reduced-motion` and pause animations when practical.
-- Check paint performance and rendering behavior with live game activity, not just static screenshots.
+- [x] Define scoped Stylus/CSS tokens and night-sky arcade cabinet visual styling with a local SVG striped sunset, skyline and reflections.
+- [x] Polish Arcade and retain the distinct Prism palette without changing core gameplay, board geometry or engine data.
+- [x] Improve control focus, clear feedback, score/bonus/level presentation, and typography.
+- [x] Add Paused / Game Over board overlays with native Resume/New Game controls and focus behavior; keep existing modal confirmations.
+- [x] Add CSS-only score/bonus/clear animations, reduced motion for OS/player, and pause animation freezing.
+- [x] Add five static visual/overlay contract checks in `tests/unit/arcade-visuals.test.js`.
+- [ ] Validate fidelity and accessibility at desktop, narrow mobile and landscape viewports using real browser screenshots.
+- [ ] Run full unit suite, lint, production build, PWA and live-game paint/memory checks.
 
-**Gate 4:** Visual milestone reviewed on desktop and phone; active pieces and state remain readable; no unnecessary visual noise.
+**Gate 4:** **Pending local acceptance.** Visual milestone must be reviewed on desktop and phone; board, overlays and motion remain readable without a gameplay performance regression.
 
 ### Stage 5 — Mobile, controls, accessibility, Lab
 
