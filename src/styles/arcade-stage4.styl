@@ -1,0 +1,374 @@
+// Stage 4 arcade cabinet skin. Decorative layers never participate in the game loop.
+.jstet-app
+  --cabinet-edge: #da6ea9
+  --rim-glow: rgba(255, 143, 58, 0.4)
+  --hud-amber: #ffbe4f
+  --arcade-shadow: rgba(7, 4, 25, 0.82)
+  --panel-bg: rgba(10, 11, 30, 0.94)
+  --panel-border: rgba(251, 126, 56, 0.62)
+  background-color #08071b
+  background-image radial-gradient(circle at 6% 11%, #7b81ca 0 1px, transparent 2px),
+                   radial-gradient(circle at 19% 30%, #c7a3fd 0 1px, transparent 2px),
+                   radial-gradient(circle at 45% 7%, #dcc1ff 0 1px, transparent 2px),
+                   radial-gradient(circle at 71% 19%, #b892d6 0 1px, transparent 2px),
+                   radial-gradient(circle at 91% 8%, #afb7ee 0 1px, transparent 2px),
+                   radial-gradient(ellipse at 12% 86%, rgba(188, 34, 141, 0.28), transparent 45%),
+                   radial-gradient(ellipse at 80% 5%, rgba(91, 53, 176, 0.28), transparent 48%)
+
+.jstet-app.theme-prism
+  --cabinet-edge: #7e94ff
+  --rim-glow: rgba(100, 174, 255, 0.34)
+  --hud-amber: #a8eaff
+  --panel-border: rgba(103, 149, 245, 0.58)
+
+.arcade-console
+  isolation isolate
+  border 2px solid var(--cabinet-edge)
+  background linear-gradient(180deg, rgba(37, 24, 71, 0.96), #090a1b 63%, #110b2a)
+  box-shadow 0 3px 0 rgba(255, 171, 102, 0.18) inset,
+             0 0 0 5px #140d30,
+             0 0 0 7px rgba(197, 80, 201, 0.44),
+             0 16px 72px rgba(1, 0, 14, 0.66),
+             0 0 60px rgba(179, 56, 172, 0.12)
+
+  &::before
+    content ''
+    position absolute
+    z-index 0
+    inset 10px
+    border-radius 20px
+    border 1px solid rgba(255, 168, 92, 0.2)
+    pointer-events none
+
+  &::after
+    content ''
+    position absolute
+    z-index 0
+    left 8%
+    right 8%
+    bottom 7px
+    height 3px
+    background linear-gradient(90deg, transparent, #e255be 23%, #ffbb58 54%, #6e68ce 79%, transparent)
+    opacity 0.75
+    pointer-events none
+
+.arcade-header
+  padding-bottom 17px
+  border-bottom 2px solid rgba(255, 152, 71, 0.35)
+  box-shadow 0 12px 18px -20px var(--hud-amber)
+
+.arcade-brand__name
+  font-family 'Arial Black', 'Helvetica Neue', sans-serif
+  font-weight 900
+  font-size clamp(26px, 2.9vw, 40px)
+  font-style italic
+  letter-spacing 0.12em
+  text-transform uppercase
+  color #fff7ff
+  text-shadow 0 2px 0 #b052ae, 0 0 15px rgba(236, 109, 242, 0.74), 0 0 35px rgba(222, 68, 181, 0.35)
+
+.mode-switch
+  border-color rgba(247, 125, 175, 0.54)
+  border-radius 18px
+  box-shadow inset 0 3px 8px rgba(0, 0, 0, 0.4)
+
+.mode-switch__button
+  border-radius 14px
+  transition background 140ms ease, box-shadow 140ms ease
+
+  &[aria-pressed='true']
+    color #21102b
+    background linear-gradient(160deg, #ffe48d 3%, #ffb834 90%)
+    box-shadow 0 1px 10px var(--rim-glow), inset 0 1px rgba(255, 255, 255, 0.62)
+
+.arcade-button--primary
+  box-shadow 0 0 18px rgba(255, 169, 37, 0.3), inset 0 1px rgba(255, 255, 255, 0.52)
+
+.arcade-button:focus-visible,
+.mode-switch__button:focus-visible,
+.lab-entry summary:focus-visible
+  outline 3px solid var(--hud-amber)
+  outline-offset 3px
+
+.game-layout
+  grid-template-areas 'skyline stats board preview' 'skyline stats board guide'
+  grid-template-columns minmax(210px, 245px) minmax(145px, 177px) minmax(350px, 1fr) minmax(204px, 247px)
+  grid-template-rows auto 1fr
+  width min(100%, 1360px)
+  gap clamp(12px, 1.4vw, 19px)
+
+.cityscape-column
+  grid-area skyline
+  display block
+  width 100%
+  height 100%
+  min-height min(75dvh, 700px)
+  overflow hidden
+  border 2px solid rgba(220, 83, 169, 0.8)
+  border-radius 18px
+  background #170f30
+  box-shadow 0 0 0 4px rgba(255, 113, 158, 0.06),
+             0 0 32px rgba(207, 73, 168, 0.18),
+             inset 0 0 24px rgba(251, 94, 208, 0.15)
+
+.arcade-panel
+  border 1px solid var(--panel-border)
+  background linear-gradient(165deg, rgba(21, 17, 46, 0.95), rgba(5, 9, 26, 0.96))
+  box-shadow 0 0 0 2px rgba(33, 16, 47, 0.72),
+             inset 0 1px rgba(255, 180, 100, 0.14),
+             0 12px 35px rgba(0, 0, 0, 0.23)
+
+.panel-heading,
+.hud-stat__label
+  font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+  font-weight 900
+  letter-spacing 0.08em
+  color var(--hud-amber)
+
+.game-hud
+  gap 12px
+  min-height 100%
+
+.hud-stat
+  padding-bottom 13px
+  border-bottom 1px solid rgba(247, 128, 74, 0.22)
+
+.hud-stat__number
+  font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+  font-weight 900
+  letter-spacing -0.04em
+  color var(--hud-amber)
+  text-shadow 0 0 13px rgba(255, 148, 52, 0.33)
+
+.hud-stat__number--score
+  font-size clamp(26px, 3vw, 35px)
+  color var(--hud-amber)
+  animation score-ignite 380ms ease-out both
+
+.hud-stat--bonus
+  animation bonus-reveal 360ms ease-out both
+
+.hud-stat--bonus .hud-stat__number
+  color #ff88d6
+
+.level-meter
+  display flex
+  gap 3px
+  max-width 100%
+  margin-top 5px
+
+  span
+    flex 1 1 0
+    height 8px
+    min-width 0
+    border-radius 2px
+    background rgba(221, 127, 63, 0.16)
+    box-shadow inset 0 0 0 1px rgba(252, 148, 78, 0.17)
+
+    &.is-active
+      background linear-gradient(145deg, #ffeb83, var(--hud-amber))
+      box-shadow 0 0 9px var(--rim-glow)
+
+.board-panel
+  position relative
+  border 1px solid rgba(241, 123, 72, 0.8)
+  background linear-gradient(160deg, rgba(32, 16, 47, 0.96), rgba(9, 10, 28, 0.98))
+  box-shadow 0 0 0 3px rgba(228, 95, 107, 0.12), 0 0 35px var(--rim-glow)
+
+.board-panel__top
+  border-bottom 1px solid rgba(255, 184, 76, 0.15)
+  margin-bottom 12px
+
+.board-panel__bottom
+  border-top 1px solid rgba(255, 184, 76, 0.14)
+  margin-top 12px
+  color #e8aee7
+
+.game-status
+  font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+  font-size 10px
+  letter-spacing 0.11em
+
+.game-status--gameOver
+  color #ffc1ce
+
+.jstet-app .board-panel__well .tetcolor-board
+  border 3px solid var(--hud-amber)
+  border-radius 12px
+  background #080b1d
+  box-shadow 0 0 0 4px rgba(241, 117, 54, 0.2),
+             0 0 16px rgba(255, 144, 41, 0.77),
+             0 0 40px rgba(254, 89, 59, 0.33),
+             inset 0 0 13px rgba(237, 150, 55, 0.17)
+
+.board-panel__well
+  flex 0 0 auto
+
+.game-cell.item
+  box-shadow inset 0 1px rgba(255, 255, 255, 0.15), inset 0 -2px rgba(2, 2, 20, 0.12)
+
+.game-cell.N-2
+  background repeating-linear-gradient(135deg, #ffcd8a 0 4px, #e559b1 4px 8px)
+  animation clear-shimmer 580ms ease-in-out infinite alternate
+
+.next-panel
+  border-color rgba(255, 171, 75, 0.65)
+  min-height 150px
+
+.next-piece
+  filter drop-shadow(0 0 9px rgba(249, 113, 235, 0.24))
+
+.guide-column
+  border-color rgba(246, 121, 69, 0.56)
+
+.control-guide > div
+  border-bottom 1px solid rgba(255, 154, 102, 0.15)
+  padding-bottom 7px
+
+kbd
+  border-color rgba(255, 154, 99, 0.4)
+  background #19122f
+  color #fff0d5
+
+.game-state-overlay
+  position absolute
+  inset 0
+  z-index 6
+  display grid
+  place-items center
+  padding 18px
+  border-radius inherit
+  background rgba(5, 6, 25, 0.8)
+  backdrop-filter blur(4px)
+
+.game-state-overlay__body
+  display grid
+  justify-items center
+  gap 14px
+  width min(100%, 325px)
+  padding clamp(18px, 3vw, 28px)
+  border 1px solid rgba(255, 181, 79, 0.75)
+  border-radius 17px
+  background linear-gradient(140deg, rgba(36, 22, 65, 0.97), rgba(12, 12, 37, 0.97))
+  box-shadow 0 0 30px rgba(255, 147, 65, 0.24), 0 24px 60px rgba(0, 0, 0, 0.36)
+  text-align center
+
+  h2
+    margin 0
+    font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+    font-size clamp(24px, 5vw, 37px)
+    font-weight 900
+    line-height 1.08
+    color var(--hud-amber)
+    letter-spacing 0.045em
+    text-shadow 0 0 20px rgba(255, 160, 60, 0.38)
+
+.game-state-overlay__eyebrow
+  margin 0
+  color #f5b6f9
+  font-size 10px
+  font-weight 800
+  letter-spacing 0.18em
+
+.game-state-overlay__summary
+  margin 0
+  font-size 13px
+  line-height 1.5
+  color #d7cde9
+
+  strong
+    display block
+    font-family ui-monospace, Consolas, monospace
+    font-size 25px
+    color #ffe0a2
+
+.game-state-overlay__actions
+  display flex
+  flex-wrap wrap
+  justify-content center
+  gap 9px
+
+.state-overlay-enter-active,
+.state-overlay-leave-active
+  transition opacity 170ms ease
+
+.state-overlay-enter-from,
+.state-overlay-leave-to
+  opacity 0
+
+.jstet-app.is-paused .game-cell,
+.jstet-app.is-paused .hud-stat__number
+  animation-play-state paused
+
+@keyframes score-ignite
+  0%
+    text-shadow 0 0 19px rgba(255, 223, 124, 0.85)
+    opacity .7
+  100%
+    text-shadow 0 0 13px rgba(255, 148, 52, 0.33)
+    opacity 1
+
+@keyframes bonus-reveal
+  0%
+    opacity .25
+    transform translateY(5px)
+  100%
+    opacity 1
+    transform translateY(0)
+
+@keyframes clear-shimmer
+  0%
+    filter brightness(.8)
+  100%
+    filter brightness(1.3)
+
+@media (max-width: 1200px)
+  .game-layout
+    width min(100%, 1130px)
+    grid-template-areas 'stats board preview' 'stats board guide'
+    grid-template-columns minmax(168px, 215px) minmax(0, 1fr) minmax(184px, 232px)
+
+  .cityscape-column
+    display none
+
+  .game-hud
+    min-height 0
+
+@media (max-width: 920px)
+  .game-layout
+    grid-template-areas 'stats preview' 'board board' 'guide guide'
+    grid-template-columns minmax(0, 1fr) minmax(110px, .7fr)
+    grid-template-rows auto auto auto
+
+  .game-hud
+    min-height 0
+
+  .board-panel
+    width 100%
+
+@media (max-width: 480px)
+  .arcade-console
+    box-shadow 0 0 0 2px #140d30, 0 9px 28px rgba(0, 0, 0, 0.48)
+
+  .game-state-overlay
+    padding 10px
+
+  .game-state-overlay__body
+    padding 16px
+    gap 11px
+
+  .game-state-overlay__actions .arcade-button
+    padding 8px 11px
+    min-height 37px
+
+  .board-panel__top,
+  .board-panel__bottom
+    margin 0
+
+@media (prefers-reduced-motion: reduce)
+  .jstet-app *,
+  .jstet-app *::before,
+  .jstet-app *::after
+    animation-duration 0.01ms !important
+    animation-iteration-count 1 !important
+    transition-duration 0.01ms !important

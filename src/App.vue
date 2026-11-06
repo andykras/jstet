@@ -497,4 +497,5 @@ export default {
 
 <style lang="stylus">
 @import './styles/arcade-shell.styl'
+@import './styles/arcade-stage4.styl'
 </style>
