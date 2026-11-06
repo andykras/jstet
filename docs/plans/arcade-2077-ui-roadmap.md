@@ -1,6 +1,6 @@
 # JSTET — Arcade 2077 UI Roadmap
 
-> Status: **IMPLEMENTATION IN PROGRESS — Stage 0 complete; Stage 1 pending browser QA**  
+> Status: **IMPLEMENTATION IN PROGRESS — Stages 0–1 complete; Stage 2 implemented, pending browser QA**  
 > Updated: 2026-11-06  
 > Target stack: Vue 3 (Options API), Vuex 4, Vite 7, Stylus, mitt  
 > Project instructions: [`AGENTS.md`](../../AGENTS.md)
@@ -161,15 +161,18 @@ Each completed stage gets one or more **focused commits in the same implementati
 
 ### Stage 2 — Responsive application shell and HUD
 
-**Status:** [ ] Not started
+**Status:** [ ] Implemented in branch — **desktop/mobile browser acceptance pending**. See [Stage 2 handoff](./arcade-2077-stage2-handover.md).
 
-- Replace the raw root controls with a semantic header, centered board area, responsive HUD and compact help.
-- Move next-piece preview and score/level/blocks/bonus presentation out of the renderer into appropriate UI layout without changing their values.
-- Ensure the board uses a stable aspect ratio/visible geometry and does not jump when HUD values change.
-- Give the board and next preview a reusable presentation surface, keeping class/value mapping and clearing animations intact.
-- Remove the visible options JSON and naive checkbox from player-facing UI.
+- [x] Replaced the raw root controls with a semantic header, centered board, functional New Game/Pause buttons, responsive HUD and compact keyboard help.
+- [x] Extracted next-piece preview and score/level/blocks/bonus presentation into `NextPiece.vue` and `GameHud.vue` without changing their Vuex data sources.
+- [x] Board size is controlled by a shared cell-size variable, not HUD or bonus width; mobile layout uses explicit grid areas.
+- [x] Shared color/cell styles are used by both the board and next-piece preview; original `getWellValue` and `getNextValue` mapping is preserved.
+- [x] Removed player-facing raw options JSON and the visible naive checkbox; legacy access is folded under Developer Lab pending Stage 5.
+- [x] Added source-level shell/renderer contract checks in `tests/unit/ui-shell.test.js`.
+- [ ] Verify desktop 1440×900, phone 390×844/320×700 and landscape 844×390 (layout, clipping, readability, board stability).
+- [ ] Verify full-game TetColor parity, pause/restart, next preview, legacy toggle and PWA in browser; record screenshots and QA evidence.
 
-**Gate 2:** Complete desktop layout plus usable narrow layout; TetColor gameplay parity verified; no dead/duplicate player controls.
+**Gate 2:** **Pending local browser QA.** Complete desktop layout plus usable narrow layout; TetColor gameplay parity verified; no dead/duplicate player controls.
 
 ### Stage 3 — Playable modes and settings
 
