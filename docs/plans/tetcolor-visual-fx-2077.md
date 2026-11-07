@@ -1,6 +1,6 @@
 # JSTET — TetColor Visual FX 2077
 
-> Status: **IN PROGRESS — Stage 0 code completed; full-repo and browser QA pending**  
+> Status: **IN PROGRESS — Stages 0–1 implemented; full-repository and browser QA pending**  
 > Updated: 2026-11-07  
 > Branch: `feat/tetcolor-visual-fx-2077` (from the latest `master`)  
 > Scope: modern Arcade gameplay renderer; **no changes to the legacy implementation**  
@@ -75,7 +75,7 @@ Tasks:
 
 ### Stage 1 — Living TetColor glass blocks
 
-**Status:** [ ] Not started
+**Status:** [ ] Implementation committed; full-repository and real-browser QA pending — see [Stage 1 handoff](./tetcolor-visual-fx-2077-stage1.md).
 
 Visuals:
 - Preserve every original TetColor hue; give filled cells a subtle inset highlight, directional glass gradient, slim crisp rim, low-strength inner shadow, and restrained specular glint.
@@ -175,10 +175,10 @@ Do not add a new rendering engine, a heavy particle library, a new dependency fo
 ## 6. Progress tracker
 
 - [ ] 0. Baseline and FX contracts — preference toggle, persistence and mapping implemented; full QA pending
-- [ ] 1. Glass material and active-piece lighting
+- [ ] 1. Glass material and active-piece lighting — code committed; full QA pending
 - [ ] 2. Movement, drop trails and landing impact
 - [ ] 3. Match/line clear and particles
 - [ ] 4. Combo/cascade/bonus celebrations
 - [ ] 5. Final polish, mobile/performance regression and acceptance
 
-**Current checkpoint:** Stage 0 code and documentation are committed; 5 isolated Node checks passed, but full-repository tests, lint, build, browser screenshots and FPS baseline are not yet available in this environment. See the [Stage 0 handoff](./tetcolor-visual-fx-2077-stage0.md). Finish those checks before marking Stage 0 complete or starting Stage 1. Subsequent implementation follows Stages 1–5 **in order**.
+**Current checkpoint:** Stages 0 and 1 have code/tests/docs committed. No full-repository build/lint/test or real-browser/FPS verification is available in this session. Finish the [Stage 0 QA](./tetcolor-visual-fx-2077-stage0.md) and [Stage 1 QA](./tetcolor-visual-fx-2077-stage1.md) before claiming either stage accepted. Stage 2 will add discrete movement/lock events and transient visuals; it has not started. Keep the PR Draft, with no merge/deploy.
