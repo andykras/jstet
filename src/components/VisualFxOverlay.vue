@@ -7,6 +7,11 @@
          :class="'tetcolor-fx-cell--' + effect.type"
          :style="effectStyle(effect)"></div>
     <div v-for="celebration in celebrations"
+         :key="'pulse-' + celebration.id"
+         class="tetcolor-fx-pulse"
+         :class="'tetcolor-fx-pulse--' + celebration.kind"
+         :style="celebrationStyle(celebration)"></div>
+    <div v-for="celebration in celebrations"
          :key="'rim-' + celebration.id"
          class="tetcolor-fx-rim"
          :class="'tetcolor-fx-rim--' + celebration.kind"></div>
