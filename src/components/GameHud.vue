@@ -6,7 +6,7 @@
       <output :key="score"
               class="hud-stat__number hud-stat__number--score">{{ formattedScore }}</output>
     </div>
-    <div class="hud-stat">
+    <div class="hud-stat hud-stat--level">
       <span class="hud-stat__label">Level</span>
       <output class="hud-stat__number">{{ level + 1 }}</output>
       <div class="level-meter"
@@ -16,7 +16,7 @@
               :class="{ 'is-active': value <= level + 1 }"></span>
       </div>
     </div>
-    <div class="hud-stat">
+    <div class="hud-stat hud-stat--progress">
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
