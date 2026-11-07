@@ -385,6 +385,7 @@ export default {
     persistPreferences() {
       this.preferences = normalizePreferences({ ...this.preferences, hardDrop: this.hard })
       savePreferences(this.preferences)
+      if (!this.preferences.visualFxEnabled) gameBus.emit('fx:reset')
       if (this.sounds) this.sounds.setEnabled(this.preferences.soundEnabled)
     },
 
