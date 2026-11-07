@@ -13,5 +13,9 @@ export function toVisualFxCell(x, y, { width, height } = {}) {
 export function isActivePieceCell(x, y, pieces, item) {
   if (!item || !pieces) return false
   const piece = pieces[item.T]
-  return Boolean(piece && piece.get(x - item.X - 1, y - item.Y - 1, item.R) > 0)
+  if (!piece) return false
+  const px = x - item.X - 1
+  const py = y - item.Y - 1
+  if (px < 0 || py < 0 || px >= piece.size || py >= piece.size) return false
+  return piece.get(px, py, item.R) > 0
 }
