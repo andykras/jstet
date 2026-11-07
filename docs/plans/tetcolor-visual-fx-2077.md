@@ -1,6 +1,6 @@
 # JSTET — TetColor Visual FX 2077
 
-> Status: **IN PROGRESS — Stages 0–4 implemented; full-repository and browser QA pending**  
+> Status: **IN PROGRESS — Stages 0–4 implemented, Stage 5 hardening committed; full QA pending**  
 > Updated: 2026-11-07  
 > Branch: `feat/tetcolor-visual-fx-2077` (from the latest `master`)  
 > Scope: modern Arcade gameplay renderer; **no changes to the legacy implementation**  
@@ -144,7 +144,7 @@ Implementation:
 
 ### Stage 5 — Art direction, performance, regression QA and release decision
 
-**Status:** [ ] Not started
+**Status:** [ ] Source review and hardening committed; full-repository/browser/mobile/performance QA blocked — see [Stage 5 handoff](./tetcolor-visual-fx-2077-stage5.md).
 
 Tasks:
 - Tune the visual hierarchy using the rule **quiet at rest / rewarding on events**. Ensure all six TetColor colors remain distinct, including contrast on the light-gray Arcade well.
@@ -179,6 +179,6 @@ Do not add a new rendering engine, a heavy particle library, a new dependency fo
 - [ ] 2. Movement, drop trails and landing impact — code committed; full QA pending
 - [ ] 3. Match/line clear and particles — code committed; full QA pending
 - [ ] 4. Combo/cascade/bonus celebrations — code committed; full QA pending
-- [ ] 5. Final polish, mobile/performance regression and acceptance
+- [ ] 5. Final polish, mobile/performance regression and acceptance — 3 robustness fixes and 9 tests committed, 14 isolated Node checks passed; actual integration QA pending
 
-**Current checkpoint:** Stages 0–4 have code, focused repository tests and handoff docs committed on the feature branch. Stage 4 isolated reward/anchor helper checks passed 5/5, but full-repository unit tests, lint, build, Vue/Stylus compilation, mobile/browser visual checks and performance baseline remain pending. Review the [Stage 0](./tetcolor-visual-fx-2077-stage0.md), [Stage 1](./tetcolor-visual-fx-2077-stage1.md), [Stage 2](./tetcolor-visual-fx-2077-stage2.md), [Stage 3](./tetcolor-visual-fx-2077-stage3.md) and [Stage 4](./tetcolor-visual-fx-2077-stage4.md) reports. Next: Stage 5 integrated QA and final visual polish. Keep PR Draft, no merge/deploy.
+**Current checkpoint:** All five implementation stages (0–4) have committed code, unit-test contracts and handoff documents. Stage 5 hardening also committed: fair sampling of 40+ Classic clear cells into a 24-effect budget; opt-out invalidation of stale cosmetic clear snapshots; phantom hard-drop-flag guard during sequential clearing. **14/14 isolated Node utility tests passed** (a fixture mirroring the reviewed helpers, *not* the checkout), plus 9 new source-repository tests were added but not executed. See the [Stage 5 QA handoff](./tetcolor-visual-fx-2077-stage5.md). Actual `npm run test:unit` / `lint` / `build`, Vue/Stylus compilation, desktop/mobile visual QA, ~60 FPS measurement and PWA preview remain pending. **Stage 5 is not accepted; PR stays Draft; no merge or deploy.**
