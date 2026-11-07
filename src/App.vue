@@ -4,6 +4,7 @@
          'theme-' + preferences.theme,
          {
            'reduce-motion': preferences.reducedMotion,
+           'fx-enabled': preferences.visualFxEnabled,
            'is-paused': status === 'paused',
            'is-lab': naiveImplementation
          }
@@ -202,6 +203,12 @@
               <option value="arcade">Arcade</option>
               <option value="prism">Prism</option>
             </select>
+          </label>
+          <label class="settings-check">
+            <input type="checkbox"
+                   v-model="preferences.visualFxEnabled"
+                   @change="persistPreferences">
+            Visual effects
           </label>
           <label class="settings-check">
             <input type="checkbox"
