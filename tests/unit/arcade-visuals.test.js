@@ -32,17 +32,20 @@ test('HUD uses real Vuex values for animated score, bonus and level progress', (
   }
 })
 
-test('cityscape and HUD share a dashboard column without changing board geometry', () => {
+test('cityscape and next share the left rail; scoreboard has an independent right rail', () => {
   const app = read('src/App.vue')
-  const style = read('src/styles/arcade-responsive.styl')
+  const rails = read('src/styles/arcade-rails.styl')
+  const sizing = read('src/styles/arcade-responsive.styl')
   for (const token of ['class="dashboard-column"', '<CityscapeArt class="cityscape-column"',
-    '<GameHud class="stats-column"']) {
+    'class="stats-column stats-column--left"', 'class="stats-column stats-column--right"',
+    'class="right-column"']) {
     assert.ok(app.includes(token), token)
   }
-  for (const token of ["'dashboard board preview'", '.dashboard-column .cityscape-column',
-    '.dashboard-column .game-hud', 'container-type size', '@media (max-width: 920px)']) {
-    assert.ok(style.includes(token), token)
+  for (const token of ["'dashboard board right'", '.dashboard-column .next-panel',
+    '.right-column .game-hud .hud-stat--bonus']) {
+    assert.ok(rails.includes(token), token)
   }
+  assert.ok(sizing.includes('container-type size'))
   assert.ok(read('src/components/themes/tetcolor.vue').includes('getWellValue'))
 })
 
@@ -67,9 +70,9 @@ test('portrait skyline includes a proportional sunset and dense waterfront', () 
 })
 
 test('simplified cabinet retains only real gameplay panels', () => {
-  const style = read('src/styles/arcade-responsive.styl')
+  const style = read('src/styles/arcade-rails.styl')
   const app = read('src/App.vue')
-  assert.ok(style.includes('.dashboard-column .game-hud .hud-stat--score'))
+  assert.ok(style.includes('.right-column .game-hud .hud-stat--score'))
   assert.ok(app.includes('<NextPiece class="preview-column"'))
   assert.ok(!app.includes('guide-column'))
   assert.ok(!app.includes('guide-example'))
