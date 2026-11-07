@@ -108,6 +108,7 @@
 
       <main v-if="!naiveImplementation"
             class="game-layout"
+            :class="'game-layout--' + mode"
             :aria-label="modeTitle + ' game'"
             :style="boardGeometry">
         <aside class="dashboard-column"
