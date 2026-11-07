@@ -20,7 +20,7 @@ test('the shell uses functional controls without exposing developer options in t
   const app = read('src/App.vue')
   assert.match(app, /@click="createStakan"/)
   assert.match(app, /@click="togglePause"/)
-  assert.match(app, /<tetcolor :visual-fx="preferences\.visualFxEnabled" \/>/)
+  assert.match(app, /<tetcolor :visual-fx="preferences\.visualFxEnabled"\s+:reduced-motion="preferences\.reducedMotion" \/>/)
   assert.match(app, /<GameHud /)
   assert.match(app, /<NextPiece /)
   assert.match(app, /requestMode\('legacy'\)/)
