@@ -19,3 +19,22 @@ export function isActivePieceCell(x, y, pieces, item) {
   if (px < 0 || py < 0 || px >= piece.size || py >= piece.size) return false
   return piece.get(px, py, item.R) > 0
 }
+
+// Snapshot just the occupied cells of one piece for transient visuals.
+// Never hand the FX layer a mutable reference to live piece/board arrays.
+export function getPieceFxCells(item, pieces, dimensions) {
+  if (!item || !pieces || !dimensions) return Object.freeze([])
+  const piece = pieces[item.T]
+  if (!piece) return Object.freeze([])
+
+  const cells = []
+  for (let y = 0; y < piece.size; y++) {
+    for (let x = 0; x < piece.size; x++) {
+      const color = piece.get(x, y, item.R)
+      if (!Number.isInteger(color) || color <= 0) continue
+      const position = toVisualFxCell(item.X + x, item.Y + y, dimensions)
+      if (position) cells.push(Object.freeze({ ...position, color }))
+    }
+  }
+  return Object.freeze(cells)
+}
