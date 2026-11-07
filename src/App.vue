@@ -291,6 +291,7 @@ export default {
       preferences,
       pendingSingleBlock: options.singleBlock,
       settingsOpen: false,
+      autoPaused: false,
       modernDispose: null,
       modernHandlers: [],
       sounds: null,
@@ -330,6 +331,7 @@ export default {
       this.$nextTick(() => this.observeWell())
     },
     status(value) {
+      if (value === 'gameOver') this.autoPaused = false
       if (value !== 'paused' && value !== 'gameOver') return
       this.$nextTick(() => {
         if (!this.settingsOpen && !this.naive && this.$refs.statePrimary) {
@@ -379,6 +381,7 @@ export default {
     },
 
     togglePause() {
+      this.autoPaused = false
       gameBus.emit('pause')
     },
 
@@ -468,7 +471,9 @@ export default {
       window.addEventListener('keydown', this.onKeyDown)
       window.addEventListener('keyup', this.onKeyUp)
       window.addEventListener('blur', this.onFocusLost)
+      window.addEventListener('focus', this.onFocusGain)
       window.addEventListener('focusin', this.onFocusIn)
+      document.addEventListener('visibilitychange', this.onVisibilityChange)
       this.createStakan()
     },
 
@@ -477,7 +482,9 @@ export default {
       window.removeEventListener('keydown', this.onKeyDown)
       window.removeEventListener('keyup', this.onKeyUp)
       window.removeEventListener('blur', this.onFocusLost)
+      window.removeEventListener('focus', this.onFocusGain)
       window.removeEventListener('focusin', this.onFocusIn)
+      document.removeEventListener('visibilitychange', this.onVisibilityChange)
       this.modernDispose()
       this.modernDispose = null
       this.sounds.dispose()
@@ -496,15 +503,33 @@ export default {
       this.setOptions(rules)
       this.setPieces(createGamePieces(this.mode))
       this.setCells(createGameBoard(this.mode))
+      this.autoPaused = false
       gameBus.emit('start', rules)
       this.$nextTick(() => this.syncPreviewCellSize())
     },
 
     onFocusLost() {
       game.releaseControls()
+      this.autoPauseForFocus()
     },
     onFocusIn(e) {
       if (shouldIgnoreGameInput(e.target)) this.onFocusLost()
+    },
+    // The run holds itself while the window or tab is away from the player,
+    // and continues from the same point when they come back.
+    autoPauseForFocus() {
+      if (this.naiveImplementation || this.status !== 'running') return
+      this.autoPaused = true
+      gameBus.emit('pause')
+    },
+    onFocusGain() {
+      if (!this.autoPaused || this.settingsOpen || this.status !== 'paused') return
+      this.autoPaused = false
+      gameBus.emit('pause')
+    },
+    onVisibilityChange() {
+      if (document.hidden) this.autoPauseForFocus()
+      else this.onFocusGain()
     },
 
     onKeyDown(e) {
