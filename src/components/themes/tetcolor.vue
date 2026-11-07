@@ -13,17 +13,22 @@
         </div>
       </template>
     </div>
+    <VisualFxOverlay v-if="visualFx"
+                     :reduced-motion="reducedMotion" />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import { isActivePieceCell } from '@/utils/visualFx.js'
+import VisualFxOverlay from '@/components/VisualFxOverlay.vue'
 
 export default {
   name: 'TetcolorBoard',
+  components: { VisualFxOverlay },
   props: {
-    visualFx: { type: Boolean, default: false }
+    visualFx: { type: Boolean, default: false },
+    reducedMotion: { type: Boolean, default: false }
   },
   computed: {
     ...mapGetters(['getWellValue', 'getDimensions'])
