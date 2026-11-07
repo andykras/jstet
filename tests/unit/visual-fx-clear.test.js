@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import Stakan from '../../src/utils/stakan.js'
-import { captureClearCandidates, markedClearFxCells, clearStepFxCells } from '../../src/utils/visualFx.js'
+import { captureClearCandidates, markedClearFxCells, mergeClearFxCells, clearStepFxCells } from '../../src/utils/visualFx.js'
 
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
 
@@ -73,8 +73,46 @@ test('Classic: line-clear step includes all 10 colored cells in exactly that row
   assert.deepEqual([...first, ...second].map(cell => cell.color).sort(), cells.map(cell => cell.color).sort())
 })
 
-test('clear snapshots handle boundaries and invalid/no-match input without phantom FX', () => {
+test('a top visible row match is captured even though the detector cannot mark it', () => {
+  // getThreeBlock detects matches whose third cell sits on the top visible row
+  // (y = height - 1) but its marking loop stops one row earlier, while the
+  // removal compaction does delete that cell. Group membership is the source
+  // of truth, not the -2 marks.
   const board = new Stakan(19, 9, 4)
+  const top = board.height - 1
+  board[top - 2][3] = 5
+  board[top - 1][3] = 5
+  board[top][3] = 5
+  const candidates = captureClearCandidates(board)
+  // Simulate the engine: all three cells are queued for removal, only the
+  // lower two are marked -2.
+  const group = new Set([3 * board.height + top - 2, 3 * board.height + top - 1, 3 * board.height + top])
+  board[top - 2][3] = -2
+  board[top - 1][3] = -2
+  const cells = markedClearFxCells(candidates, board, (x, y) => group.has(x * board.height + y))
+  assert.equal(cells.length, 3)
+  assert.deepEqual(cells.find(cell => cell.row === 0), { column: 2, row: 0, color: 5 })
+  // Step selection reaches the top cell too.
+  assert.deepEqual(clearStepFxCells(cells, 'tetcolor', 3, top, board), [{ column: 2, row: 0, color: 5 }])
+})
+
+test('a batch-mode lock extends the pending snapshot instead of replacing it', () => {
+  const board = new Stakan(19, 9, 4)
+  const first = Object.freeze([{ column: 1, row: 17, color: 2 }, { column: 2, row: 17, color: 2 }])
+  const fresh = Object.freeze([{ column: 4, row: 15, color: 3 }, { column: 1, row: 17, color: 2 }])
+  const merged = mergeClearFxCells(first, fresh)
+  assert.equal(merged.length, 3)
+  assert.ok(merged.includes(first[0]) && merged.includes(first[1]) && merged.includes(fresh[0]))
+  assert.ok(Object.isFrozen(merged))
+  // Empty inputs keep the pending snapshot and never fabricate one.
+  assert.equal(mergeClearFxCells(first, []), first)
+  assert.equal(mergeClearFxCells(null, fresh), fresh)
+  assert.deepEqual(mergeClearFxCells(null, []), [])
+  // Overlapping duplicates are not double-counted.
+  assert.equal(mergeClearFxCells(merged, fresh).length, 3)
+})
+
+test('clear snapshots handle boundaries and invalid/no-match input without phantom FX', () => {  const board = new Stakan(19, 9, 4)
   assert.deepEqual(captureClearCandidates(null), [])
   assert.deepEqual(markedClearFxCells(null, board), [])
   assert.deepEqual(clearStepFxCells([], 'tetcolor', 3, 5, board), [])
@@ -93,7 +131,8 @@ test('the existing clearing algorithms are wrapped, never replaced or delayed', 
   assert.match(engine, /const detectClears = \(mode, detect\) =>/)
   assert.match(engine, /const candidates = track \? captureClearCandidates\(\$cells\) : null/)
   assert.match(engine, /const result = detect\(\)/)
-  assert.match(engine, /clearFxCells = candidates \? markedClearFxCells\(candidates, \$cells\)/)
+  assert.match(engine, /const isDetected = result instanceof Set/)
+  assert.match(engine, /clearFxCells = mergeClearFxCells\(clearFxCells, fresh\)/)
   assert.match(engine, /detectClears\('tetcolor', getThreeBlock\)/)
   assert.equal(engine.split("detectClears('tetcolor', getThreeBlock)").length - 1, 2, 'lock and cascade both emit clear events')
   assert.match(engine, /detectClears\('classic', \(\) => getSolidLines\(/)

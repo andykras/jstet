@@ -53,17 +53,38 @@ export function captureClearCandidates(cells) {
   return candidates
 }
 
-// Keep the original color and position only if the engine actually marked the
-// cell for removal. This supports arbitrary TetColor matches and Classic rows.
-export function markedClearFxCells(candidates, cells) {
+// Keep the original color and position of every cell the engine will remove.
+// The detected group is the authority: the TetColor detector never marks the
+// top visible row as -2 even though the removal compaction deletes it there.
+// Callers without a group predicate keep the historical -2-mark behavior.
+export function markedClearFxCells(candidates, cells, isDetected = null) {
   if (!cells || !candidates?.length) return Object.freeze([])
   const marked = []
   for (const { x, y, color } of candidates) {
-    if (cells[y][x] !== -2) continue
+    const detected = isDetected ? isDetected(x, y) : cells[y][x] === -2
+    if (!detected) continue
     const position = toVisualFxCell(x, y, cells)
     if (position) marked.push(Object.freeze({ ...position, color }))
   }
   return Object.freeze(marked)
+}
+
+// Batch mode allows another lock while an earlier clear group is still
+// pending; accumulate both groups so the first one keeps its charge and
+// release effects. Cells are disjoint within one clearing lifecycle.
+export function mergeClearFxCells(current, fresh) {
+  if (!Array.isArray(fresh) || !fresh.length) return Array.isArray(current) ? current : Object.freeze([])
+  if (!Array.isArray(current) || !current.length) return fresh
+  const seen = new Set(current.map(cell => cell.column + ':' + cell.row))
+  const merged = current.slice()
+  for (const cell of fresh) {
+    const key = cell.column + ':' + cell.row
+    if (!seen.has(key)) {
+      seen.add(key)
+      merged.push(cell)
+    }
+  }
+  return Object.freeze(merged)
 }
 
 // Single-step clearing removes exactly one TetColor cell or one Classic row.

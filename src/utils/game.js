@@ -7,7 +7,7 @@ import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines, resetSolidLines } from '@/game/tetris'
 import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock, resetThreeBlocks } from '@/game/tetcolor'
 import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
-import { getPieceFxCells, captureClearCandidates, markedClearFxCells, clearStepFxCells } from '@/utils/visualFx'
+import { getPieceFxCells, captureClearCandidates, markedClearFxCells, mergeClearFxCells, clearStepFxCells } from '@/utils/visualFx'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -37,8 +37,16 @@ const detectClears = (mode, detect) => {
     hasFxConsumer('fx:combo') || hasFxConsumer('fx:cascade')
   const candidates = track ? captureClearCandidates($cells) : null
   const result = detect()
-  clearFxCells = candidates ? markedClearFxCells(candidates, $cells) : EMPTY_FX_CELLS
-  if (clearFxCells.length) {
+  // Membership comes from the detected group itself: the TetColor detector
+  // cannot mark the top visible row as -2, and a batch-mode lock can extend
+  // a still pending group, so the snapshot accumulates across such locks.
+  const isDetected = result instanceof Set
+    ? (x, y) => result.has(x * $cells.height + y)
+    : (x, y) => result.includes(y)
+  const fresh = candidates ? markedClearFxCells(candidates, $cells, isDetected) : EMPTY_FX_CELLS
+  const resume = clearFxCells.length > 0
+  clearFxCells = mergeClearFxCells(clearFxCells, fresh)
+  if (clearFxCells.length && !resume) {
     emitFx('fx:clear-start', () => Object.freeze({
       mode, batch: !game.singleBlock, cells: clearFxCells
     }))
