@@ -46,7 +46,8 @@ test('FX snapshot coordinates remain correct after rotation and for Classic', ()
 
 test('engine publishes FX only on accepted gameplay movements and actual locks', () => {
   const engine = read('src/utils/game.js')
-  assert.match(engine, /if \(\$bus\?\.all\.get\(type\)\?\.size\) \$bus\.emit\(type, makePayload\(\)\)/)
+  assert.match(engine, /const hasFxConsumer = type => Boolean\(\$bus\?\.all\.get\(type\)\?\.size\)/)
+  assert.match(engine, /if \(hasFxConsumer\(type\)\) \$bus\.emit\(type, makePayload\(\)\)/)
   assert.match(engine, /const accepted = set\(X, Y, R\)/)
   assert.match(engine, /if \(accepted && action !== 'gravity' &&/)
   assert.match(engine, /emitFx\('fx:move',/)
