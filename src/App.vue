@@ -128,7 +128,8 @@
                  aria-label="Playing field">
           <div ref="wellContainer"
                class="board-panel__well">
-            <tetcolor :visual-fx="preferences.visualFxEnabled" />
+            <tetcolor :visual-fx="preferences.visualFxEnabled"
+                      :reduced-motion="preferences.reducedMotion" />
           </div>
           <Transition name="state-overlay">
             <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen"
@@ -561,4 +562,5 @@ export default {
 @import './styles/arcade-rails.styl'
 @import './styles/arcade-mobile-maxfit.styl'
 @import './styles/tetcolor-visual-fx.styl'
+@import './styles/tetcolor-motion-fx.styl'
 </style>
