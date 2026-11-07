@@ -75,3 +75,20 @@ export function clearStepFxCells(cells, mode, x, y, dimensions) {
   return Object.freeze(cells.filter(cell =>
     cell.row === position.row && (mode === 'classic' || cell.column === position.column)))
 }
+
+// Keep celebration labels near the actual awarded match, rather than
+// positioning by the HUD or the next active piece.
+export function getFxAnchor(cells) {
+  if (!Array.isArray(cells) || !cells.length) return null
+  let column = 0
+  let row = 0
+  let count = 0
+  for (const cell of cells) {
+    if (!Number.isFinite(cell.column) || !Number.isFinite(cell.row)) continue
+    column += cell.column
+    row += cell.row
+    count++
+  }
+  if (!count) return null
+  return Object.freeze({ column: column / count, row: row / count })
+}
