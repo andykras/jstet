@@ -40,20 +40,57 @@
              class="header-actions">
           <button type="button"
                   class="arcade-button arcade-button--primary"
+                  aria-label="New game"
+                  title="New Game (N)"
                   @click="createStakan">
-            New Game (N)
+            <span class="header-action__label">New Game (N)</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M3 11a9 9 0 1 1 2.7 6.4" />
+              <path d="M3 4v7h7" />
+            </svg>
           </button>
           <button type="button"
                   class="arcade-button"
                   :disabled="status !== 'running' && status !== 'paused'"
+                  :aria-label="status === 'paused' ? 'Resume game' : 'Pause game'"
+                  :title="status === 'paused' ? 'Resume (P)' : 'Pause (P)'"
                   @click="togglePause">
-            {{ status === 'paused' ? 'Resume (P)' : 'Pause (P)' }}
+            <span class="header-action__label">{{ status === 'paused' ? 'Resume (P)' : 'Pause (P)' }}</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="currentColor"
+                 aria-hidden="true">
+              <path v-if="status === 'paused'"
+                    d="M7 4.5v15l12-7.5z" />
+              <path v-else
+                    d="M6 4h4v16H6zm8 0h4v16h-4z" />
+            </svg>
           </button>
           <button ref="settingsTrigger"
                   type="button"
                   class="arcade-button"
+                  aria-label="Settings"
+                  title="Settings (S)"
                   @click="openSettings">
-            Settings (S)
+            <span class="header-action__label">Settings (S)</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M12 2.5l1.8 2.3 2.9-.1.9 2.8 2.6 1.3-.7 2.8 1.3 2.5-2.2 1.9-.5 2.9-2.9.4-2 2.1-2.5-1.4-2.8.7-1.3-2.6-2.8-.9.1-2.9L2.5 12l2.3-1.8-.1-2.9 2.8-.9 1.3-2.6 2.8.7z" />
+              <circle cx="12" cy="12" r="3.2" />
+            </svg>
           </button>
         </div>
       </header>
@@ -73,13 +110,6 @@
         <section class="board-panel"
                  :class="'board-panel--' + mode"
                  aria-label="Playing field">
-          <div class="board-panel__top">
-            <span class="panel-eyebrow">PLAYFIELD / 01</span>
-            <span class="game-status"
-                  :class="'game-status--' + status"
-                  role="status"
-                  aria-live="polite">{{ statusLabel }}</span>
-          </div>
           <div class="board-panel__well">
             <tetcolor />
           </div>
@@ -251,11 +281,6 @@ export default {
     },
     status() {
       return this.$store.state.status
-    },
-    statusLabel() {
-      if (this.status === 'gameOver') return 'GAME OVER'
-      if (this.status === 'paused') return 'PAUSED'
-      return this.status === 'running' ? 'PLAYING' : 'READY'
     },
     modeTitle() {
       return this.mode === 'classic' ? 'Classic' : 'TetColor'
@@ -470,4 +495,5 @@ export default {
 @import './styles/arcade-stage4.styl'
 @import './styles/arcade-stage5.styl'
 @import './styles/arcade-responsive.styl'
+@import './styles/arcade-mobile.styl'
 </style>
