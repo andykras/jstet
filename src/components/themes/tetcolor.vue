@@ -18,9 +18,13 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { isActivePieceCell } from '@/utils/visualFx.js'
 
 export default {
   name: 'TetcolorBoard',
+  props: {
+    visualFx: { type: Boolean, default: false }
+  },
   computed: {
     ...mapGetters(['getWellValue', 'getDimensions'])
   },
@@ -39,7 +43,8 @@ export default {
         bottom: (val != 0 && valD != 0) || valD == 0,
         empty: val == 0,
         right: val == 0 && valR != 0,
-        top: val == 0 && valU != 0
+        top: val == 0 && valU != 0,
+        'fx-active': this.visualFx && val > 0 && isActivePieceCell(x, y, this.$store.state.pieces, this.$store.state.item)
       }
     },
     isBorder(x, y) {
