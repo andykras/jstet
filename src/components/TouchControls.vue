@@ -3,34 +3,6 @@
            aria-label="Touch game controls">
     <div class="touch-pad__left"
          role="group"
-         aria-label="Rotate and drop">
-      <button type="button"
-              class="touch-pad__key touch-pad__key--rotate"
-              :disabled="!enabled"
-              aria-label="Rotate"
-              @pointerdown="onPointerDown($event, 'rotate')"
-              @pointerup="onPointerUp"
-              @pointercancel="onPointerCancel"
-              @lostpointercapture="onPointerCancel"
-              @click="onClick($event, 'rotate')">
-        ↻
-      </button>
-      <button type="button"
-              class="touch-pad__drop"
-              :disabled="!enabled"
-              :aria-label="hard ? 'Hard drop' : 'Soft drop'"
-              @pointerdown="onPointerDown($event, 'drop')"
-              @pointerup="onPointerUp"
-              @pointercancel="onPointerCancel"
-              @lostpointercapture="onPointerCancel"
-              @click="onClick($event, 'drop')">
-        <span class="touch-pad__drop-icon"
-              aria-hidden="true">⇣</span>
-        <span>DROP</span>
-      </button>
-    </div>
-    <div class="touch-pad__right"
-         role="group"
          aria-label="Move left and right">
       <button v-for="control in moveControls"
               :key="control.action"
@@ -45,6 +17,34 @@
               @lostpointercapture="onPointerCancel"
               @click="onClick($event, control.action)">
         {{ control.glyph }}
+      </button>
+    </div>
+    <div class="touch-pad__right"
+         role="group"
+         aria-label="Drop and rotate">
+      <button type="button"
+              class="touch-pad__drop"
+              :disabled="!enabled"
+              :aria-label="hard ? 'Hard drop' : 'Soft drop'"
+              @pointerdown="onPointerDown($event, 'drop')"
+              @pointerup="onPointerUp"
+              @pointercancel="onPointerCancel"
+              @lostpointercapture="onPointerCancel"
+              @click="onClick($event, 'drop')">
+        <span class="touch-pad__drop-icon"
+              aria-hidden="true">⇣</span>
+        <span>DROP</span>
+      </button>
+      <button type="button"
+              class="touch-pad__key touch-pad__key--rotate"
+              :disabled="!enabled"
+              aria-label="Rotate"
+              @pointerdown="onPointerDown($event, 'rotate')"
+              @pointerup="onPointerUp"
+              @pointercancel="onPointerCancel"
+              @lostpointercapture="onPointerCancel"
+              @click="onClick($event, 'rotate')">
+        ↻
       </button>
     </div>
   </section>
