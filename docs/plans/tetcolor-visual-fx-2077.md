@@ -1,6 +1,6 @@
 # JSTET — TetColor Visual FX 2077
 
-> Status: **PLANNED — implementation not started**  
+> Status: **IN PROGRESS — Stage 0 code completed; full-repo and browser QA pending**  
 > Updated: 2026-11-07  
 > Branch: `feat/tetcolor-visual-fx-2077` (from the latest `master`)  
 > Scope: modern Arcade gameplay renderer; **no changes to the legacy implementation**  
@@ -60,7 +60,7 @@ Make TetColor feel like a premium, tactile, futuristic arcade game: vivid glass-
 
 ### Stage 0 — Establish FX contracts and baseline
 
-**Status:** [ ] Not started
+**Status:** [ ] Code implemented; browser baseline and full-repository checks pending — see [Stage 0 handoff](./tetcolor-visual-fx-2077-stage0.md).
 
 Tasks:
 - Capture baseline screenshots and a short representative perf trace for TetColor/Classic on desktop and a real phone or mobile browser; record current cell size, preview, frame-time behavior and existing animation.
@@ -174,11 +174,11 @@ Do not add a new rendering engine, a heavy particle library, a new dependency fo
 
 ## 6. Progress tracker
 
-- [ ] 0. Baseline and FX contracts
+- [ ] 0. Baseline and FX contracts — preference toggle, persistence and mapping implemented; full QA pending
 - [ ] 1. Glass material and active-piece lighting
 - [ ] 2. Movement, drop trails and landing impact
 - [ ] 3. Match/line clear and particles
 - [ ] 4. Combo/cascade/bonus celebrations
 - [ ] 5. Final polish, mobile/performance regression and acceptance
 
-**Current checkpoint:** planning only. First implementation task is **Stage 0**. After it is verified and documented, proceed to Stage 1, then 2, 3, 4 and 5 **in order**.
+**Current checkpoint:** Stage 0 code and documentation are committed; 5 isolated Node checks passed, but full-repository tests, lint, build, browser screenshots and FPS baseline are not yet available in this environment. See the [Stage 0 handoff](./tetcolor-visual-fx-2077-stage0.md). Finish those checks before marking Stage 0 complete or starting Stage 1. Subsequent implementation follows Stages 1–5 **in order**.
