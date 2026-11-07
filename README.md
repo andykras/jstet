@@ -11,7 +11,7 @@ Start the development server or open the deployed static site. A TetColor game s
 - **TetColor**: connect three or more blocks of the same color horizontally, vertically, or diagonally; matching blocks disappear and can trigger cascades and bonuses. The default Arcade theme retains the original light-gray `#AAAAAA` well and six TetColor colors.
 - **Classic**: stack the seven tetrominoes and clear complete horizontal lines to score points.
 - **New Game** resets the well and counters. **Pause / Resume** freezes and resumes the current run. **Game Over** shows the final score and offers a restart.
-- **Settings**: change **Arcade / Prism** appearance, reduced motion, keyboard-help visibility, and hard/soft Space-drop behavior immediately. The clearing-sequence option applies to the **next game**. Visual/control preferences are stored locally; an unfinished game is not saved.\n- **Audio**: enable or mute the mainframe hum and the keyboard, piece-lock and clearing effects in Settings. The hum pauses with the game, and browsers may require the first keyboard/touch interaction before allowing playback.
+- **Settings**: change **Arcade / Prism** appearance, opt into **Visual effects** (Off by default), reduced motion, keyboard-help visibility, and hard/soft Space-drop behavior immediately. The clearing-sequence option applies to the **next game**. Visual/control preferences, including the optional glass-block FX, are stored locally; an unfinished game is not saved.\n- **Audio**: enable or mute the mainframe hum and the keyboard, piece-lock and clearing effects in Settings. The hum pauses with the game, and browsers may require the first keyboard/touch interaction before allowing playback.
 
 ### Keyboard
 
