@@ -563,4 +563,5 @@ export default {
 @import './styles/arcade-mobile-maxfit.styl'
 @import './styles/tetcolor-visual-fx.styl'
 @import './styles/tetcolor-motion-fx.styl'
+@import './styles/tetcolor-clear-fx.styl'
 </style>
