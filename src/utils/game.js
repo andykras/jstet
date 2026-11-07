@@ -21,7 +21,8 @@ let $three = new Set()
 $three.sorted = []
 
 // Build small cosmetic snapshots only when an opt-in FX consumer is mounted.
-const hasFxConsumer = type => Boolean($bus?.all.get(type)?.size)
+// Handler stacks on the mitt bus are arrays, so consumer presence is array length.
+const hasFxConsumer = type => Boolean($bus?.all.get(type)?.length)
 const emitFx = (type, makePayload) => {
   if (hasFxConsumer(type)) $bus.emit(type, makePayload())
 }

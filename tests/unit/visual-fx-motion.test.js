@@ -46,7 +46,10 @@ test('FX snapshot coordinates remain correct after rotation and for Classic', ()
 
 test('engine publishes FX only on accepted gameplay movements and actual locks', () => {
   const engine = read('src/utils/game.js')
-  assert.match(engine, /const hasFxConsumer = type => Boolean\(\$bus\?\.all\.get\(type\)\?\.size\)/)
+  // Handler stacks on the mitt bus are arrays: a Map/Set-style .size check
+  // would read as undefined and silently disable every engine effect.
+  assert.match(engine, /const hasFxConsumer = type => Boolean\(\$bus\?\.all\.get\(type\)\?\.length\)/)
+  assert.doesNotMatch(engine, /all\.get\(type\)\?\.size/)
   assert.match(engine, /if \(hasFxConsumer\(type\)\) \$bus\.emit\(type, makePayload\(\)\)/)
   assert.match(engine, /const accepted = set\(X, Y, R\)/)
   assert.match(engine, /if \(accepted && action !== 'gravity' &&/)
@@ -79,6 +82,14 @@ test('FX overlay is optional, bounded and cleans up on all relevant lifecycles',
   assert.match(overlay, /clearTimeout\(timer\)/)
   assert.match(overlay, /gameBus\.off\(type, handler\)/)
   assert.match(overlay, /this\.reducedMotion \|\| this\.osReducedMotion/)
+})
+
+test('engine gates cosmetic FX on actual bus consumers, which mitt stores as arrays', () => {
+  const engine = read('src/utils/game.js')
+  assert.match(engine, /const hasFxConsumer = type => Boolean\(\$bus\?\.all\.get\(type\)\?\.length\)/)
+  // The handler stacks are mitt arrays: a Map/Set-style .size check would read
+  // as undefined and silently disable every engine gangway effect.
+  assert.doesNotMatch(engine, /all\.get\(type\)\?\.size/)
 })
 
 test('motion/impact styling is opt-in, transparent to touch, and respects both motion settings', () => {
