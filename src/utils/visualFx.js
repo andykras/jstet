@@ -92,3 +92,17 @@ export function getFxAnchor(cells) {
   if (!count) return null
   return Object.freeze({ column: column / count, row: row / count })
 }
+
+// A large Classic clear can contain 40+ blocks. Show a representative,
+// evenly spaced subset instead of allocating then discarding excess overlays.
+// Never mutate the original (frozen) engine snapshot.
+export function sampleFxCells(cells, limit) {
+  if (!Array.isArray(cells) || !Number.isInteger(limit) || limit <= 0) return []
+  if (cells.length <= limit) return cells
+  const selected = []
+  for (let i = 0; i < limit; i++) {
+    const index = Math.floor(i * cells.length / limit)
+    selected.push(cells[index])
+  }
+  return selected
+}
