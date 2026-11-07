@@ -54,7 +54,7 @@ test('engine publishes FX only on accepted gameplay movements and actual locks',
   assert.match(engine, /if \(!accepted && Y < item\.Y\)/)
   assert.match(engine, /if \(put\(item\)\) \{\s+emitFx\('fx:lock',/)
   assert.match(engine, /const distance = start\.Y - item\.Y/)
-  assert.match(engine, /if \(distance > 0\) \{\s+emitFx\('fx:hard-drop',/)
+  assert.match(engine, /if \(!clearing && distance > 0\) \{\s+emitFx\('fx:hard-drop',/)
   assert.match(engine, /hardDropPending = false/)
   assert.equal(engine.split("$bus.emit('sound:drop')").length - 1, 1)
 })
