@@ -1,0 +1,106 @@
+// Award-style mobile cabinet finishing pass.
+// This is the final layout layer, after arcade-mobile and arcade-rails.
+// Reserve explicit side rails and fit the actual board into the remaining
+// container: no flex basis expansion into the live HUD.
+@media (max-width: 920px)
+  .jstet-app
+    padding 4px
+
+  .arcade-console
+    padding 6px
+
+  .arcade-header
+    padding-bottom 4px
+
+  .game-layout
+    // The first rail width includes the entire card, not 12px extra padding.
+    --mobile-rail: clamp(62px, 16vw, 130px)
+    --mobile-card-width: var(--mobile-rail)
+    gap 4px
+    padding-top 3px
+
+  .game-layout--classic
+    // Classic has 10 columns (TetColor has 7). Narrower cards allow
+    // significantly larger Classic cells without covering the board.
+    --mobile-rail: clamp(53px, 13.8vw, 110px)
+
+  .board-panel
+    padding 2px
+    border-radius clamp(13px, 2.4vw, 19px)
+    background radial-gradient(ellipse at 50% 43%, rgba(71, 35, 100, .25), transparent 75%), linear-gradient(160deg, #251335, #100a25 90%)
+    box-shadow inset 0 1px rgba(255, 208, 143, .1), 0 0 23px rgba(218, 83, 152, .14)
+
+  .board-panel__well
+    // Earlier flex: 1 1 0 ignored this width and caused overlay collisions.
+    // Keep both width and flex basis bound to the side rails.
+    flex 0 0 auto
+    width unquote('calc(100% - var(--mobile-rail) - var(--mobile-rail) - 12px)')
+    max-width unquote('calc(100% - var(--mobile-rail) - var(--mobile-rail) - 12px)')
+    height 100%
+    min-height 0
+
+  .board-panel__well .tetcolor-board
+    // Actual game proportions come from --board-columns and --board-rows.
+    // Only 7px is reserved for the glowing 3px frame and rounding.
+    --jstet-cell-size unquote('max(1px, min(calc((100cqw - 7px) / var(--board-columns, 7)), calc((100cqh - 7px) / var(--board-rows, 18))))')
+
+  .dashboard-column .game-hud .hud-stat--level
+    left 5px
+    top 5px
+
+  .dashboard-column .next-panel
+    left 5px
+    width var(--mobile-card-width)
+
+  .right-column .game-hud .hud-stat--score
+    right 5px
+    top 5px
+
+  .right-column .game-hud .hud-stat--progress
+    right 5px
+    top unquote('calc(12px + clamp(51px, 8vw, 77px))')
+
+  .right-column .game-hud .hud-stat--bonus
+    right 5px
+    bottom 5px
+
+  // Give the preview the largest cells the real piece and rail permit.
+  .dashboard-column .next-panel .next-piece
+    --jstet-cell-size unquote('min(var(--jstet-preview-cell-size, 30px), calc((var(--mobile-card-width) - 14px) / var(--preview-columns, 3)))')
+
+  // Bevelled, readable two-handed controls: left/right | DROP/rotate.
+  .touch-pad
+    padding 3px
+    border 1px solid rgba(255, 175, 115, .34)
+    border-radius 14px
+    background linear-gradient(160deg, rgba(41, 26, 68, .94), rgba(14, 12, 34, .95))
+    box-shadow inset 0 1px rgba(255, 215, 168, .09), 0 0 18px rgba(17, 6, 43, .26)
+
+  .touch-pad__key
+    display grid
+    place-items center
+    background linear-gradient(160deg, #3c295b, #211b44)
+    color #fff0ff
+    box-shadow inset 0 1px rgba(251, 217, 255, .13), 0 3px 10px rgba(4, 4, 24, .24)
+
+  .touch-pad__arrow
+    width clamp(29px, 6.5vw, 39px)
+    height clamp(29px, 6.5vw, 39px)
+    overflow visible
+    filter drop-shadow(0 0 5px rgba(246, 204, 255, .2))
+
+  .touch-pad__key:active:not(:disabled)
+    background linear-gradient(160deg, #65508c, #35295f)
+    color #ffffff
+    box-shadow inset 0 1px rgba(255, 255, 255, .25)
+
+@media (max-width: 370px)
+  .game-layout
+    --mobile-rail: clamp(59px, 17.5vw, 67px)
+
+  .game-layout--classic
+    --mobile-rail: 51px
+
+  .touch-pad__arrow
+    width 29px
+    height 29px

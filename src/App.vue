@@ -108,6 +108,7 @@
 
       <main v-if="!naiveImplementation"
             class="game-layout"
+            :class="'game-layout--' + mode"
             :aria-label="modeTitle + ' game'"
             :style="boardGeometry">
         <aside class="dashboard-column"
@@ -550,4 +551,5 @@ export default {
 @import './styles/arcade-responsive.styl'
 @import './styles/arcade-mobile.styl'
 @import './styles/arcade-rails.styl'
+@import './styles/arcade-mobile-maxfit.styl'
 </style>
