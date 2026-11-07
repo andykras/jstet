@@ -36,7 +36,7 @@
           </button>
           <button ref="modeLegacy"
                   type="button"
-                  class="mode-switch__button"
+                  class="mode-switch__button mode-switch__button--legacy"
                   :aria-pressed="naiveImplementation"
                   @click="requestMode('legacy')">
             Legacy
