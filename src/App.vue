@@ -564,4 +564,5 @@ export default {
 @import './styles/tetcolor-visual-fx.styl'
 @import './styles/tetcolor-motion-fx.styl'
 @import './styles/tetcolor-clear-fx.styl'
+@import './styles/tetcolor-bonus-fx.styl'
 </style>
