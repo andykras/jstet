@@ -36,8 +36,8 @@ test('mode-specific rails enlarge both gameboards while preserving side card spa
       const [columns, rows] = mode === 'classic' ? [10, 20] : [7, 18]
       const playableCell = Math.min((reservedWidth - 7) / columns, (760 - 7) / rows)
       assert.ok(playableCell >= 1)
-      assert.ok(columns * playableCell <= reservedWidth - 7)
-      assert.ok(rows * playableCell <= 760 - 7)
+      assert.ok(columns * playableCell <= reservedWidth - 7 + 1e-7)
+      assert.ok(rows * playableCell <= 760 - 7 + 1e-7)
     }
   }
 })
