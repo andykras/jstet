@@ -48,6 +48,9 @@ test('glass cell styling is scoped behind opt-in and reuses live palette tokens'
   assert.match(fx, /\.jstet-app\.fx-enabled\.is-running/)
   assert.match(fx, /\.jstet-app\.fx-enabled\.reduce-motion/)
   assert.match(fx, /@media \(prefers-reduced-motion: reduce\)/)
+  // The media rule must survive the specificity race with the is-running
+  // animation rule, or OS-level reduced motion keeps the breathe animation.
+  assert.match(fx, /@media \(prefers-reduced-motion: reduce\)\n  \.jstet-app\.fx-enabled\.is-running \.tetcolor-board \.game-cell\.fx-active::after\n    animation none/)
   assert.match(app, /'fx-enabled': preferences\.visualFxEnabled && !naiveImplementation/)
   assert.match(app, /'is-running': status === 'running' && !naiveImplementation/)
   assert.match(app, /<tetcolor :visual-fx="preferences\.visualFxEnabled"\s+:reduced-motion="preferences\.reducedMotion" \/>/)
