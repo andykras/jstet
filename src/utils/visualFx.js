@@ -38,3 +38,40 @@ export function getPieceFxCells(item, pieces, dimensions) {
   }
   return Object.freeze(cells)
 }
+
+// Capture only positive playable values before the engine marks matches as -2.
+// Called at discrete detection boundaries, never on every animation frame.
+export function captureClearCandidates(cells) {
+  if (!cells) return []
+  const candidates = []
+  for (let y = 1; y < cells.height; y++) {
+    for (let x = 1; x < cells.width - 1; x++) {
+      const color = cells[y][x]
+      if (color > 0) candidates.push({ x, y, color })
+    }
+  }
+  return candidates
+}
+
+// Keep the original color and position only if the engine actually marked the
+// cell for removal. This supports arbitrary TetColor matches and Classic rows.
+export function markedClearFxCells(candidates, cells) {
+  if (!cells || !candidates?.length) return Object.freeze([])
+  const marked = []
+  for (const { x, y, color } of candidates) {
+    if (cells[y][x] !== -2) continue
+    const position = toVisualFxCell(x, y, cells)
+    if (position) marked.push(Object.freeze({ ...position, color }))
+  }
+  return Object.freeze(marked)
+}
+
+// Single-step clearing removes exactly one TetColor cell or one Classic row.
+// The row/column filter is based on the original detection snapshot, even if
+// the underlying board cells have since shifted under gravity.
+export function clearStepFxCells(cells, mode, x, y, dimensions) {
+  const position = toVisualFxCell(x, y, dimensions)
+  if (!position || !cells?.length) return Object.freeze([])
+  return Object.freeze(cells.filter(cell =>
+    cell.row === position.row && (mode === 'classic' || cell.column === position.column)))
+}
