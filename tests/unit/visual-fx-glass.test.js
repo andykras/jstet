@@ -50,7 +50,7 @@ test('glass cell styling is scoped behind opt-in and reuses live palette tokens'
   assert.match(fx, /@media \(prefers-reduced-motion: reduce\)/)
   assert.match(app, /'fx-enabled': preferences\.visualFxEnabled && !naiveImplementation/)
   assert.match(app, /'is-running': status === 'running' && !naiveImplementation/)
-  assert.match(app, /<tetcolor :visual-fx="preferences\.visualFxEnabled" \/>/)
+  assert.match(app, /<tetcolor :visual-fx="preferences\.visualFxEnabled"\s+:reduced-motion="preferences\.reducedMotion" \/>/)
   assert.match(app, /@import '\.\/styles\/tetcolor-visual-fx\.styl'/)
   assert.match(baseline, /\.game-cell\n/)
   assert.doesNotMatch(baseline, /fx-active|fx-enabled|fx-glass/)
