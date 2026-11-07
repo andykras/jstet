@@ -551,4 +551,5 @@ export default {
 @import './styles/arcade-responsive.styl'
 @import './styles/arcade-mobile.styl'
 @import './styles/arcade-rails.styl'
+@import './styles/arcade-mobile-maxfit.styl'
 </style>
