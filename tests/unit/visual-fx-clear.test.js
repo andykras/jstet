@@ -95,6 +95,7 @@ test('the existing clearing algorithms are wrapped, never replaced or delayed', 
   assert.match(engine, /const result = detect\(\)/)
   assert.match(engine, /clearFxCells = candidates \? markedClearFxCells\(candidates, \$cells\)/)
   assert.match(engine, /detectClears\('tetcolor', getThreeBlock\)/)
+  assert.equal(engine.split("detectClears('tetcolor', getThreeBlock)").length - 1, 2, 'lock and cascade both emit clear events')
   assert.match(engine, /detectClears\('classic', \(\) => getSolidLines\(/)
   assert.match(engine, /emitClearStep\('tetcolor', x, xy - x \* \$cells\.height\)/)
   assert.match(engine, /emitClearStep\('classic', 1, \$lines\[\$lines\.length - 1\]\)/)
