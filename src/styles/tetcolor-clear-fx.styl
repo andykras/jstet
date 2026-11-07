@@ -1,0 +1,97 @@
+// Visual FX 2077 / Stage 3 — opt-in match and line-clear feedback.
+// Colors are captured before the engine writes its -2 removal sentinel.
+// One overlay cell is used per clear event cell, with two CSS-only particles.
+.jstet-app.fx-enabled .tetcolor-fx-cell--charge
+  border 1px solid var(--fx-color)
+  background linear-gradient(90deg, transparent 4%, rgba(255, 255, 255, 0.54) 50%, transparent 96%)
+  background-size 220% 100%
+  box-shadow inset 0 0 6px var(--fx-color), 0 0 7px var(--fx-color)
+  animation fx-clear-charge 145ms ease-out both
+  animation-delay unquote('calc(var(--fx-order) * 9ms)')
+
+  &::before
+    inset 1px
+    border 1px solid rgba(255, 255, 255, 0.75)
+    box-shadow inset 0 0 6px var(--fx-color)
+    animation fx-clear-charge-rim 145ms ease-out both
+    animation-delay unquote('calc(var(--fx-order) * 9ms)')
+
+.jstet-app.fx-enabled .tetcolor-fx-cell--clear
+  border 1px solid var(--fx-color)
+  background radial-gradient(circle at center, rgba(255, 255, 255, 0.84), var(--fx-color) 23%, transparent 76%)
+  box-shadow 0 0 9px var(--fx-color), inset 0 0 7px rgba(255, 255, 255, 0.6)
+  animation fx-clear-release 340ms ease-out both
+
+  // Two light shards per cell; bounded and independent of game-cell deletion.
+  &::before,
+  &::after
+    width 23%
+    height 23%
+    background var(--fx-color)
+    box-shadow 0 0 6px var(--fx-color)
+    clip-path polygon(50% 0, 100% 30%, 73% 100%, 0 75%)
+
+  &::before
+    top 25%
+    left 17%
+    animation fx-clear-particle-left 340ms cubic-bezier(.1, .6, .5, 1) both
+
+  &::after
+    right 20%
+    bottom 20%
+    animation fx-clear-particle-right 340ms cubic-bezier(.1, .6, .5, 1) both
+
+@keyframes fx-clear-charge
+  from
+    opacity 0.24
+    background-position 100% 50%
+    transform scale(0.96)
+  55%
+    opacity 0.85
+  to
+    opacity 0
+    background-position 0 50%
+    transform scale(1)
+
+@keyframes fx-clear-charge-rim
+  from
+    opacity 0.25
+  55%
+    opacity 0.8
+  to
+    opacity 0
+
+@keyframes fx-clear-release
+  from
+    opacity 0.95
+    transform scale(1)
+  38%
+    opacity 0.65
+  to
+    opacity 0
+    transform scale(0.57)
+
+@keyframes fx-clear-particle-left
+  from
+    opacity 1
+    transform translate(0, 0) rotate(0deg)
+  to
+    opacity 0
+    transform translate(-115%, -145%) rotate(-75deg)
+
+@keyframes fx-clear-particle-right
+  from
+    opacity 1
+    transform translate(0, 0) rotate(0deg)
+  to
+    opacity 0
+    transform translate(135%, 155%) rotate(110deg)
+
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-cell--charge,
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-cell--clear
+  display none
+
+@media (prefers-reduced-motion: reduce)
+  .jstet-app.fx-enabled .tetcolor-fx-cell--charge,
+  .jstet-app.fx-enabled .tetcolor-fx-cell--clear
+    display none
