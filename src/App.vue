@@ -315,6 +315,9 @@ export default {
     naive(value) {
       if (value) this.stopModern()
       else this.startModern()
+      // v-if replaces the well element when leaving Legacy. Observe the new
+      // element rather than keeping a stale reference to the detached board.
+      this.$nextTick(() => this.observeWell())
     },
     status(value) {
       if (value !== 'paused' && value !== 'gameOver') return
@@ -331,13 +334,10 @@ export default {
     this.startModern()
   },
   mounted() {
-    this.$nextTick(() => {
-      this.syncPreviewCellSize()
-      if (typeof ResizeObserver !== 'undefined') {
-        this.wellResizeObserver = new ResizeObserver(() => this.syncPreviewCellSize())
-        if (this.$refs.wellContainer) this.wellResizeObserver.observe(this.$refs.wellContainer)
-      }
-    })
+    if (typeof ResizeObserver !== 'undefined') {
+      this.wellResizeObserver = new ResizeObserver(() => this.syncPreviewCellSize())
+    }
+    this.$nextTick(() => this.observeWell())
     window.addEventListener('resize', this.syncPreviewCellSize)
   },
   beforeUnmount() {
@@ -350,6 +350,14 @@ export default {
 
   methods: {
     ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel', 'setOptions', 'setStatus']),
+
+    observeWell() {
+      if (this.wellResizeObserver) {
+        this.wellResizeObserver.disconnect()
+        if (this.$refs.wellContainer) this.wellResizeObserver.observe(this.$refs.wellContainer)
+      }
+      this.syncPreviewCellSize()
+    },
 
     syncPreviewCellSize() {
       const cell = this.$refs.wellContainer?.querySelector('.tetcolor-board .game-cell')
