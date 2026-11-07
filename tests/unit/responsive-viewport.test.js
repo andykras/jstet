@@ -27,7 +27,8 @@ test('viewport sizing uses the real board container and preserves square cells',
 test('compact screens keep touch controls and the complete board in the layout', () => {
   const styles = read('src/styles/arcade-responsive.styl')
   assert.match(styles, /@media \(max-width: 920px\)/)
-  assert.match(styles, /'stats preview' 'board board' 'touch touch'/)
+  assert.match(styles, /'dashboard preview' 'board board' 'touch touch'/)
+  assert.match(styles, /'board dashboard' 'board touch'/)
   assert.match(styles, /@media \(max-width: 640px\) and \(orientation: portrait\)/)
   assert.match(styles, /@media \(max-width: 920px\) and \(max-height: 520px\) and \(orientation: landscape\)/)
   assert.match(styles, /max-height: 560px/)
