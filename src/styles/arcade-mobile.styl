@@ -260,10 +260,13 @@
 
 @media (max-width: 640px)
   .arcade-brand
-    flex 0 0 22px
+    flex 0 0 auto
+    gap 3px
 
   .arcade-brand__name
-    display none
+    display block
+    font-size clamp(15px, 4vw, 19px)
+    letter-spacing .03em
 
   .arcade-brand__mark
     transform scale(.78)
@@ -308,6 +311,12 @@
     height clamp(46px, 12vw, 55px)
 
 @media (max-width: 370px)
+  .arcade-brand__name
+    display none
+
+  .arcade-brand
+    flex 0 0 22px
+
   .game-layout
     --mobile-rail: clamp(66px, 22vw, 78px)
 
