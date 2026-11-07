@@ -4,7 +4,7 @@
          'theme-' + preferences.theme,
          {
            'reduce-motion': preferences.reducedMotion,
-           'fx-enabled': preferences.visualFxEnabled,
+           'fx-enabled': preferences.visualFxEnabled && !naiveImplementation,
            'is-paused': status === 'paused',
            'is-lab': naiveImplementation
          }
