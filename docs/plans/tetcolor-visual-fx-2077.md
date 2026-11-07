@@ -15,6 +15,10 @@ Make TetColor feel like a premium, tactile, futuristic arcade game: vivid glass-
 ### Non-negotiable defaults and boundaries
 
 - **TetColor remains the default game mode** (`App.vue`: `mode: 'tetcolor'`). Classic remains available and playable.
+- **Visual FX are OFF by default (No FX)** for all users, including first launch and when no preference is stored. The starting gameplay must look and behave as the current baseline, without enhanced glass materials, active-piece pulse, trails, impact flashes, particles, or combo celebrations.
+- Add an explicit **Visual effects: Off / On** control under Settings. Opt-in only; enabling FX is immediate, does not restart or reset the game, and the choice persists across reloads. Turning it off immediately cancels existing cosmetic effects and restores baseline rendering.
+- Implement the FX switch as a presentation preference (e.g. `visualFxEnabled: false`); **do not couple it to game mode or Arcade/Prism theme**. Both appearance themes remain selectable independently. Normalize missing/invalid historical saved values to `false` without losing existing preferences.
+- Reduced motion remains an independent restriction: when FX is On but reduced motion is requested, present only static/low-motion styling. **No FX** must be fully inactive regardless of reduced-motion and sound settings.
 - The **existing TetColor skin/palette is the visual baseline and default**. Preserve the original six TetColor colors (`#89fb6e`, `#ec64f8`, `#ec615c`, `#fffe73`, `#5458f6`, `#89fcfd`) and the current Arcade console appearance as the default (`preferences.theme: 'arcade'`). Add depth/gloss/light within those identities; do **not** silently switch the blocks to a generic all-cyan neon skin, create another default skin, or change their gameplay meaning.
 - Keep existing Arcade and Prism appearance preferences functional; Prism remains a supported alternate with its own palette. FX should derive from color tokens rather than hard-coded one-theme values.
 - Keep the existing light-gray TetColor well / grid contract in the default Arcade presentation unless explicitly approved otherwise.
@@ -64,9 +68,10 @@ Tasks:
 - Specify minimal immutable FX payloads and cell-to-overlay coordinate conversion (including resized wells).
 - Set a bounded effect-count / animation-lifetime policy; define cancellation on `pause`, restart, legacy switch, game-over, navigation and visibility changes.
 - Create reusable FX tokens/timings and reduced-motion fallback before creating elaborate effects.
+- Add the explicit Visual effects Off/On preference with **default false**, persistence and backward-compatible normalization; define a reliable baseline/no-FX CSS gate. Ensure the preference can change immediately without restarting the game.
 - Add Stage 0 contract tests so audio/gameplay events cannot be accidentally duplicated.
 
-**Gate:** Baseline and event diagram recorded; cosmetics are isolated from gameplay; tests remain green.
+**Gate:** Baseline and event diagram recorded; default No FX is demonstrably identical to the pre-FX baseline; opt-in toggle, persistence, runtime cancellation, and legacy saved-preference migration are tested; cosmetics are isolated from gameplay; tests remain green.
 
 ### Stage 1 — Living TetColor glass blocks
 
@@ -83,7 +88,7 @@ Implementation:
 - Prefer `src/styles/game-cells.styl` and isolated FX CSS tokens. Extend `tetcolor.vue` / `NextPiece.vue` only for correct active/preview identification.
 - Any added pseudo-elements/markup must not affect square cell sizing, mobile maximum-fit layout or board hit testing.
 
-**Gate:** Colors are unmistakably TetColor, cells are crisp at small phone sizes, board and Next remain geometrically unchanged, and reduced-motion produces a polished static look.
+**Gate:** With FX On, colors are unmistakably TetColor, cells are crisp at small phone sizes, board and Next remain geometrically unchanged, and reduced-motion produces a polished static look. With FX Off, block materials remain exactly at their baseline styling.
 
 ### Stage 2 — Motion, hard drop and physical landing
 
@@ -144,7 +149,7 @@ Implementation:
 Tasks:
 - Tune the visual hierarchy using the rule **quiet at rest / rewarding on events**. Ensure all six TetColor colors remain distinct, including contrast on the light-gray Arcade well.
 - Verify touch behavior and maximum-fit geometry at 320×568, 375×667, 390×844, 428×926, 768×1024, short landscape and desktop 1366×768.
-- Cover both Arcade and Prism themes, both modes, Next preview, bonus HUD, pause/resume, game over, new game, responsive resize and legacy-mode return.
+- Cover both Arcade and Prism themes, **FX Off by default and FX On by explicit opt-in**, both modes, Next preview, bonus HUD, pause/resume, game over, new game, responsive resize and legacy-mode return.
 - Verify keyboard/touch parity, normal vs hard drop, match types, cascades, sound enabled/disabled, background-tab cancellation, app reduced motion, and OS reduced motion.
 - Compare representative frame times/memory against Stage 0. **Target** smooth 60 FPS on a representative phone without visible input lag; if not attainable, lower effect density rather than compromise the game.
 - Run complete `npm run test:unit`, `npm run lint`, `npm run build`, inspect production preview and verify PWA/static build compatibility.
@@ -162,7 +167,7 @@ Tasks:
 | Transient overlay | new small component under `src/components/` and optional `src/utils/` FX controller |
 | Discrete events | existing `src/utils/game.js` via `src/utils/gameBus.js`, only as required |
 | Match/line metadata | `src/game/tetcolor.js`, `src/game/tetris.js` only where indispensable, **no rule edits** |
-| User preferences/motion | existing `src/utils/preferences.js`, `src/App.vue`, `arcade-shell.styl` |
+| User preferences/motion | existing `src/utils/preferences.js`, `src/App.vue`, `arcade-shell.styl` — FX starts Off |
 | Unit/UI contracts | focused tests under `tests/unit/` |
 
 Do not add a new rendering engine, a heavy particle library, a new dependency for simple CSS FX, or a separate game-state owner without measured need.
