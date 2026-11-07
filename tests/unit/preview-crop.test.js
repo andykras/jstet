@@ -39,5 +39,5 @@ test('next-piece UI derives crop width from the current piece and limits by side
   assert.match(component, /getPreviewRows\(this.previewBounds\)/)
   assert.match(component, /'--preview-columns': previewColumns/)
   assert.match(component, /v-for="row in previewRows"/)
-  assert.match(rails, /--jstet-cell-size unquote\('min\(var\(--jstet-preview-cell-size, 30px\), calc\(\(var\(--mobile-card-width\) - 16px\) \/ var\(--preview-columns, 3\)\)\)'\)/)
+  assert.match(rails, /--jstet-cell-size unquote\('min\(var\(--jstet-preview-cell-size, 30px\), calc\(\(var\(--mobile-card-width\) - 12px\) \/ var\(--preview-columns, 3\)\)\)'\)/)
 })
