@@ -90,10 +90,17 @@
     display none
 
   .board-panel__well
+    // Leave only narrow side rails for HUD cards. The playable well fills
+    // the remaining width and height; its grid is centered within this area.
     width unquote('calc(100% - var(--mobile-rail) - var(--mobile-rail) - 12px)')
     height 100%
     min-height 0
     flex 1 1 0
+
+  .board-panel__well .tetcolor-board
+    // Desktop's 38px cap was keeping a tall phone board artificially tiny.
+    // Fit by the smaller of available width / columns and height / rows.
+    --jstet-cell-size unquote('max(1px, min(calc((100cqw - 14px) / var(--board-columns, 7)), calc((100cqh - 14px) / var(--board-rows, 18))))')
 
   // The city art is desktop-only; mobile metrics frame the board corners.
   .dashboard-column
@@ -197,7 +204,7 @@
     font-size clamp(9px, 1.5vw, 13px)
 
   .next-panel .next-piece
-    --jstet-cell-size: clamp(10px, 1.9vw, 17px)
+    // Final scaling is applied by arcade-rails.styl after the mobile rules.
     margin 6px auto 0
 
   // Thumb controls are split: rotation/drop on the left, movement on the right.
@@ -365,8 +372,7 @@
   .touch-pad__drop-icon
     font-size 22px
 
-  .dashboard-column .game-hud .hud-stat--bonus
-    top 71px
+
 
 // Extremely short portrait windows may scroll, never clip playable cells.
 @media (max-width: 640px) and (max-height: 560px) and (orientation: portrait)
