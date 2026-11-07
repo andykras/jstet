@@ -7,6 +7,7 @@ import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines, resetSolidLines } from '@/game/tetris'
 import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock, resetThreeBlocks } from '@/game/tetcolor'
 import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
+import { getPieceFxCells } from '@/utils/visualFx'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -18,6 +19,11 @@ let $bus = null
 let $lines = []
 let $three = new Set()
 $three.sorted = []
+
+// Build small cosmetic snapshots only when an opt-in FX consumer is mounted.
+const emitFx = (type, makePayload) => {
+  if ($bus?.all.get(type)?.size) $bus.emit(type, makePayload())
+}
 
 export function setup(bus) {
   if ($bus) throw new Error('Game engine already connected')
@@ -56,6 +62,7 @@ export const game = {
   started: false,
   paused: false,
   debug: false,
+  hardDropPending: false,
 
   // Configuring a run never mutates the shared defaults or Vuex hot-path data.
   configure(values) {
@@ -84,6 +91,7 @@ export const game = {
     this.id = null
     this.started = false
     this.paused = false
+    this.hardDropPending = false
     this.releaseControls()
     if (this.status !== 'idle') {
       this.status = 'idle'
@@ -107,6 +115,7 @@ export const game = {
     this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
     this.matchStreak = 0
     this.chainBonus = 0
+    this.hardDropPending = false
     this.intervals = {}
     this.started = true
     this.status = 'running'
@@ -190,10 +199,10 @@ export const game = {
     }
 
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
-    if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R)
-    if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R)
-    if (events.rotate.active(this.currentTime)) update(item.X, item.Y, item.R + 1)
-    if (events.down.active(this.currentTime)) update(item.X, item.Y - 1, item.R)
+    if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R, 'left')
+    if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R, 'right')
+    if (events.rotate.active(this.currentTime)) update(item.X, item.Y, item.R + 1, 'rotate')
+    if (events.down.active(this.currentTime)) update(item.X, item.Y - 1, item.R, 'down')
 
     this.increase()
     this.id = requestAnimationFrame(this.loop.bind(this))
@@ -253,16 +262,32 @@ const set = (X, Y, R, T = item.T, N = item.N) => {
 //   return success
 // }
 
-const update = (X, Y, R) => {
+const update = (X, Y, R, action = 'gravity') => {
   if (($lines.length > 0 && game.singleBlock) || ($three.size > 0 && game.singleBlock)) return
 
-  if (!set(X, Y, R) && Y < item.Y) {
+  const previous = item
+  const accepted = set(X, Y, R)
+  if (accepted && action !== 'gravity' && (previous.X !== item.X || previous.Y !== item.Y || previous.R !== item.R)) {
+    emitFx('fx:move', () => Object.freeze({
+      action,
+      from: Object.freeze({ X: previous.X, Y: previous.Y, R: previous.R }),
+      to: Object.freeze({ X: item.X, Y: item.Y, R: item.R }),
+      cells: getPieceFxCells(previous, $pieces, $cells)
+    }))
+  }
+
+  if (!accepted && Y < item.Y) {
     game.drop = Math.max(0, game.drop - 1)
 
     game.scheduled = !game.scheduled
     if (game.scheduled) return
 
     if (put(item)) {
+      emitFx('fx:lock', () => Object.freeze({
+        cells: getPieceFxCells(item, $pieces, $cells),
+        hard: game.hardDropPending
+      }))
+      game.hardDropPending = false
       $bus.emit('sound:drop')
       if (game.tetcolor) {
         $three = getThreeBlock()
@@ -293,6 +318,7 @@ const update = (X, Y, R) => {
       // reset all timers for next piece, except level timer
       game.intervals = { [game.levelTime * 1000]: game.intervals[game.levelTime * 1000] }
     } else {
+      game.hardDropPending = false
       game.started = false
     }
   }
@@ -335,7 +361,18 @@ const update = (X, Y, R) => {
 // }
 
 const dropDown = _ => {
+  const start = item
   while (set(item.X, item.Y - 1, item.R));
+  const distance = start.Y - item.Y
+  if (distance > 0) {
+    emitFx('fx:hard-drop', () => Object.freeze({
+      from: Object.freeze({ X: start.X, Y: start.Y, R: start.R }),
+      to: Object.freeze({ X: item.X, Y: item.Y, R: item.R }),
+      distance,
+      cells: getPieceFxCells(start, $pieces, $cells)
+    }))
+  }
+  game.hardDropPending = true
   update(item.X, item.Y + game.drop++, item.R)
 }
 
