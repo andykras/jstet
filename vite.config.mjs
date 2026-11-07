@@ -15,7 +15,12 @@ export default defineConfig({
       filename: 'service-worker.js',
       injectRegister: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3}'],
+        // A waiting worker is why phones kept the old build with all tabs open:
+        // take control immediately and drop caches from previous precache revisions.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true
       }
     })
   ],
