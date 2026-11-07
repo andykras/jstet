@@ -1,6 +1,6 @@
 # JSTET — TetColor Visual FX 2077
 
-> Status: **IN PROGRESS — Stages 0–2 implemented; full-repository and browser QA pending**  
+> Status: **IN PROGRESS — Stages 0–3 implemented; full-repository and browser QA pending**  
 > Updated: 2026-11-07  
 > Branch: `feat/tetcolor-visual-fx-2077` (from the latest `master`)  
 > Scope: modern Arcade gameplay renderer; **no changes to the legacy implementation**  
@@ -109,7 +109,7 @@ Implementation:
 
 ### Stage 3 — Match and line elimination
 
-**Status:** [ ] Not started
+**Status:** [ ] Implementation committed; full-repository and real-browser QA pending — see [Stage 3 handoff](./tetcolor-visual-fx-2077-stage3.md).
 
 Visuals:
 - Before removal, matched TetColor cells briefly charge/brighten (~80–140 ms visual cue) and a localized light sweep passes across the affected cells.
@@ -177,8 +177,8 @@ Do not add a new rendering engine, a heavy particle library, a new dependency fo
 - [ ] 0. Baseline and FX contracts — preference toggle, persistence and mapping implemented; full QA pending
 - [ ] 1. Glass material and active-piece lighting — code committed; full QA pending
 - [ ] 2. Movement, drop trails and landing impact — code committed; full QA pending
-- [ ] 3. Match/line clear and particles
+- [ ] 3. Match/line clear and particles — code committed; full QA pending
 - [ ] 4. Combo/cascade/bonus celebrations
 - [ ] 5. Final polish, mobile/performance regression and acceptance
 
-**Current checkpoint:** Stages 0–2 are implemented and committed, with unit contracts and dedicated QA handoffs. The Stage 2 helper's 3 isolated Node tests passed, but the **repository** test/lint/build, actual Vue/Stylus compilation, browser/mobile checks and performance baseline remain pending. See [Stage 0](./tetcolor-visual-fx-2077-stage0.md), [Stage 1](./tetcolor-visual-fx-2077-stage1.md) and [Stage 2](./tetcolor-visual-fx-2077-stage2.md) handoffs. Next: finish QA, then Stage 3 (match/line-clear FX). Keep PR Draft; no merge/deploy.
+**Current checkpoint:** Stages 0–3 have implementation, focused repository tests and handoff docs committed. The Stage 3 pure capture/step helpers passed 5/5 isolated Node fixture checks, but the **repository** test/lint/build, Vue/Stylus compilation, mobile/browser visual checks and performance baseline remain pending. Review [Stage 0](./tetcolor-visual-fx-2077-stage0.md), [Stage 1](./tetcolor-visual-fx-2077-stage1.md), [Stage 2](./tetcolor-visual-fx-2077-stage2.md) and [Stage 3](./tetcolor-visual-fx-2077-stage3.md) before acceptance. Next Stage 4 adds actual combo/cascade/bonus celebrations; no merge/deploy.
