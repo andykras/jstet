@@ -62,7 +62,8 @@
 
   // Board, live metrics and next preview occupy one grid area.
   .game-layout
-    --mobile-rail: clamp(68px, 23vw, 180px)
+    // Side cards frame the board, they must not steal its usable width.
+    --mobile-rail: clamp(64px, 18.5vw, 148px)
     --mobile-card-width: calc(var(--mobile-rail) - 12px)
     grid-template-areas 'stage' 'touch'
     grid-template-columns minmax(0, 1fr)
@@ -325,7 +326,7 @@
     flex 0 0 22px
 
   .game-layout
-    --mobile-rail: clamp(66px, 22vw, 78px)
+    --mobile-rail: clamp(59px, 18vw, 70px)
 
   .arcade-header
     gap 3px
