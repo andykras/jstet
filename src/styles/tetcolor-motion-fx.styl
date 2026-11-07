@@ -1,0 +1,114 @@
+// Visual FX 2077 / Stage 2 — compact, opt-in, pointer-transparent feedback.
+// This layer is absolutely positioned inside the rendered well; never changes
+// grid dimensions or intercepts touch input.
+.jstet-app.fx-enabled .tetcolor-board
+  position relative
+
+.jstet-app.fx-enabled .tetcolor-fx-layer
+  position absolute
+  inset 0
+  z-index 2
+  overflow hidden
+  pointer-events none
+
+.jstet-app.fx-enabled .tetcolor-fx-cell
+  position absolute
+  top unquote('calc(var(--fx-row) * var(--jstet-cell-size))')
+  left unquote('calc(var(--fx-column) * var(--jstet-cell-size))')
+  width var(--jstet-cell-size)
+  height var(--jstet-cell-size)
+  pointer-events none
+  box-sizing border-box
+
+  &::before,
+  &::after
+    content ''
+    position absolute
+    pointer-events none
+
+.jstet-app.fx-enabled .tetcolor-fx-cell--move
+  border 1px solid var(--fx-color)
+  background radial-gradient(circle at 45% 25%, rgba(255, 255, 255, 0.42), transparent 70%)
+  box-shadow inset 0 0 5px rgba(255, 255, 255, 0.32), 0 0 7px var(--fx-color)
+  animation fx-piece-trace 155ms ease-out both
+
+.jstet-app.fx-enabled .tetcolor-fx-cell--drop
+  height unquote('calc((var(--fx-distance) + 1) * var(--jstet-cell-size))')
+  opacity 0
+  animation fx-drop-trace 270ms ease-out both
+
+  &::before
+    top 0
+    bottom 0
+    left 50%
+    width 3px
+    transform translateX(-50%)
+    background linear-gradient(180deg, transparent, var(--fx-color) 28%, rgba(255, 255, 255, 0.92) 69%, transparent)
+    box-shadow 0 0 7px var(--fx-color), 0 0 11px rgba(255, 255, 255, 0.5)
+
+  &::after
+    bottom 0
+    left 21%
+    width 58%
+    height var(--jstet-cell-size)
+    border-bottom 2px solid var(--fx-color)
+    background linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.16))
+
+.jstet-app.fx-enabled .tetcolor-fx-cell--lock,
+.jstet-app.fx-enabled .tetcolor-fx-cell--hard-lock
+  animation fx-lock-flash 210ms ease-out both
+
+  &::before
+    inset 2px
+    border 2px solid var(--fx-color)
+    box-shadow 0 0 9px var(--fx-color), inset 0 0 5px rgba(255, 255, 255, 0.58)
+    animation fx-impact-ring 210ms ease-out both
+
+  &::after
+    inset 0
+    background radial-gradient(circle, rgba(255, 255, 255, 0.74), var(--fx-color) 24%, transparent 70%)
+    animation fx-lock-flash 210ms ease-out both
+
+.jstet-app.fx-enabled .tetcolor-fx-cell--hard-lock
+  animation-duration 250ms
+
+  &::before,
+  &::after
+    animation-duration 250ms
+
+@keyframes fx-piece-trace
+  from
+    opacity 0.42
+    transform translate(0, 0) scale(0.94)
+  to
+    opacity 0
+    transform translate(unquote('calc(var(--fx-dx) * var(--jstet-cell-size))'), unquote('calc(var(--fx-dy) * var(--jstet-cell-size))')) scale(0.72)
+
+@keyframes fx-drop-trace
+  from
+    opacity 0.72
+    transform translateY(-3px) scaleX(0.86)
+  to
+    opacity 0
+    transform translateY(4px) scaleX(0.48)
+
+@keyframes fx-lock-flash
+  from
+    opacity 0.85
+  to
+    opacity 0
+
+@keyframes fx-impact-ring
+  from
+    opacity 0.83
+    transform scale(0.5)
+  to
+    opacity 0
+    transform scale(1.25)
+
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-layer
+  display none
+
+@media (prefers-reduced-motion: reduce)
+  .jstet-app.fx-enabled .tetcolor-fx-layer
+    display none
