@@ -40,6 +40,8 @@ test('desktop preview shares actual playable-cell size and bonus has its own pan
   assert.match(app, /ref="wellContainer"/)
   assert.match(app, /getBoundingClientRect\(\)\.width/)
   assert.match(app, /ResizeObserver/)
+  assert.match(app, /this\.\$nextTick\(\(\) => this\.observeWell\(\)\)/)
+  assert.match(app, /this\.wellResizeObserver\.disconnect\(\)/)
   assert.match(app, /--jstet-preview-cell-size/)
   assert.match(rails, /--jstet-cell-size: var\(--jstet-preview-cell-size, 30px\)/)
   assert.match(rails, /grid-template-areas 'dashboard board right'/)
