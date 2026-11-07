@@ -541,4 +541,5 @@ export default {
 @import './styles/arcade-stage5.styl'
 @import './styles/arcade-responsive.styl'
 @import './styles/arcade-mobile.styl'
+@import './styles/arcade-rails.styl'
 </style>
