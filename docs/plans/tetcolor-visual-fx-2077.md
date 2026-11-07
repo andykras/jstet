@@ -1,6 +1,6 @@
 # JSTET — TetColor Visual FX 2077
 
-> Status: **IN PROGRESS — Stages 0–4 implemented, Stage 5 hardening committed; full QA pending**  
+> Status: **IN PROGRESS — Stages 0–4 implemented, Stage 5 QA complete in this environment (physical-device check pending)**  
 > Updated: 2026-11-07  
 > Branch: `feat/tetcolor-visual-fx-2077` (from the latest `master`)  
 > Scope: modern Arcade gameplay renderer; **no changes to the legacy implementation**  
@@ -144,7 +144,7 @@ Implementation:
 
 ### Stage 5 — Art direction, performance, regression QA and release decision
 
-**Status:** [ ] Source review and hardening committed; full-repository/browser/mobile/performance QA blocked — see [Stage 5 handoff](./tetcolor-visual-fx-2077-stage5.md).
+**Status:** [x] Implemented and QA-complete in this environment (repository checks, browser matrix, reduced motion, performance) — see [Stage 5 handoff](./tetcolor-visual-fx-2077-stage5.md). Physical-device check pending; merge needs explicit approval.
 
 Tasks:
 - Tune the visual hierarchy using the rule **quiet at rest / rewarding on events**. Ensure all six TetColor colors remain distinct, including contrast on the light-gray Arcade well.
@@ -174,11 +174,11 @@ Do not add a new rendering engine, a heavy particle library, a new dependency fo
 
 ## 6. Progress tracker
 
-- [ ] 0. Baseline and FX contracts — preference toggle, persistence and mapping implemented; full QA pending
-- [ ] 1. Glass material and active-piece lighting — code committed; full QA pending
-- [ ] 2. Movement, drop trails and landing impact — code committed; full QA pending
-- [ ] 3. Match/line clear and particles — code committed; full QA pending
-- [ ] 4. Combo/cascade/bonus celebrations — code committed; full QA pending
-- [ ] 5. Final polish, mobile/performance regression and acceptance — 3 robustness fixes and 9 tests committed, 14 isolated Node checks passed; actual integration QA pending
+- [x] 0. Baseline and FX contracts — preference toggle, persistence and mapping implemented; QA passed (FX Off parity, persistence, opt-out invalidation)
+- [x] 1. Glass material and active-piece lighting — implemented; QA passed (Arcade/Prism, static preview, pulse only while running)
+- [x] 2. Movement, drop trails and landing impact — implemented; QA passed (accepted-move trails, hard-drop streak, lock flashes; `12be06e` fixed dead engine emissions)
+- [x] 3. Match/line clear and particles — implemented; QA passed (charge/step/clear on real matches; `437087a` fixed top-row visibility and batch snapshot merge)
+- [x] 4. Combo/cascade/bonus celebrations — implemented; QA passed (COMBO ×n rendered live, cascade separation, anchored to real match center)
+- [x] 5. Final polish, mobile/performance regression and acceptance — 126/126 tests, lint, build pass; browser + responsive matrix + reduced motion + ~60 FPS (GPU) verified; fixes `f259bf4`, `12be06e`, `437087a`, `2392c8c`, `8476f35` committed. Physical-device check and merge approval pending.
 
-**Current checkpoint:** All five implementation stages (0–4) have committed code, unit-test contracts and handoff documents. Stage 5 hardening also committed: fair sampling of 40+ Classic clear cells into a 24-effect budget; opt-out invalidation of stale cosmetic clear snapshots; phantom hard-drop-flag guard during sequential clearing. **14/14 isolated Node utility tests passed** (a fixture mirroring the reviewed helpers, *not* the checkout), plus 9 new source-repository tests were added but not executed. See the [Stage 5 QA handoff](./tetcolor-visual-fx-2077-stage5.md). Actual `npm run test:unit` / `lint` / `build`, Vue/Stylus compilation, desktop/mobile visual QA, ~60 FPS measurement and PWA preview remain pending. **Stage 5 is not accepted; PR stays Draft; no merge or deploy.**
+**Current checkpoint:** All five implementation stages are implemented and passed Stage 5 QA in this environment (headless Chrome 157, CDP, dev + production preview): repository checks green, FX Off parity with the baseline, full FX On behavior and lifecycle cleanup, both themes, 7-viewport responsive matrix, reduced motion at both levels, ~60 FPS with FX On on the GPU path, stable memory, FX element cap 24 with full drain. Known limitation: no physical-device testing. See the [Stage 5 report](./tetcolor-visual-fx-2077-stage5.md). **PR stays Draft; merge needs explicit approval.**

@@ -1,73 +1,65 @@
 # JSTET — Visual FX 2077 / Stage 5 QA and hardening report
 
 > Updated: 2026-11-07  
-> Branch: `feat/tetcolor-visual-fx-2077`  
-> PR: [#12](https://github.com/andykras/jstet/pull/12) — **Draft**, do not merge or deploy  
-> Status: **Static/source review and Stage 5 hardening committed. Full-repository/browser/mobile QA still BLOCKED and is not accepted.**
+> Branch: `feat/tetcolor-visual-fx-2077`, HEAD `2392c8c`  
+> PR: [#12](https://github.com/andykras/jstet/pull/12) — **Draft**  
+> Status: **Repository checks, browser QA matrix, reduced motion and performance complete. Physical-device testing not performed (no phone available). Merge still needs explicit approval.**
 
-## Scope and delivered fixes
+## Repository checks (executed, latest run)
 
-Stage 5 is the integrated QA gate for all opt-in Visual FX 2077 stages. The actual full Vue/Vite/Stylus runtime and browser checks have **not** been performed yet; the source audit identified and fixed three important opt-in edge cases:
+- `npm run test:unit` — **126/126 pass** (one obsolete assertion updated, new regression tests for every fix below).
+- `npm run lint` — exit 0.
+- `npm run build` — exit 0; PWA precache **23 entries, 1108.96 KiB**, `dist/service-worker.js` generated.
 
-1. **Fair, bounded effects on multirow Classic clears:** Previously `VisualFxOverlay.add()` appended every cell, then repeatedly evicted the oldest element once the 24-element limit was exceeded. A 40-cell, 4-row clear therefore preferentially displayed only the last 24 cells. `src/utils/visualFx.js` now exports pure `sampleFxCells(cells, limit)` that selects up to 24 source cells evenly across the original sorted list, without changing the source array or the engine's `clearFxCells` snapshot. `src/components/VisualFxOverlay.vue` uses it only for cosmetic materialization. For a 4×10 Classic clear, all four rows remain represented; the cap stays 24. Combo/cascade bonus anchors are still calculated from **all** original matched cells, never the sampled subset.
-2. **Stale clear-group metadata after switching FX Off:** The new `fx:reset` command in `src/utils/game.js` clears the presentation-only `clearFxCells` snapshot. `App.vue` emits it when settings are persisted with `visualFxEnabled: false`, while `setup()` installs/removes its handler with the engine lifecycle. This prevents turning FX back on midclear from playing delayed effects for a match detected when the old layer was active. The actual clearing algorithm, `$three`, `$lines`, score, bonus and sounds are untouched.
-3. **Hard-drop cosmetic state while a sequential clear is pending:** The old engine already ignores piece updates while `game.singleBlock` is clearing a TetColor group or Classic lines. Stage 2 introduced `hardDropPending` to distinguish a hard-lock flash. Stage 5 now checks that same original clearing guard before emitting `fx:hard-drop` or setting `hardDropPending`; a drop during the blocked window no longer marks a subsequent legitimate gravity lock as a hard drop. Original `dropDown()` gameplay calculations, `set()` loop and `update()` call remain intact.
+## Bugs found and fixed during Stage 5 QA
 
-### Tests added
+| Commit | Severity | Bug | Fix |
+| --- | --- | --- | --- |
+| `12be06e` | **Critical** | `hasFxConsumer` checked `bus.all.get(type)?.size`, but mitt stores handler stacks in **arrays**, so `.size` was `undefined` and every engine FX emission (`fx:move`, `fx:hard-drop`, `fx:lock`, `fx:clear-*`, `fx:combo`, `fx:cascade`) was silently skipped. With FX On the overlay stayed empty forever. | Test consumer presence by array `.length`; regression test locks the array semantics. |
+| `437087a` | High | Two clear-FX adapter gaps: (1) TetColor matches reaching the top visible row were invisible — the detector cannot mark row `height-1` as `-2` while the removal compaction deletes it; (2) a batch-mode lock during a pending clear **replaced** the global snapshot, erasing the first group's charge/release effects. | Membership now derives from the detected group itself (`Set.has(x*h+y)` / row list); pending snapshots accumulate via pure `mergeClearFxCells` until the lifecycle resets; `fx:clear-start` fires once per lifecycle. |
+| `2392c8c` | Medium | OS-level `prefers-reduced-motion: reduce` hid the FX layer but kept the permanent `fx-glass-breathe` animation on the active piece: the media override used a 4-class selector and lost the specificity race against the `.is-running` animation rule. | Override selector matches the animation rule's specificity and wins by order. |
+| `f259bf4` | Test | Obsolete hard-drop FX assertion did not match the intentional `!clearing` guard. | Assertion updated, guard semantics kept. |
+| `8476f35` | Feature (user request) | Returning to an inactive window resumed gravity with accumulated speed ("+100 to speed"). | Window blur / hidden tab auto-pauses the run; focus/visibility restores it; only the automatic pause is reversible by focus — manual pause, fresh run and game over keep their state. Verified in browser for 7 scenarios. |
 
-`tests/unit/visual-fx-qa.test.js` adds **9 Node test cases** for large clear sampling (40→24 and four-row coverage), unchanged small arrays, invalid limits, true-center bonus anchoring, original Classic colors, FX Off preference migration and CSS isolation, `fx:reset`/listener cleanup, hard-drop guard, and timed-effect caps. Existing Stage 0–4 test files remain on the branch.
+## Browser QA (headless Chrome 157 via CDP, dev :1337 and production preview :4173)
 
-## Actual verification performed in this session
+- **FX Off (default) parity:** no `.tetcolor-fx-layer` DOM, no `.fx-enabled` class, original colors (`empty = rgb(170,170,170)`, palette N1–N6 unchanged), no `.fx-active` cells, identical geometry. Toggling FX On→Off mid-run does not reset the game (score/settled/status preserved).
+- **FX On behavior:** movement trails after accepted moves only, hard-drop streak + lock flash, charge/step on clears, `COMBO ×n` celebration rendered in the live 760 ms window, active piece `fx-active` pulse, Next preview static, effects strictly inside the board rectangle and exactly aligned to the cell grid (0 px deviation from the nearest cell), event order `fx:lock → fx:clear-start → fx:clear-step → fx:combo` correct.
+- **Gameplay parity:** Classic single-line clear `score = lines × 100 × (level+1)` verified live; TetColor organic triple match and two consecutive matches awarding combo verified live; no duplicated `sound:drop`.
+- **Lifecycle:** pause mid-effect, restart (KeyN), game over, mode switching, Legacy round trip (Lab stays FX-clean, return restores the layer), hidden tab and blur clear timed effects; preferences survive restarts.
+- **Reduced motion:** OS emulation and the app checkbox independently hide the layer and stop the breathe animation (after `2392c8c`).
+- **Themes:** Arcade and Prism under FX Off/On; Prism palette tokens flow through `--cell-N` untouched; screenshots captured for both.
+- **Responsive matrix:** 320×568, 375×667, 390×844, 428×926, 768×1024, 1366×768, 844×390 landscape × dev + production preview × FX Off/On. Cells square and uniform everywhere, no horizontal/vertical overflow, no HUD overlaps, board/preview/controls inside the viewport, FX layer matches the cell grid exactly, touch targets ≥ 44 px. Short-landscape buttons measure 42 px — pre-existing `arcade-mobile.styl` styling (PR #11 territory), untouched by this branch. Screenshots for 390×844 and 1366×768 in both FX states.
+- Screenshots stored in `qa-local/` session output (`/tmp/jstet-qa6/shots/`, `docs/plans/baseline/screenshots/qa12-*.png` regenerated on demand).
 
-- Inspected the current feature branch code (including TetColor, Classic, bonus formulas, App, component, CSS, audio and preference paths) and identified the three fixes above.
-- Checked GitHub feature-branch modifications and relevant source-contract references.
-- Reconstructed **the pure utility logic** from the reviewed source into an isolated Node 22 fixture at `/tmp/jstet-fx-stage5/`, alongside the existing Piece/Stakan behavior. Executed `node --check` and **14/14 isolated Node tests PASS** covering board mapping, color snapshots, sampling, Classic 4-line coverage, live-piece detection and reward anchoring. This does **not** prove that the full repository unit suite or browser passes.
-- Confirmed this execution container cannot resolve `github.com` (`curl: (6) Could not resolve host`), and lacks a mounted JSTET checkout, node_modules, Vue, Vite, Stylus, ESLint and a usable browser runtime. Consequently `npm run test:unit`, `npm run lint`, `npm run build` and real Playwright/phone QA **were not executed**. Do not report these as passed.
-- No CI/Actions, merge, production deployment or server changes.
+## Performance (measured, not estimated)
 
-## Required Mac/Opencode validation before marking Stage 5 complete
+Headless Chrome 157; the rig ran both with GPU compositing and with forced software rendering:
 
-Use the latest `feat/tetcolor-visual-fx-2077` branch and follow `AGENTS.md`. Work only on this PR; no GitHub Actions or deployment. First run:
+| Scenario | FX Off | FX On |
+| --- | --- | --- |
+| FPS (GPU, representative play: moves + hard drops) | 60.1 | **60.1** |
+| Frame p95 / max (GPU) | 17.8 / 19.8 ms | 18.1 / 19.0 ms |
+| Frames > 20 ms (GPU, 6 s) | 0 | 0 |
+| FPS during one-line clear burst (GPU) | 60.2 | 60.1 |
+| FPS (software renderer, no GPU — rig artifact) | 60.1 | 44.3, p95 58 ms |
 
-```sh
-git fetch origin
-git switch feat/tetcolor-visual-fx-2077
-git pull --ff-only
-node --version
-npm --version
-npm install
-npm run test:unit
-npm run lint
-npm run build
-npm run dev
-```
+- Input latency keydown → store update: **0.2–23 ms** in both FX states, no regression.
+- Memory: heap 3.2–5.5 MB across 5 restarts and 4 FX toggles (drift 2.3 MB, GC noise); FX elements bounded by `MAX_EFFECTS = 24`, drain to 0 after settle; no timer/DOM leak observed.
+- **Physical-device testing was not performed** — the ~60 FPS target is verified on the desktop GPU path and emulated mobile viewports only.
 
-Record the actual command outputs, complete pass/failure counts and any changes. Use the dev server/preview for the checks below, and run `npm run preview` after the production build to validate the PWA/relative paths.
+## Deployment note
 
-### Browser acceptance matrix
+The user explicitly requested and approved deploying this branch to production during QA (releases `20261107-123418-437087a`, `20261107-124150-8476f35`, `20261107-124603-2392c8c`); production currently serves this branch. The PR remains a Draft and merge still requires separate approval.
 
-Check TetColor and Classic in Arcade and Prism with FX **Off (default)** and **On**, at: **320×568, 375×667, 390×844, 428×926, 768×1024, 1366×768**, plus short landscape. Baseline comparisons must be against the current `master`, not an assumed design.
+## Acceptance criteria
 
-1. **No FX and persistence:** clean profile -> Visual effects unchecked, unchanged block colors/borders and the original light-gray TetColor well; no FX-layer DOM, no transient animation and no change to Next preview or mobile layout. Migrated v1 saved preferences retain theme/audio/reduced-motion, defaulting only the new FX key to Off. FX On persists after reload; turning it Off immediately restores the original visual baseline without restarting or altering the live score.
-2. **Geometry:** no shift in actual board size or row/column count; TetColor 7×18 and Classic 10×20; Next preview does not shrink or clip; no HUD/right-rail or controls overlap at 320px width. Verify the absolute FX-layer top-left alignment with the first/last colored cells, including 3px well frame.
-3. **Glass:** all original six TetColor colors remain readable and distinguishable, Prism palette works; active falling piece pulses **only while running**; settled pieces never pulse; Next uses static material and preserves crop. Pause/game-over and both reduced-motion settings prevent the active pulse.
-4. **Movement/impact:** keyboard/touch left, right, rotate, down, held-key repeat, gravity fall and hard drop. Only **successful** manual actions emit motion trails. Blocked wall/rotation, gravity and zero-distance drop cannot emit phantom trails. Hard drop streak follows the actual trajectory and ends at the settled piece; regular lock gives a smaller impact, hard lock a stronger one.
-5. **Matching:** TetColor horizontal/vertical/diagonal/overlapping triples, sequential and batch clear options, new gravity cascades. Charge/sweep and debris must use only the actual matched cells and retain pre-`-2` original colors. Classic clears 1, 2, 3 and **4 rows at once**; all rows should be represented under the 24-element cap, with a left-to-right glint.
-6. **Rewards:** first successful match has no combo pop; second/third consecutive **pieces** that match show correct `COMBO ×2`/`×3` and awarded amount, not total score. Breaking the streak produces no celebration. Actual gravity cascades show separate blue `CASCADE ×depth` ripple, the exact award, and a brief cyan frame pulse. Zero bonuses must not animate. No new sounds or duplicate `bonus`/`score` events.
-7. **Cleanup:** pause/restart mid-effect, game over, switch modes, Legacy round trip, toggle FX Off/On midclear and midbonus, change theme, resize/rotate device, blur/focus and background tab. No stale trail, duplicated award, timer leak, stuck hard-lock glow or leaking event listener. Exercise app reduced motion **and** `prefers-reduced-motion` independently.
-8. **Performance:** compare representative 30–60s gameplay sessions with FX Off and FX On in mobile Chrome and desktop browser. Target ~60 FPS/16.7ms frame budget with no meaningful key/touch latency regression. Check frame drops during multirow clears and cascade bursts, DOM node count (at most **24 FX cells + 2 active celebrations × 3 DOM nodes**), and heap/timer stability across 10+ restart/FX toggle cycles.
-9. **Packaging and accessibility:** dev and production preview; check PWA reload/offline behavior and relative asset paths. Verify mouse/touch controls are clickable through the FX overlay, settings keyboard navigation, and that decorative reward text is `aria-hidden` to avoid duplicate screen-reader announcements.
+- [x] `npm run test:unit`, `npm run lint`, `npm run build` — pass.
+- [x] Desktop browser visual QA matrix, both themes, FX Off/On, lifecycle cleanup.
+- [x] Emulated mobile/responsive matrix, dev + production preview.
+- [x] Performance comparison FX Off/On (desktop GPU path ~60 FPS).
+- [x] All discovered regressions fixed (`12be06e`, `437087a`, `2392c8c`).
+- [ ] Physical-device (real phone) gameplay and FPS check.
+- [ ] User review and explicit merge approval.
 
-Capture screenshots for FX Off vs On on **390×844 and 1366×768**, including an active clear/bonus, and record notes on visual quality, FPS and all failures. Fix any real issues on this branch, repeat tests and update the stage report with evidence.
-
-## Acceptance criteria / remaining blockers
-
-- [x] Stage 5 source audit and code hardening.
-- [x] 14 isolated utility checks pass on Node 22; actual repository tests remain unexecuted.
-- [ ] Complete `npm run test:unit`, `npm run lint`, `npm run build` from the repository.
-- [ ] Desktop/mobile visual QA matrix against `master`.
-- [ ] Browser/PWA smoke test and ~60 FPS/performance comparison.
-- [ ] All discovered regressions fixed and evidence recorded.
-- [ ] User reviews and explicitly approves PR merge/deployment.
-
-**Current conclusion:** Stage 5 is **in progress**, not yet accepted. PR #12 must remain **OPEN + Draft** until the actual repository and browser gates are completed.
+**Conclusion:** Stage 5 QA is complete for this environment. Remaining known gap: real-device verification. PR #12 stays **OPEN + Draft**; merge needs explicit approval.
