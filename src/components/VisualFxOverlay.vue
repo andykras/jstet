@@ -13,7 +13,7 @@
 import { gameBus } from '@/utils/gameBus.js'
 
 const MAX_EFFECTS = 24
-const DURATION = Object.freeze({ move: 155, drop: 270, lock: 210, 'hard-lock': 250 })
+const DURATION = Object.freeze({ move: 155, drop: 270, lock: 210, 'hard-lock': 250, charge: 235, clear: 340 })
 
 export default {
   name: 'VisualFxOverlay',
@@ -46,6 +46,8 @@ export default {
       ['fx:move', payload => this.onMove(payload)],
       ['fx:hard-drop', payload => this.onDrop(payload)],
       ['fx:lock', payload => this.onLock(payload)],
+      ['fx:clear-start', payload => this.onClearStart(payload)],
+      ['fx:clear-step', payload => this.onClearStep(payload)],
       ['start', () => this.clear()],
       ['status', status => { if (status !== 'running') this.clear() }]
     ]
@@ -79,7 +81,8 @@ export default {
         '--fx-color': `var(--cell-${effect.color}, #ffffff)`,
         '--fx-dx': effect.dx,
         '--fx-dy': effect.dy,
-        '--fx-distance': effect.distance
+        '--fx-distance': effect.distance,
+        '--fx-order': effect.order
       }
     },
     onMove(payload) {
@@ -97,9 +100,18 @@ export default {
       if (!payload) return
       this.add(payload.hard ? 'hard-lock' : 'lock', payload.cells)
     },
+    onClearStart(payload) {
+      if (!payload) return
+      this.add('charge', payload.cells)
+    },
+    onClearStep(payload) {
+      if (!payload) return
+      this.add('clear', payload.cells)
+    },
     add(type, cells, values = {}) {
       if (!this.running || this.reducedMotion || this.osReducedMotion || document.hidden || !Array.isArray(cells)) return
       const duration = DURATION[type]
+      let order = 0
       for (const cell of cells) {
         if (this.effects.length >= MAX_EFFECTS) {
           const expired = this.effects.shift()
@@ -114,7 +126,8 @@ export default {
           color: cell.color,
           dx: values.dx || 0,
           dy: values.dy || 0,
-          distance: values.distance || 0
+          distance: values.distance || 0,
+          order: Math.min(order++, 9)
         }
         this.effects.push(effect)
         this.timers.set(effect.id, setTimeout(() => this.remove(effect.id), duration))
