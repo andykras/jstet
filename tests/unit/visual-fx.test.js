@@ -44,7 +44,7 @@ test('opt-in choice persists and remains independent of theme, audio and reduced
 test('settings expose a live opt-in toggle gated to the modern app without changing game mode', () => {
   const app = read('src/App.vue')
   assert.match(app, /mode: 'tetcolor'/)
-  assert.match(app, /'fx-enabled': preferences\.visualFxEnabled/)
+  assert.match(app, /'fx-enabled': preferences\.visualFxEnabled && !naiveImplementation/)
   assert.match(app, /v-model="preferences\.visualFxEnabled"\s+@change="persistPreferences"/)
   assert.match(app, /savePreferences\(this\.preferences\)/)
   assert.match(app, /<option value="arcade">Arcade<\/option>/)
