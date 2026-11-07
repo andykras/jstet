@@ -54,18 +54,32 @@ test('mobile stage places Level and Next left; Score, Blocks and Bonus right', (
   assert.match(hud, /bonus > 0 \? '\+' \+ bonus : '—'/)
 })
 
-test('touch groups put rotate/drop on left and left/right on the right', () => {
+test('mobile controls place left/right on the left and Drop/Rotate on the right', () => {
   const pad = read('src/components/TouchControls.vue')
   const style = read('src/styles/arcade-mobile.styl')
   const left = pad.split('class="touch-pad__left"')[1].split('class="touch-pad__right"')[0]
   const right = pad.split('class="touch-pad__right"')[1].split('</section>')[0]
-  assert.match(left, /onPointerDown\(\$event, 'rotate'\)/)
-  assert.match(left, /onPointerDown\(\$event, 'drop'\)/)
-  assert.match(right, /v-for="control in moveControls"/)
+  assert.match(left, /aria-label="Move left and right"/)
+  assert.match(left, /v-for="control in moveControls"/)
+  assert.match(right, /aria-label="Drop and rotate"/)
+  assert.ok(right.indexOf("onPointerDown($event, 'drop')") < right.indexOf("onPointerDown($event, 'rotate')"))
+  assert.match(pad, /action: 'left'/)
+  assert.match(pad, /action: 'right'/)
   assert.doesNotMatch(pad, /action: 'down'/)
   assert.match(style, /\.touch-pad\n    grid-area touch/)
   assert.match(style, /justify-content space-between/)
   assert.match(style, /\.touch-pad__left,\n  \.touch-pad__right/)
-  // Keyboard down is still supported even though the compact touch pad has four keys.
+  // Keyboard down remains supported, independently of the four touch buttons.
   assert.match(read('src/App.vue'), /ArrowDown: \(\) => gameBus\.emit\('down:start'\)/)
+})
+
+test('Legacy is desktop-only while TetColor and Classic stay in the mobile header', () => {
+  const app = read('src/App.vue')
+  const mobile = read('src/styles/arcade-mobile.styl')
+  assert.match(app, /class="mode-switch__button mode-switch__button--legacy"/)
+  assert.match(mobile, /@media \(max-width: 920px\)/)
+  assert.match(mobile, /\.mode-switch__button--legacy\n    display none/)
+  assert.match(app, /requestMode\('tetcolor'\)/)
+  assert.match(app, /requestMode\('classic'\)/)
+  assert.match(app, /requestMode\('legacy'\)/)
 })
