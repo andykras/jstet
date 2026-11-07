@@ -6,3 +6,12 @@ export function toVisualFxCell(x, y, { width, height } = {}) {
   if (x < 1 || x >= width - 1 || y < 1 || y >= height) return null
   return Object.freeze({ column: x - 1, row: height - 1 - y })
 }
+
+// The renderer's one-based template coordinates are the same coordinates used
+// by getWellValue(). Check the actual falling piece, not a color or cell value:
+// settled blocks can have exactly the same color as the active piece.
+export function isActivePieceCell(x, y, pieces, item) {
+  if (!item || !pieces) return false
+  const piece = pieces[item.T]
+  return Boolean(piece && piece.get(x - item.X - 1, y - item.Y - 1, item.R) > 0)
+}
