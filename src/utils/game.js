@@ -54,6 +54,8 @@ const emitClearStep = (mode, x, y) => {
 export function setup(bus) {
   if ($bus) throw new Error('Game engine already connected')
   $bus = bus
+  const resetFx = () => { clearFxCells = EMPTY_FX_CELLS }
+  bus.on('fx:reset', resetFx)
   const detach = attachGameCommands(bus, {
     input(type) {
       if (game.started && !game.paused) events.emit(type)
@@ -78,6 +80,7 @@ export function setup(bus) {
   return () => {
     game.stop()
     detach()
+    bus.off('fx:reset', resetFx)
     $bus = null
   }
 }
@@ -415,10 +418,11 @@ const update = (X, Y, R, action = 'gravity') => {
 // }
 
 const dropDown = _ => {
+  const clearing = game.singleBlock && ($lines.length > 0 || $three.size > 0)
   const start = item
   while (set(item.X, item.Y - 1, item.R));
   const distance = start.Y - item.Y
-  if (distance > 0) {
+  if (!clearing && distance > 0) {
     emitFx('fx:hard-drop', () => Object.freeze({
       from: Object.freeze({ X: start.X, Y: start.Y, R: start.R }),
       to: Object.freeze({ X: item.X, Y: item.Y, R: item.R }),
@@ -426,7 +430,7 @@ const dropDown = _ => {
       cells: getPieceFxCells(start, $pieces, $cells)
     }))
   }
-  game.hardDropPending = true
+  if (!clearing) game.hardDropPending = true
   update(item.X, item.Y + game.drop++, item.R)
 }
 
