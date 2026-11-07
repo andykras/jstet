@@ -162,6 +162,16 @@
         </fieldset>
 
         <fieldset class="settings-group">
+          <legend>Audio</legend>
+          <label class="settings-check">
+            <input type="checkbox"
+                   v-model="preferences.soundEnabled"
+                   @change="persistPreferences">
+            Enable sounds
+          </label>
+        </fieldset>
+
+        <fieldset class="settings-group">
           <legend>Controls</legend>
           <label class="settings-check">
             <input type="checkbox"
@@ -207,6 +217,7 @@ import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/
 import { setup, game } from '@/utils/game.js'
 import { gameBus } from '@/utils/gameBus.js'
 import { shouldIgnoreGameInput } from '@/utils/keyboard.js'
+import { attachSounds } from '@/utils/sounds.js'
 import options, { resolveRunOptions } from '@/game/options.js'
 
 export default {
@@ -222,7 +233,8 @@ export default {
       pendingSingleBlock: options.singleBlock,
       settingsOpen: false,
       modernDispose: null,
-      modernHandlers: []
+      modernHandlers: [],
+      sounds: null
     }
   },
 
@@ -286,6 +298,7 @@ export default {
     persistPreferences() {
       this.preferences = normalizePreferences({ ...this.preferences, hardDrop: this.hard })
       savePreferences(this.preferences)
+      if (this.sounds) this.sounds.setEnabled(this.preferences.soundEnabled)
     },
 
     pauseForDialog() {
@@ -350,6 +363,7 @@ export default {
 
     startModern() {
       if (this.modernDispose) return
+      this.sounds = attachSounds(gameBus, { enabled: this.preferences.soundEnabled })
       this.modernDispose = setup(gameBus)
 
       const on = (type, listener) => {
@@ -378,6 +392,8 @@ export default {
       window.removeEventListener('focusin', this.onFocusIn)
       this.modernDispose()
       this.modernDispose = null
+      this.sounds.dispose()
+      this.sounds = null
       for (const [type, listener] of this.modernHandlers) gameBus.off(type, listener)
       this.modernHandlers = []
     },
