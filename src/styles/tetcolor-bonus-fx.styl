@@ -58,6 +58,33 @@
     &.tetcolor-fx-celebration--tier-3
       box-shadow 0 0 24px rgba(103, 212, 255, 0.58), inset 0 1px rgba(227, 251, 255, 0.34)
 
+// Cascade: a localized expanding energy wave, distinct from the warm combo pop.
+.jstet-app.fx-enabled .tetcolor-fx-pulse
+  display none
+
+  &--cascade
+    position absolute
+    z-index 3
+    top unquote('calc(var(--fx-row) * var(--jstet-cell-size))')
+    left unquote('calc(var(--fx-column) * var(--jstet-cell-size))')
+    display block
+    width unquote('calc(2.6 * var(--jstet-cell-size))')
+    height unquote('calc(2.6 * var(--jstet-cell-size))')
+    border 2px solid rgba(117, 230, 255, 0.85)
+    border-radius 50%
+    background radial-gradient(circle, rgba(111, 222, 255, 0.16), transparent 68%)
+    box-shadow 0 0 13px rgba(91, 225, 255, 0.34)
+    pointer-events none
+    animation fx-cascade-ripple 580ms ease-out both
+
+@keyframes fx-cascade-ripple
+  from
+    opacity 0.88
+    transform translate(-50%, -50%) scale(0.45)
+  to
+    opacity 0
+    transform translate(-50%, -50%) scale(1.7)
+
 .jstet-app.fx-enabled .tetcolor-fx-rim
   position absolute
   z-index 3
@@ -98,10 +125,12 @@
     transform scale(1)
 
 .jstet-app.fx-enabled.reduce-motion .tetcolor-fx-celebration,
-.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-rim
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-rim,
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-pulse
   display none
 
 @media (prefers-reduced-motion: reduce)
   .jstet-app.fx-enabled .tetcolor-fx-celebration,
-  .jstet-app.fx-enabled .tetcolor-fx-rim
+  .jstet-app.fx-enabled .tetcolor-fx-rim,
+  .jstet-app.fx-enabled .tetcolor-fx-pulse
     display none
