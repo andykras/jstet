@@ -21,27 +21,37 @@ test('mobile header keeps modes and accessible icon actions on one row', () => {
   assert.match(style, /\.header-actions\n    order initial/)
 })
 
-test('mobile board metrics occupy the four corners around the same well', () => {
+test('mobile stage prioritizes a large well with slim side rails', () => {
+  const app = read('src/App.vue')
+  const style = read('src/styles/arcade-mobile.styl')
+  const responsive = read('src/styles/arcade-responsive.styl')
+  assert.doesNotMatch(app, /PLAYFIELD \/ 01|PLAYING|statusLabel\(\)/)
+  assert.match(style, /--mobile-rail: clamp\(64px, 18\.5vw, 148px\)/)
+  assert.match(style, /width unquote\('calc\(100% - var\(--mobile-rail\) - var\(--mobile-rail\) - 12px\)'\)/)
+  assert.match(style, /\.board-panel__well \.tetcolor-board/)
+  assert.match(style, /--jstet-cell-size unquote\('max\(1px, min\(calc/)
+  assert.doesNotMatch(style.split('.board-panel__well .tetcolor-board')[1].split('// The city art')[0], /min\(38px/)
+  assert.match(responsive, /container-type size/)
+})
+
+test('mobile stage places Level and Next left; Score, Blocks and Bonus right', () => {
   const app = read('src/App.vue')
   const hud = read('src/components/GameHud.vue')
-  const style = read('src/styles/arcade-mobile.styl')
   const rails = read('src/styles/arcade-rails.styl')
-  assert.doesNotMatch(app, /PLAYFIELD \/ 01|PLAYING|statusLabel\(\)/)
   assert.match(app, /<NextPiece class="preview-column"/)
   assert.match(app, /<GameHud class="stats-column stats-column--left"/)
   assert.match(app, /<GameHud class="stats-column stats-column--right"/)
   assert.match(hud, /hud-stat--score/)
   assert.match(hud, /hud-stat--level/)
   assert.match(hud, /hud-stat--progress/)
-  assert.match(style, /grid-template-areas 'stage' 'touch'/)
-  assert.match(style, /\.board-panel__well\n    width unquote\('calc\(100% - var\(--mobile-rail\) - var\(--mobile-rail\) - 12px\)'\)/)
-  for (const name of ['hud-stat--score', 'hud-stat--progress']) {
-    assert.ok(rails.includes('.right-column .game-hud .' + name), name)
-  }
-  assert.match(rails, /\.right-column \.game-hud \.hud-stat--score\n    left 9px\n    bottom 9px/)
-  assert.match(rails, /\.dashboard-column \.game-hud \.hud-stat--level\n    right 9px\n    top 9px/)
-  assert.match(rails, /\.right-column \.game-hud \.hud-stat--progress\n    right 9px\n    bottom 9px/)
-  assert.match(rails, /\.dashboard-column \.next-panel\n    position absolute/)
+  assert.match(hud, /hud-stat--bonus/)
+  assert.match(rails, /\.dashboard-column \.game-hud \.hud-stat--level\n    left 9px/)
+  assert.match(rails, /\.dashboard-column \.next-panel\n    position absolute\n    z-index 3\n    top 50%/)
+  assert.match(rails, /\.right-column \.game-hud \.hud-stat--score\n    right 9px\n    left auto\n    top 9px/)
+  assert.match(rails, /\.right-column \.game-hud \.hud-stat--progress\n    right 9px\n    left auto\n    top unquote/)
+  assert.match(rails, /\.right-column \.game-hud \.hud-stat--bonus\n    right 9px\n    left auto\n    top auto\n    bottom 9px/)
+  assert.match(hud, /mode === 'tetcolor'/)
+  assert.match(hud, /bonus > 0 \? '\+' \+ bonus : '—'/)
 })
 
 test('touch groups put rotate/drop on left and left/right on the right', () => {
