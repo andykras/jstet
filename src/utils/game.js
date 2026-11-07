@@ -7,7 +7,7 @@ import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines, resetSolidLines } from '@/game/tetris'
 import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock, resetThreeBlocks } from '@/game/tetcolor'
 import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
-import { getPieceFxCells } from '@/utils/visualFx'
+import { getPieceFxCells, captureClearCandidates, markedClearFxCells, clearStepFxCells } from '@/utils/visualFx'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -21,8 +21,33 @@ let $three = new Set()
 $three.sorted = []
 
 // Build small cosmetic snapshots only when an opt-in FX consumer is mounted.
+const hasFxConsumer = type => Boolean($bus?.all.get(type)?.size)
 const emitFx = (type, makePayload) => {
-  if ($bus?.all.get(type)?.size) $bus.emit(type, makePayload())
+  if (hasFxConsumer(type)) $bus.emit(type, makePayload())
+}
+
+// Visual metadata follows the already-detected clear group; it cannot influence
+// which cells are cleared or when the engine advances them.
+const EMPTY_FX_CELLS = Object.freeze([])
+let clearFxCells = EMPTY_FX_CELLS
+
+const detectClears = (mode, detect) => {
+  const track = hasFxConsumer('fx:clear-start') || hasFxConsumer('fx:clear-step')
+  const candidates = track ? captureClearCandidates($cells) : null
+  const result = detect()
+  clearFxCells = candidates ? markedClearFxCells(candidates, $cells) : EMPTY_FX_CELLS
+  if (clearFxCells.length) {
+    emitFx('fx:clear-start', () => Object.freeze({
+      mode, batch: !game.singleBlock, cells: clearFxCells
+    }))
+  }
+  return result
+}
+
+const emitClearStep = (mode, x, y) => {
+  if (!clearFxCells.length || !hasFxConsumer('fx:clear-step')) return
+  const cells = game.singleBlock ? clearStepFxCells(clearFxCells, mode, x, y, $cells) : clearFxCells
+  if (cells.length) $bus.emit('fx:clear-step', Object.freeze({ mode, cells }))
 }
 
 export function setup(bus) {
@@ -92,6 +117,7 @@ export const game = {
     this.started = false
     this.paused = false
     this.hardDropPending = false
+    clearFxCells = EMPTY_FX_CELLS
     this.releaseControls()
     if (this.status !== 'idle') {
       this.status = 'idle'
@@ -111,6 +137,7 @@ export const game = {
     $pieces = store.state.pieces
     $lines = resetSolidLines()
     $three = resetThreeBlocks()
+    clearFxCells = EMPTY_FX_CELLS
 
     this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
     this.matchStreak = 0
@@ -170,6 +197,11 @@ export const game = {
     }
 
     if ($three.size && this.interval(game.clearSpeed())) {
+      const xy = $three.sorted[$three.sorted.length - 1]
+      if (xy !== undefined) {
+        const x = Math.floor(xy / $cells.height)
+        emitClearStep('tetcolor', x, xy - x * $cells.height)
+      }
       do {
         const add = Math.floor(game.scorePart * ($three.bonus / $three.sorted.length))
         game.score += add
@@ -178,7 +210,8 @@ export const game = {
       game.totalLines += game.singleBlock ? removeThreeBlockSorted() || 1 : removeThreeBlock() || $three.size
       if ($three.sorted.length === 0) {
         $three.clear()
-        if (($three = getThreeBlock()).size) {
+        clearFxCells = EMPTY_FX_CELLS
+        if (($three = detectClears('tetcolor', getThreeBlock)).size) {
           $bus.emit('sound:clear')
           game.chainBonus = cascadeBonus(game.chainBonus, game.bonusSize)
           game.bonus = game.chainBonus
@@ -191,7 +224,9 @@ export const game = {
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
+      emitClearStep('classic', 1, $lines[$lines.length - 1])
       const cleared = game.singleBlock ? clearOneLine() : clearAllLines()
+      if (!$lines.length) clearFxCells = EMPTY_FX_CELLS
       game.totalLines += cleared
       game.score += cleared * game.scorePart * 10 * (game.level + 1)
       $bus.emit('lines', game.totalLines)
@@ -290,7 +325,7 @@ const update = (X, Y, R, action = 'gravity') => {
       game.hardDropPending = false
       $bus.emit('sound:drop')
       if (game.tetcolor) {
-        $three = getThreeBlock()
+        $three = detectClears('tetcolor', getThreeBlock)
         game.chainBonus = 0
         if ($three.size) {
           game.matchStreak++
@@ -308,7 +343,7 @@ const update = (X, Y, R, action = 'gravity') => {
           $bus.emit('bonus', 0)
         }
       } else {
-        $lines = getSolidLines({ asc: game.singleBlock, item })
+        $lines = detectClears('classic', () => getSolidLines({ asc: game.singleBlock, item }))
         if ($lines.length) $bus.emit('sound:clear')
       }
 
