@@ -111,17 +111,20 @@
             :aria-label="modeTitle + ' game'"
             :style="boardGeometry">
         <aside class="dashboard-column"
-               aria-label="Game statistics">
+               aria-label="Level and next piece">
           <CityscapeArt class="cityscape-column"
                         aria-hidden="true" />
-          <GameHud class="stats-column"
-                   :mode="mode" />
+          <GameHud class="stats-column stats-column--left"
+                   :mode="mode"
+                   section="left" />
+          <NextPiece class="preview-column" />
         </aside>
 
         <section class="board-panel"
                  :class="'board-panel--' + mode"
                  aria-label="Playing field">
-          <div class="board-panel__well">
+          <div ref="wellContainer"
+               class="board-panel__well">
             <tetcolor />
           </div>
           <Transition name="state-overlay">
@@ -156,7 +159,12 @@
 
         <TouchControls :status="status"
                        :hard="hard" />
-        <NextPiece class="preview-column" />
+        <aside class="right-column"
+               aria-label="Score and bonus">
+          <GameHud class="stats-column stats-column--right"
+                   :mode="mode"
+                   section="right" />
+        </aside>
 
       </main>
 
@@ -275,7 +283,8 @@ export default {
       settingsOpen: false,
       modernDispose: null,
       modernHandlers: [],
-      sounds: null
+      sounds: null,
+      previewCellSize: null
     }
   },
 
@@ -287,7 +296,8 @@ export default {
       const { width, height } = this.$store.getters.getDimensions
       return {
         '--board-columns': Math.max(1, (width || 9) - 2),
-        '--board-rows': Math.max(1, (height || 19) - 1)
+        '--board-rows': Math.max(1, (height || 19) - 1),
+        '--jstet-preview-cell-size': this.previewCellSize ? this.previewCellSize + 'px' : '30px'
       }
     },
     status() {
@@ -320,12 +330,35 @@ export default {
     this.setOptions(resolveRunOptions(options))
     this.startModern()
   },
+  mounted() {
+    this.$nextTick(() => {
+      this.syncPreviewCellSize()
+      if (typeof ResizeObserver !== 'undefined') {
+        this.wellResizeObserver = new ResizeObserver(() => this.syncPreviewCellSize())
+        if (this.$refs.wellContainer) this.wellResizeObserver.observe(this.$refs.wellContainer)
+      }
+    })
+    window.addEventListener('resize', this.syncPreviewCellSize)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.syncPreviewCellSize)
+    if (this.wellResizeObserver) this.wellResizeObserver.disconnect()
+  },
   unmounted() {
     this.stopModern()
   },
 
   methods: {
     ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel', 'setOptions', 'setStatus']),
+
+    syncPreviewCellSize() {
+      const cell = this.$refs.wellContainer?.querySelector('.tetcolor-board .game-cell')
+      if (!cell) return
+      const size = cell.getBoundingClientRect().width
+      if (size > 0 && Math.abs(size - (this.previewCellSize || 0)) > 0.25) {
+        this.previewCellSize = size
+      }
+    },
 
     togglePause() {
       gameBus.emit('pause')
@@ -445,6 +478,7 @@ export default {
       this.setPieces(createGamePieces(this.mode))
       this.setCells(createGameBoard(this.mode))
       gameBus.emit('start', rules)
+      this.$nextTick(() => this.syncPreviewCellSize())
     },
 
     onFocusLost() {
