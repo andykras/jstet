@@ -4,6 +4,25 @@ import { readFileSync } from 'node:fs'
 
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
 
+test('an inactive window pauses the run and returning focus resumes it', () => {
+  const app = read('src/App.vue')
+  // The blur/hidden pause is automatic and remembers its own origin.
+  assert.ok(app.includes("window.addEventListener('blur', this.onFocusLost)"))
+  assert.ok(app.includes("window.addEventListener('focus', this.onFocusGain)"))
+  assert.ok(app.includes("document.addEventListener('visibilitychange', this.onVisibilityChange)"))
+  assert.match(app, /autoPauseForFocus\(\) \{\n      if \(this\.naiveImplementation \|\| this\.status !== 'running'\) return\n      this\.autoPaused = true\n      gameBus\.emit\('pause'\)/)
+  assert.match(app, /if \(!this\.autoPaused \|\| this\.settingsOpen \|\| this\.status !== 'paused'\) return\n      this\.autoPaused = false\n      gameBus\.emit\('pause'\)/)
+  // Manual pause/resume and a fresh run clear the automatic origin, so focus
+  // never resumes a session the player stopped on purpose.
+  assert.match(app, /togglePause\(\) \{\n      this\.autoPaused = false\n      gameBus\.emit\('pause'\)/)
+  assert.match(app, /this\.autoPaused = false\n      gameBus\.emit\('start', rules\)/)
+  assert.match(app, /if \(value === 'gameOver'\) this\.autoPaused = false/)
+  for (const token of ["window.removeEventListener('focus', this.onFocusGain)",
+    "document.removeEventListener('visibilitychange', this.onVisibilityChange)"]) {
+    assert.ok(app.includes(token), token)
+  }
+})
+
 test('touch controls use only the existing game command bus', () => {
   const pad = read('src/components/TouchControls.vue')
   const app = read('src/App.vue')

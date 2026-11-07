@@ -7,6 +7,7 @@ import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines, resetSolidLines } from '@/game/tetris'
 import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock, resetThreeBlocks } from '@/game/tetcolor'
 import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
+import { getPieceFxCells, captureClearCandidates, markedClearFxCells, mergeClearFxCells, clearStepFxCells } from '@/utils/visualFx'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -19,9 +20,51 @@ let $lines = []
 let $three = new Set()
 $three.sorted = []
 
+// Build small cosmetic snapshots only when an opt-in FX consumer is mounted.
+// Handler stacks on the mitt bus are arrays, so consumer presence is array length.
+const hasFxConsumer = type => Boolean($bus?.all.get(type)?.length)
+const emitFx = (type, makePayload) => {
+  if (hasFxConsumer(type)) $bus.emit(type, makePayload())
+}
+
+// Visual metadata follows the already-detected clear group; it cannot influence
+// which cells are cleared or when the engine advances them.
+const EMPTY_FX_CELLS = Object.freeze([])
+let clearFxCells = EMPTY_FX_CELLS
+
+const detectClears = (mode, detect) => {
+  const track = hasFxConsumer('fx:clear-start') || hasFxConsumer('fx:clear-step') ||
+    hasFxConsumer('fx:combo') || hasFxConsumer('fx:cascade')
+  const candidates = track ? captureClearCandidates($cells) : null
+  const result = detect()
+  // Membership comes from the detected group itself: the TetColor detector
+  // cannot mark the top visible row as -2, and a batch-mode lock can extend
+  // a still pending group, so the snapshot accumulates across such locks.
+  const isDetected = result instanceof Set
+    ? (x, y) => result.has(x * $cells.height + y)
+    : (x, y) => result.includes(y)
+  const fresh = candidates ? markedClearFxCells(candidates, $cells, isDetected) : EMPTY_FX_CELLS
+  const resume = clearFxCells.length > 0
+  clearFxCells = mergeClearFxCells(clearFxCells, fresh)
+  if (clearFxCells.length && !resume) {
+    emitFx('fx:clear-start', () => Object.freeze({
+      mode, batch: !game.singleBlock, cells: clearFxCells
+    }))
+  }
+  return result
+}
+
+const emitClearStep = (mode, x, y) => {
+  if (!clearFxCells.length || !hasFxConsumer('fx:clear-step')) return
+  const cells = game.singleBlock ? clearStepFxCells(clearFxCells, mode, x, y, $cells) : clearFxCells
+  if (cells.length) $bus.emit('fx:clear-step', Object.freeze({ mode, cells }))
+}
+
 export function setup(bus) {
   if ($bus) throw new Error('Game engine already connected')
   $bus = bus
+  const resetFx = () => { clearFxCells = EMPTY_FX_CELLS }
+  bus.on('fx:reset', resetFx)
   const detach = attachGameCommands(bus, {
     input(type) {
       if (game.started && !game.paused) events.emit(type)
@@ -46,6 +89,7 @@ export function setup(bus) {
   return () => {
     game.stop()
     detach()
+    bus.off('fx:reset', resetFx)
     $bus = null
   }
 }
@@ -56,6 +100,8 @@ export const game = {
   started: false,
   paused: false,
   debug: false,
+  hardDropPending: false,
+  cascadeDepth: 0,
 
   // Configuring a run never mutates the shared defaults or Vuex hot-path data.
   configure(values) {
@@ -84,6 +130,8 @@ export const game = {
     this.id = null
     this.started = false
     this.paused = false
+    this.hardDropPending = false
+    clearFxCells = EMPTY_FX_CELLS
     this.releaseControls()
     if (this.status !== 'idle') {
       this.status = 'idle'
@@ -103,10 +151,13 @@ export const game = {
     $pieces = store.state.pieces
     $lines = resetSolidLines()
     $three = resetThreeBlocks()
+    clearFxCells = EMPTY_FX_CELLS
 
     this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
     this.matchStreak = 0
     this.chainBonus = 0
+    this.cascadeDepth = 0
+    this.hardDropPending = false
     this.intervals = {}
     this.started = true
     this.status = 'running'
@@ -161,6 +212,12 @@ export const game = {
     }
 
     if ($three.size && this.interval(game.clearSpeed())) {
+      let cascadeBonusAwarded = 0
+      const xy = $three.sorted[$three.sorted.length - 1]
+      if (xy !== undefined) {
+        const x = Math.floor(xy / $cells.height)
+        emitClearStep('tetcolor', x, xy - x * $cells.height)
+      }
       do {
         const add = Math.floor(game.scorePart * ($three.bonus / $three.sorted.length))
         game.score += add
@@ -169,20 +226,32 @@ export const game = {
       game.totalLines += game.singleBlock ? removeThreeBlockSorted() || 1 : removeThreeBlock() || $three.size
       if ($three.sorted.length === 0) {
         $three.clear()
-        if (($three = getThreeBlock()).size) {
+        clearFxCells = EMPTY_FX_CELLS
+        if (($three = detectClears('tetcolor', getThreeBlock)).size) {
           $bus.emit('sound:clear')
+          game.cascadeDepth++
           game.chainBonus = cascadeBonus(game.chainBonus, game.bonusSize)
           game.bonus = game.chainBonus
           game.score += game.chainBonus
           $bus.emit('bonus', game.chainBonus)
+          cascadeBonusAwarded = game.chainBonus
         }
       }
       $bus.emit('lines', game.totalLines)
       $bus.emit('score', game.score)
+      if (cascadeBonusAwarded > 0) {
+        emitFx('fx:cascade', () => Object.freeze({
+          amount: cascadeBonusAwarded,
+          depth: game.cascadeDepth,
+          cells: clearFxCells
+        }))
+      }
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
+      emitClearStep('classic', 1, $lines[$lines.length - 1])
       const cleared = game.singleBlock ? clearOneLine() : clearAllLines()
+      if (!$lines.length) clearFxCells = EMPTY_FX_CELLS
       game.totalLines += cleared
       game.score += cleared * game.scorePart * 10 * (game.level + 1)
       $bus.emit('lines', game.totalLines)
@@ -190,10 +259,10 @@ export const game = {
     }
 
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
-    if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R)
-    if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R)
-    if (events.rotate.active(this.currentTime)) update(item.X, item.Y, item.R + 1)
-    if (events.down.active(this.currentTime)) update(item.X, item.Y - 1, item.R)
+    if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R, 'left')
+    if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R, 'right')
+    if (events.rotate.active(this.currentTime)) update(item.X, item.Y, item.R + 1, 'rotate')
+    if (events.down.active(this.currentTime)) update(item.X, item.Y - 1, item.R, 'down')
 
     this.increase()
     this.id = requestAnimationFrame(this.loop.bind(this))
@@ -253,19 +322,36 @@ const set = (X, Y, R, T = item.T, N = item.N) => {
 //   return success
 // }
 
-const update = (X, Y, R) => {
+const update = (X, Y, R, action = 'gravity') => {
   if (($lines.length > 0 && game.singleBlock) || ($three.size > 0 && game.singleBlock)) return
 
-  if (!set(X, Y, R) && Y < item.Y) {
+  const previous = item
+  const accepted = set(X, Y, R)
+  if (accepted && action !== 'gravity' && (previous.X !== item.X || previous.Y !== item.Y || previous.R !== item.R)) {
+    emitFx('fx:move', () => Object.freeze({
+      action,
+      from: Object.freeze({ X: previous.X, Y: previous.Y, R: previous.R }),
+      to: Object.freeze({ X: item.X, Y: item.Y, R: item.R }),
+      cells: getPieceFxCells(previous, $pieces, $cells)
+    }))
+  }
+
+  if (!accepted && Y < item.Y) {
     game.drop = Math.max(0, game.drop - 1)
 
     game.scheduled = !game.scheduled
     if (game.scheduled) return
 
     if (put(item)) {
+      emitFx('fx:lock', () => Object.freeze({
+        cells: getPieceFxCells(item, $pieces, $cells),
+        hard: game.hardDropPending
+      }))
+      game.hardDropPending = false
       $bus.emit('sound:drop')
       if (game.tetcolor) {
-        $three = getThreeBlock()
+        game.cascadeDepth = 0
+        $three = detectClears('tetcolor', getThreeBlock)
         game.chainBonus = 0
         if ($three.size) {
           game.matchStreak++
@@ -275,6 +361,11 @@ const update = (X, Y, R) => {
             game.score += combo
             $bus.emit('bonus', combo)
             $bus.emit('score', game.score)
+            emitFx('fx:combo', () => Object.freeze({
+              amount: combo,
+              streak: game.matchStreak,
+              cells: clearFxCells
+            }))
           }
           $bus.emit('sound:clear')
         } else {
@@ -283,7 +374,7 @@ const update = (X, Y, R) => {
           $bus.emit('bonus', 0)
         }
       } else {
-        $lines = getSolidLines({ asc: game.singleBlock, item })
+        $lines = detectClears('classic', () => getSolidLines({ asc: game.singleBlock, item }))
         if ($lines.length) $bus.emit('sound:clear')
       }
 
@@ -293,6 +384,7 @@ const update = (X, Y, R) => {
       // reset all timers for next piece, except level timer
       game.intervals = { [game.levelTime * 1000]: game.intervals[game.levelTime * 1000] }
     } else {
+      game.hardDropPending = false
       game.started = false
     }
   }
@@ -335,7 +427,19 @@ const update = (X, Y, R) => {
 // }
 
 const dropDown = _ => {
+  const clearing = game.singleBlock && ($lines.length > 0 || $three.size > 0)
+  const start = item
   while (set(item.X, item.Y - 1, item.R));
+  const distance = start.Y - item.Y
+  if (!clearing && distance > 0) {
+    emitFx('fx:hard-drop', () => Object.freeze({
+      from: Object.freeze({ X: start.X, Y: start.Y, R: start.R }),
+      to: Object.freeze({ X: item.X, Y: item.Y, R: item.R }),
+      distance,
+      cells: getPieceFxCells(start, $pieces, $cells)
+    }))
+  }
+  if (!clearing) game.hardDropPending = true
   update(item.X, item.Y + game.drop++, item.R)
 }
 

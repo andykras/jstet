@@ -1,0 +1,101 @@
+// Visual FX 2077 / Stage 1 — entirely opt-in.
+// Off keeps the existing flat block backgrounds, borders, and preview untouched.
+// Preserve the six TetColor hues through the existing Arcade / Prism cell tokens.
+.jstet-app.fx-enabled
+  .game-cell.item:not(.N-2):not(.N-1)
+    position relative
+    overflow hidden
+    border-color rgba(7, 12, 35, 0.54)
+    background-color var(--fx-block-color)
+    background-image linear-gradient(145deg,
+                       rgba(255, 255, 255, 0.44) 0%,
+                       rgba(255, 255, 255, 0.13) 22%,
+                       rgba(255, 255, 255, 0) 46%,
+                       rgba(2, 5, 28, 0.12) 70%,
+                       rgba(2, 5, 28, 0.33) 100%)
+    box-shadow inset 0 1px rgba(255, 255, 255, 0.38),
+               inset 1px 0 rgba(255, 255, 255, 0.21),
+               inset 0 -2px rgba(4, 8, 30, 0.25)
+
+    &::before,
+    &::after
+      content ''
+      position absolute
+      pointer-events none
+
+    &::before
+      top 2px
+      left 2px
+      right 2px
+      height 35%
+      border-radius 1px
+      background linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0))
+      opacity 0.72
+
+    &::after
+      inset 1px
+      border 1px solid rgba(255, 255, 255, 0.72)
+      border-radius 2px
+      opacity 0.2
+      transform scale(0.96)
+
+    &.N1
+      --fx-block-color var(--cell-1, #89fb6e)
+
+    &.N2
+      --fx-block-color var(--cell-2, #ec64f8)
+
+    &.N3
+      --fx-block-color var(--cell-3, #ec615c)
+
+    &.N4
+      --fx-block-color var(--cell-4, #fffe73)
+
+    &.N5
+      --fx-block-color var(--cell-5, #5458f6)
+
+    &.N6
+      --fx-block-color var(--cell-6, #89fcfd)
+
+    &.N7
+      --fx-block-color var(--cell-7, #ffac65)
+
+  // Only the live falling piece carries energy. Settled cells stay still.
+  .tetcolor-board .game-cell.fx-active
+    box-shadow inset 0 1px rgba(255, 255, 255, 0.52),
+               inset 0 -2px rgba(3, 5, 25, 0.25),
+               0 0 7px rgba(241, 236, 255, 0.28)
+
+    &::after
+      opacity 0.63
+
+  // The Next preview shares the material, never the active-piece animation.
+  .next-piece .game-cell.item::after
+    opacity 0.28
+
+// Animate only a small pseudo-element's opacity/transform, never the full well.
+.jstet-app.fx-enabled.is-running .tetcolor-board .game-cell.fx-active::after
+  animation fx-glass-breathe 1450ms ease-in-out infinite alternate
+
+@keyframes fx-glass-breathe
+  from
+    opacity 0.35
+    transform scale(0.94)
+
+  to
+    opacity 0.78
+    transform scale(1)
+
+.jstet-app.fx-enabled.reduce-motion .tetcolor-board .game-cell.fx-active::after
+  animation none
+  opacity 0.56
+  transform none
+
+// The is-running selector matches the animation rule above: a 4-class media
+// rule would lose the specificity race and reduced-motion users would keep
+// the permanent breathe animation.
+@media (prefers-reduced-motion: reduce)
+  .jstet-app.fx-enabled.is-running .tetcolor-board .game-cell.fx-active::after
+    animation none
+    opacity 0.56
+    transform none

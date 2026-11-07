@@ -5,7 +5,8 @@ export const DEFAULT_PREFERENCES = Object.freeze({
   reducedMotion: false,
   showHelp: true,
   hardDrop: false,
-  soundEnabled: true
+  soundEnabled: true,
+  visualFxEnabled: false
 })
 
 export const normalizePreferences = value => {
@@ -15,7 +16,8 @@ export const normalizePreferences = value => {
     reducedMotion: typeof source.reducedMotion === 'boolean' ? source.reducedMotion : DEFAULT_PREFERENCES.reducedMotion,
     showHelp: typeof source.showHelp === 'boolean' ? source.showHelp : DEFAULT_PREFERENCES.showHelp,
     hardDrop: typeof source.hardDrop === 'boolean' ? source.hardDrop : DEFAULT_PREFERENCES.hardDrop,
-    soundEnabled: typeof source.soundEnabled === 'boolean' ? source.soundEnabled : DEFAULT_PREFERENCES.soundEnabled
+    soundEnabled: typeof source.soundEnabled === 'boolean' ? source.soundEnabled : DEFAULT_PREFERENCES.soundEnabled,
+    visualFxEnabled: typeof source.visualFxEnabled === 'boolean' ? source.visualFxEnabled : DEFAULT_PREFERENCES.visualFxEnabled
   }
 }
 

@@ -1,0 +1,136 @@
+// Visual FX 2077 / Stage 4 — rewards are presentation-only and strictly opt-in.
+// A small local award and short rim pulse communicate real, positive engine
+// bonuses. Never cover the entire playfield with opaque effects.
+.jstet-app.fx-enabled .tetcolor-fx-celebration
+  position absolute
+  z-index 4
+  top unquote('clamp(27px, calc(var(--fx-row) * var(--jstet-cell-size)), calc(100% - 27px))')
+  left unquote('clamp(57px, calc(var(--fx-column) * var(--jstet-cell-size)), calc(100% - 57px))')
+  display flex
+  flex-direction column
+  align-items center
+  gap 2px
+  min-width 84px
+  max-width 96%
+  padding 4px 9px 5px
+  border 1px solid rgba(255, 198, 116, 0.75)
+  border-radius 7px
+  background linear-gradient(145deg, rgba(56, 18, 65, 0.94), rgba(17, 15, 42, 0.95))
+  color #ffeab5
+  text-shadow 0 0 9px rgba(255, 189, 79, 0.38)
+  box-shadow 0 0 12px rgba(252, 172, 72, 0.26), inset 0 1px rgba(255, 244, 218, 0.25)
+  pointer-events none
+  white-space nowrap
+  animation fx-reward-rise 760ms cubic-bezier(.18, .76, .3, 1) both
+
+  &__name
+    font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+    font-size clamp(9px, 1.9vw, 12px)
+    font-weight 900
+    letter-spacing 0.035em
+
+  &__amount
+    font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+    font-size clamp(14px, 2.4vw, 21px)
+    line-height 1.1
+    font-weight 900
+    font-variant-numeric tabular-nums
+    color #ffffff
+
+  &--tier-2
+    border-width 2px
+    box-shadow 0 0 17px rgba(252, 172, 72, 0.43), inset 0 1px rgba(255, 244, 218, 0.31)
+
+  &--tier-3
+    border-width 2px
+    box-shadow 0 0 23px rgba(252, 172, 72, 0.58), inset 0 1px rgba(255, 244, 218, 0.38)
+
+  &--cascade
+    border-color rgba(120, 218, 255, 0.85)
+    background linear-gradient(145deg, rgba(16, 45, 72, 0.95), rgba(12, 20, 49, 0.95))
+    color #baf4ff
+    text-shadow 0 0 9px rgba(130, 221, 255, 0.4)
+    box-shadow 0 0 15px rgba(103, 212, 255, 0.3), inset 0 1px rgba(227, 251, 255, 0.22)
+
+    &.tetcolor-fx-celebration--tier-2
+      box-shadow 0 0 18px rgba(103, 212, 255, 0.43), inset 0 1px rgba(227, 251, 255, 0.28)
+
+    &.tetcolor-fx-celebration--tier-3
+      box-shadow 0 0 24px rgba(103, 212, 255, 0.58), inset 0 1px rgba(227, 251, 255, 0.34)
+
+// Cascade: a localized expanding energy wave, distinct from the warm combo pop.
+.jstet-app.fx-enabled .tetcolor-fx-pulse
+  display none
+
+  &--cascade
+    position absolute
+    z-index 3
+    top unquote('calc(var(--fx-row) * var(--jstet-cell-size))')
+    left unquote('calc(var(--fx-column) * var(--jstet-cell-size))')
+    display block
+    width unquote('calc(2.6 * var(--jstet-cell-size))')
+    height unquote('calc(2.6 * var(--jstet-cell-size))')
+    border 2px solid rgba(117, 230, 255, 0.85)
+    border-radius 50%
+    background radial-gradient(circle, rgba(111, 222, 255, 0.16), transparent 68%)
+    box-shadow 0 0 13px rgba(91, 225, 255, 0.34)
+    pointer-events none
+    animation fx-cascade-ripple 580ms ease-out both
+
+@keyframes fx-cascade-ripple
+  from
+    opacity 0.88
+    transform translate(-50%, -50%) scale(0.45)
+  to
+    opacity 0
+    transform translate(-50%, -50%) scale(1.7)
+
+.jstet-app.fx-enabled .tetcolor-fx-rim
+  position absolute
+  z-index 3
+  inset 2px
+  border 2px solid rgba(255, 180, 91, 0.85)
+  border-radius 8px
+  box-shadow inset 0 0 12px rgba(255, 171, 70, 0.35), 0 0 10px rgba(255, 162, 55, 0.36)
+  pointer-events none
+  animation fx-reward-rim 560ms ease-out both
+
+  &--cascade
+    border-color rgba(98, 218, 255, 0.85)
+    box-shadow inset 0 0 12px rgba(84, 202, 255, 0.35), 0 0 10px rgba(84, 202, 255, 0.36)
+
+@keyframes fx-reward-rise
+  from
+    opacity 0
+    transform translate(-50%, 6px) scale(0.88)
+  24%
+    opacity 1
+    transform translate(-50%, -9px) scale(1.02)
+  58%
+    opacity 1
+    transform translate(-50%, -15px) scale(1)
+  to
+    opacity 0
+    transform translate(-50%, -25px) scale(0.97)
+
+@keyframes fx-reward-rim
+  from
+    opacity 0
+    transform scale(0.995)
+  25%
+    opacity 0.94
+    transform scale(1)
+  to
+    opacity 0
+    transform scale(1)
+
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-celebration,
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-rim,
+.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-pulse
+  display none
+
+@media (prefers-reduced-motion: reduce)
+  .jstet-app.fx-enabled .tetcolor-fx-celebration,
+  .jstet-app.fx-enabled .tetcolor-fx-rim,
+  .jstet-app.fx-enabled .tetcolor-fx-pulse
+    display none
