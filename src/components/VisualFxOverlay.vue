@@ -31,7 +31,7 @@
 
 <script>
 import { gameBus } from '@/utils/gameBus.js'
-import { getFxAnchor } from '@/utils/visualFx.js'
+import { getFxAnchor, sampleFxCells } from '@/utils/visualFx.js'
 
 const MAX_EFFECTS = 24
 const MAX_CELEBRATIONS = 2
@@ -178,7 +178,9 @@ export default {
       if (!this.running || this.reducedMotion || this.osReducedMotion || document.hidden || !Array.isArray(cells)) return
       const duration = DURATION[type]
       let order = 0
-      for (const cell of cells) {
+      // Large clears cover the entire field rather than keeping only the last 24 cells.
+      const selected = sampleFxCells(cells, MAX_EFFECTS)
+      for (const cell of selected) {
         if (this.effects.length >= MAX_EFFECTS) {
           const expired = this.effects.shift()
           clearTimeout(this.timers.get(expired.id))
