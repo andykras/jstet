@@ -7,8 +7,9 @@ const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'ut
 test('touch controls use only the existing game command bus', () => {
   const pad = read('src/components/TouchControls.vue')
   const app = read('src/App.vue')
-  for (const token of ["action: 'left'", "action: 'right'", "action: 'rotate'", "action: 'down'",
+  for (const token of ["action: 'left'", "action: 'right'", "onPointerDown($event, 'rotate')",
     "gameBus.emit('drop', this.hard)", "createTouchInput(command => gameBus.emit(command))",
+    'touch-pad__left', 'touch-pad__right', 'moveControls',
     '@pointerdown=', '@pointerup=', '@pointercancel=', '@lostpointercapture=']) {
     assert.ok(pad.includes(token), token)
   }
