@@ -102,7 +102,7 @@ export default {
     },
     onClearStart(payload) {
       if (!payload) return
-      this.add('charge', payload.cells)
+      this.add('charge', payload.cells, { mode: payload.mode })
     },
     onClearStep(payload) {
       if (!payload) return
@@ -127,7 +127,7 @@ export default {
           dx: values.dx || 0,
           dy: values.dy || 0,
           distance: values.distance || 0,
-          order: Math.min(order++, 9)
+          order: values.mode === 'classic' ? cell.column : Math.min(order++, 9)
         }
         this.effects.push(effect)
         this.timers.set(effect.id, setTimeout(() => this.remove(effect.id), duration))
