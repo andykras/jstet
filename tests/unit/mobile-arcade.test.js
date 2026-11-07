@@ -32,7 +32,7 @@ test('mobile board metrics occupy the four corners around the same well', () => 
   assert.match(hud, /hud-stat--level/)
   assert.match(hud, /hud-stat--progress/)
   assert.match(style, /grid-template-areas 'stage' 'touch'/)
-  assert.match(style, /\.board-panel__well\n    width calc\(100% - 2 \* var\(--mobile-rail\) - 12px\)/)
+  assert.match(style, /\.board-panel__well\n    width unquote\('calc\(100% - var\(--mobile-rail\) - var\(--mobile-rail\) - 12px\)'\)/)
   for (const name of ['hud-stat--score', 'hud-stat--level', 'hud-stat--progress']) {
     assert.ok(style.includes('.dashboard-column .game-hud .' + name), name)
   }
