@@ -16,7 +16,16 @@
               @pointercancel="onPointerCancel"
               @lostpointercapture="onPointerCancel"
               @click="onClick($event, control.action)">
-        {{ control.glyph }}
+        <svg class="touch-pad__arrow"
+             viewBox="0 0 32 32"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="3.4"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true">
+          <path :d="control.path" />
+        </svg>
       </button>
     </div>
     <div class="touch-pad__right"
@@ -63,8 +72,8 @@ export default {
   data() {
     return {
       moveControls: [
-        { action: 'left', label: 'Move left', glyph: '←' },
-        { action: 'right', label: 'Move right', glyph: '→' }
+        { action: 'left', label: 'Move left', path: 'M27 16H5 M13 8l-8 8 8 8' },
+        { action: 'right', label: 'Move right', path: 'M5 16h22 M19 8l8 8-8 8' }
       ],
       activePointers: new Set()
     }
