@@ -1,6 +1,13 @@
 <template>
   <div class="jstet-app"
-       :class="['theme-' + preferences.theme, { 'reduce-motion': preferences.reducedMotion, 'is-paused': status === 'paused', 'is-lab': naiveImplementation }]">
+       :class="[
+         'theme-' + preferences.theme,
+         {
+           'reduce-motion': preferences.reducedMotion,
+           'is-paused': status === 'paused',
+           'is-lab': naiveImplementation
+         }
+       ]">
     <div class="arcade-console">
       <header class="arcade-header">
         <div class="arcade-brand"
@@ -88,8 +95,12 @@
                  stroke-linecap="round"
                  stroke-linejoin="round"
                  aria-hidden="true">
-              <path d="M12 2.5l1.8 2.3 2.9-.1.9 2.8 2.6 1.3-.7 2.8 1.3 2.5-2.2 1.9-.5 2.9-2.9.4-2 2.1-2.5-1.4-2.8.7-1.3-2.6-2.8-.9.1-2.9L2.5 12l2.3-1.8-.1-2.9 2.8-.9 1.3-2.6 2.8.7z" />
-              <circle cx="12" cy="12" r="3.2" />
+              <path
+                d="M12 2.5l1.8 2.3 2.9-.1.9 2.8 2.6 1.3-.7 2.8 1.3 2.5-2.2 1.9-.5 2.9-2.9.4-2 2.1-2.5-1.4
+                   -2.8.7-1.3-2.6-2.8-.9.1-2.9L2.5 12l2.3-1.8-.1-2.9 2.8-.9 1.3-2.6 2.8.7z" />
+              <circle cx="12"
+                      cy="12"
+                      r="3.2" />
             </svg>
           </button>
         </div>
