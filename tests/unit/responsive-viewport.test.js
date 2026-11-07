@@ -35,3 +35,30 @@ test('compact screens keep touch controls and the complete board in the layout',
   assert.match(styles, /overflow visible/)
   assert.match(styles, /touch-pad__directions/)
 })
+
+test('header shortcuts, compact settings and pause flow are consistent', () => {
+  const app = read('src/App.vue')
+  const styles = read('src/styles/arcade-responsive.styl')
+  for (const label of ['New Game (N)', 'Pause (P)', 'Settings (S)', 'Resume (P)']) {
+    assert.ok(app.includes(label), label)
+  }
+  for (const action of ["KeyN: () => this.createStakan()", "KeyP: () => gameBus.emit('pause')",
+    "KeyS: () => this.openSettings()"]) {
+    assert.ok(app.includes(action), action)
+  }
+  assert.doesNotMatch(app, /KeyY:|pendingMode|modalWasRunning|<footer class="arcade-footer">/)
+  assert.match(app, /if \(this.status === 'running'\) this.togglePause\(\)/)
+  const close = app.split('closeSettings() {')[1].split('requestMode(mode) {')[0]
+  assert.doesNotMatch(close, /togglePause\(\)/)
+  assert.match(styles, /width 430px/)
+  assert.match(styles, /max-width 100%/)
+  assert.match(styles, /max-height calc\(100dvh - 32px\)/)
+})
+
+test('sound options and lifecycle from master survive the responsive redesign', () => {
+  const app = read('src/App.vue')
+  assert.match(app, /v-model="preferences.soundEnabled"/)
+  assert.match(app, /attachSounds\(gameBus, \{ enabled: this.preferences.soundEnabled \}\)/)
+  assert.match(app, /this.sounds.setEnabled\(this.preferences.soundEnabled\)/)
+  assert.match(app, /this.sounds.dispose\(\)/)
+})
