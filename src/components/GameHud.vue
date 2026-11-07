@@ -1,12 +1,14 @@
 <template>
   <section class="arcade-panel game-hud"
            aria-label="Game statistics">
-    <div class="hud-stat hud-stat--score">
+    <div v-if="section !== 'left'"
+         class="hud-stat hud-stat--score">
       <h2 class="panel-heading">Score</h2>
       <output :key="score"
               class="hud-stat__number hud-stat__number--score">{{ formattedScore }}</output>
     </div>
-    <div class="hud-stat">
+    <div v-if="section !== 'right'"
+         class="hud-stat hud-stat--level">
       <span class="hud-stat__label">Level</span>
       <output class="hud-stat__number">{{ level + 1 }}</output>
       <div class="level-meter"
@@ -16,15 +18,17 @@
               :class="{ 'is-active': value <= level + 1 }"></span>
       </div>
     </div>
-    <div class="hud-stat">
+    <div v-if="section !== 'left'"
+         class="hud-stat hud-stat--progress">
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
-    <div v-if="mode === 'tetcolor' && bonus > 0"
+    <div v-if="section !== 'left' && mode === 'tetcolor'"
          :key="bonus"
          class="hud-stat hud-stat--bonus">
       <span class="hud-stat__label">Bonus</span>
-      <output class="hud-stat__number">+{{ bonus }}</output>
+      <output class="hud-stat__number"
+              aria-live="polite">{{ bonus > 0 ? '+' + bonus : '—' }}</output>
     </div>
   </section>
 </template>
@@ -35,7 +39,8 @@ import { mapState } from 'vuex'
 export default {
   name: 'GameHud',
   props: {
-    mode: { type: String, default: 'tetcolor' }
+    mode: { type: String, default: 'tetcolor' },
+    section: { type: String, default: 'all' }
   },
   computed: {
     ...mapState({

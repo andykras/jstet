@@ -23,7 +23,8 @@ test('the shell uses functional controls without exposing developer options in t
   assert.match(app, /<tetcolor \/>/)
   assert.match(app, /<GameHud /)
   assert.match(app, /<NextPiece /)
-  assert.match(app, /<details class="lab-entry">/)
+  assert.match(app, /requestMode\('legacy'\)/)
+  assert.doesNotMatch(app, /<footer class="arcade-footer">/)
   assert.doesNotMatch(app, /{{\s*\$store\.state\.options\s*}}/)
 })
 

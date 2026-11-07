@@ -6,6 +6,7 @@ import { next } from '@/game/next'
 import { put } from '@/game/put'
 import { clearAllLines, clearOneLine, getSolidLines, resetSolidLines } from '@/game/tetris'
 import { removeThreeBlockSorted, removeThreeBlock, getThreeBlock, resetThreeBlocks } from '@/game/tetcolor'
+import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
@@ -104,6 +105,8 @@ export const game = {
     $three = resetThreeBlocks()
 
     this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
+    this.matchStreak = 0
+    this.chainBonus = 0
     this.intervals = {}
     this.started = true
     this.status = 'running'
@@ -168,11 +171,10 @@ export const game = {
         $three.clear()
         if (($three = getThreeBlock()).size) {
           $bus.emit('sound:clear')
-          game.bonus += Math.round((game.bonusSize + 0.5 * game.bonus) / 100) * 100
-          game.score += game.bonus
-          $bus.emit('bonus', game.bonus)
-        } else {
-          game.bonus = 0
+          game.chainBonus = cascadeBonus(game.chainBonus, game.bonusSize)
+          game.bonus = game.chainBonus
+          game.score += game.chainBonus
+          $bus.emit('bonus', game.chainBonus)
         }
       }
       $bus.emit('lines', game.totalLines)
@@ -264,13 +266,27 @@ const update = (X, Y, R) => {
       $bus.emit('sound:drop')
       if (game.tetcolor) {
         $three = getThreeBlock()
-        if ($three.size) $bus.emit('sound:clear')
+        game.chainBonus = 0
+        if ($three.size) {
+          game.matchStreak++
+          const combo = comboBonusForStreak(game.matchStreak, game.scorePart)
+          if (combo > 0) {
+            game.bonus = combo
+            game.score += combo
+            $bus.emit('bonus', combo)
+            $bus.emit('score', game.score)
+          }
+          $bus.emit('sound:clear')
+        } else {
+          game.matchStreak = 0
+          game.bonus = 0
+          $bus.emit('bonus', 0)
+        }
       } else {
         $lines = getSolidLines({ asc: game.singleBlock, item })
         if ($lines.length) $bus.emit('sound:clear')
       }
 
-      $bus.emit('bonus', 0)
       item = next(item.N)
       // next(item.N)
 

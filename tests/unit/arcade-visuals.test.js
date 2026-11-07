@@ -19,7 +19,7 @@ test('pause and game-over overlays expose real actions and focus behavior', () =
   for (const token of ['<Transition name="state-overlay">', "status === 'paused' || status === 'gameOver'",
     'role="dialog"', 'aria-labelledby="game-state-heading"', 'ref="statePrimary"',
     "status === 'paused' ? togglePause() : createStakan()", 'status(value)',
-    '!this.settingsOpen && !this.pendingMode && !this.naive']) {
+    '!this.settingsOpen && !this.naive']) {
     assert.ok(app.includes(token), token)
   }
 })
@@ -32,13 +32,20 @@ test('HUD uses real Vuex values for animated score, bonus and level progress', (
   }
 })
 
-test('city layout and board geometry are separate at desktop and mobile widths', () => {
-  const style = read('src/styles/arcade-stage4.styl')
-  for (const token of ["'skyline stats board preview'", '.cityscape-column',
-    '.jstet-app .board-panel__well .tetcolor-board', '@media (max-width: 1200px)',
-    '@media (max-width: 920px)', '@media (max-width: 480px)']) {
-    assert.ok(style.includes(token), token)
+test('cityscape and next share the left rail; scoreboard has an independent right rail', () => {
+  const app = read('src/App.vue')
+  const rails = read('src/styles/arcade-rails.styl')
+  const sizing = read('src/styles/arcade-responsive.styl')
+  for (const token of ['class="dashboard-column"', '<CityscapeArt class="cityscape-column"',
+    'class="stats-column stats-column--left"', 'class="stats-column stats-column--right"',
+    'class="right-column"']) {
+    assert.ok(app.includes(token), token)
   }
+  for (const token of ["'dashboard board right'", '.dashboard-column .next-panel',
+    '.right-column .game-hud .hud-stat--bonus']) {
+    assert.ok(rails.includes(token), token)
+  }
+  assert.ok(sizing.includes('container-type size'))
   assert.ok(read('src/components/themes/tetcolor.vue').includes('getWellValue'))
 })
 
@@ -62,14 +69,14 @@ test('portrait skyline includes a proportional sunset and dense waterfront', () 
   }
 })
 
-test('reference refinement improves card balance without changing the board renderer', () => {
-  const style = read('src/styles/arcade-stage4.styl')
+test('simplified cabinet retains only real gameplay panels', () => {
+  const style = read('src/styles/arcade-rails.styl')
   const app = read('src/App.vue')
-  assert.ok(style.includes('grid-template-columns minmax(245px, 315px)'))
-  assert.ok(style.includes('.game-hud .hud-stat'))
-  assert.ok(style.includes('.guide-example'))
-  assert.ok(app.includes('CONNECT THREE'))
-  assert.ok(app.includes('FILL A LINE'))
+  assert.ok(style.includes('.right-column .game-hud .hud-stat--score'))
+  assert.ok(app.includes('<NextPiece class="preview-column"'))
+  assert.ok(!app.includes('guide-column'))
+  assert.ok(!app.includes('guide-example'))
+  assert.ok(!app.includes('arcade-footer'))
   assert.ok(read('src/components/themes/tetcolor.vue').includes('getWellValue'))
 })
 

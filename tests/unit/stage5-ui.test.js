@@ -7,8 +7,9 @@ const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'ut
 test('touch controls use only the existing game command bus', () => {
   const pad = read('src/components/TouchControls.vue')
   const app = read('src/App.vue')
-  for (const token of ["action: 'left'", "action: 'right'", "action: 'rotate'", "action: 'down'",
+  for (const token of ["action: 'left'", "action: 'right'", "onPointerDown($event, 'rotate')",
     "gameBus.emit('drop', this.hard)", "createTouchInput(command => gameBus.emit(command))",
+    'touch-pad__left', 'touch-pad__right', 'moveControls',
     '@pointerdown=', '@pointerup=', '@pointercancel=', '@lostpointercapture=']) {
     assert.ok(pad.includes(token), token)
   }
@@ -48,13 +49,17 @@ test('Legacy Lab retains all four skins and live animation/drop options', () => 
   assert.ok(legacy.includes("if (e.key == 's') this.dropSoft = !this.dropSoft"))
 })
 
-test('touch layout is available at phone/tablet sizes and usable in short landscape', () => {
-  const shell = read('src/styles/arcade-stage5.styl')
+test('touch layout remains accessible in portrait and short landscape', () => {
+  const base = read('src/styles/arcade-stage5.styl')
+  const responsive = read('src/styles/arcade-responsive.styl')
   const app = read('src/App.vue')
-  for (const token of ["'stats preview' 'board board' 'touch touch'", 'position sticky',
-    'touch-action none', '@media (max-width: 920px)', '@media (max-width: 370px)',
-    'max-height: 500px', 'orientation: landscape', 'env(safe-area-inset-bottom)']) {
-    assert.ok(shell.includes(token), token)
+  for (const token of ['touch-action none', '.touch-pad__directions', '.touch-pad__drop']) {
+    assert.ok(base.includes(token), token)
   }
-  assert.ok(app.includes("@import './styles/arcade-stage5.styl'"))
+  for (const token of ["'dashboard preview' 'board board' 'touch touch'",
+    "'board dashboard' 'board touch'", 'position sticky', '@media (max-width: 920px)',
+    'max-height: 520px', 'orientation: landscape', 'env(safe-area-inset-bottom)']) {
+    assert.ok(responsive.includes(token), token)
+  }
+  assert.ok(app.includes("@import './styles/arcade-responsive.styl'"))
 })

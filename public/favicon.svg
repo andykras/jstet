@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>JSTET</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#29113d"/>
+      <stop offset="1" stop-color="#0b0921"/>
+    </linearGradient>
+    <linearGradient id="block" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffd0ff"/>
+      <stop offset="1" stop-color="#ef70e7"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="url(#bg)" stroke="#f277ca" stroke-width="2"/>
+  <g fill="#f27ee8" opacity=".18">
+    <rect x="24" y="8" width="20" height="22" rx="3"/>
+    <rect x="6" y="26" width="55" height="24" rx="4"/>
+  </g>
+  <g fill="url(#block)" stroke="#ffe5fe" stroke-width=".6">
+    <rect x="25" y="11" width="14" height="14" rx="1.5"/>
+    <rect x="7" y="29" width="14" height="14" rx="1.5"/>
+    <rect x="25" y="29" width="14" height="14" rx="1.5"/>
+    <rect x="43" y="29" width="14" height="14" rx="1.5"/>
+  </g>
+  <g stroke="#fff1ff" opacity=".6" stroke-linecap="round">
+    <path d="M27 13h9 M9 31h9 M27 31h9 M45 31h9"/>
+  </g>
+</svg>

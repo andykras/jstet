@@ -9,8 +9,8 @@ test('both modes are real game sessions, not cosmetic theme toggles', () => {
   const modes = read('src/game/modes.js')
   assert.match(app, /requestMode\('classic'\)/)
   assert.match(app, /requestMode\('tetcolor'\)/)
-  assert.match(app, /:aria-pressed="mode === 'classic'"/)
-  assert.match(app, /:aria-pressed="mode === 'tetcolor'"/)
+  assert.match(app, /:aria-pressed="!naiveImplementation && mode === 'classic'"/)
+  assert.match(app, /:aria-pressed="!naiveImplementation && mode === 'tetcolor'"/)
   assert.match(app, /createGamePieces\(this.mode\)/)
   assert.match(app, /createGameBoard\(this.mode\)/)
   assert.match(app, /tetcolor: this.mode === 'tetcolor'/)
@@ -18,25 +18,26 @@ test('both modes are real game sessions, not cosmetic theme toggles', () => {
   assert.match(modes, /new Stakan\(21, 12, 4\)/)
 })
 
-test('mode change requires an intentional confirmation during active play', () => {
+test('all three modes switch immediately without a confirmation dialog', () => {
   const app = read('src/App.vue')
-  assert.match(app, /role="dialog"/)
-  assert.match(app, /aria-modal="true"/)
-  assert.match(app, /pauseForDialog\(\)/)
-  assert.match(app, /confirmMode\(\)/)
-  assert.match(app, /cancelMode\(\)/)
-  assert.match(app, /Your current game will be discarded/)
+  assert.match(app, /requestMode\('legacy'\)/)
+  assert.match(app, /:aria-pressed="naiveImplementation"/)
+  assert.match(app, /this.naive = true/)
+  assert.match(app, /this.naive = false/)
+  assert.match(app, /this.createStakan\(\)/)
+  assert.doesNotMatch(app, /pendingMode|confirmMode|cancelMode|Your current game will be discarded/)
 })
 
 test('the settings use live preferences and next-game rule application', () => {
   const app = read('src/App.vue')
   assert.match(app, /v-model="preferences.theme"/)
   assert.match(app, /v-model="preferences.reducedMotion"/)
-  assert.match(app, /v-model="preferences.showHelp"/)
   assert.match(app, /v-model="pendingSingleBlock"/)
   assert.match(app, /singleBlock: this.pendingSingleBlock/)
   assert.match(app, /savePreferences\(this.preferences\)/)
-  assert.match(app, /this.modalWasRunning && this.status === 'paused'/)
+  assert.match(app, /if \(this.status === 'running'\) this.togglePause\(\)/)
+  assert.match(app, /Closing settings leaves an active session paused/)
+  assert.doesNotMatch(app, /modalWasRunning/)
 })
 
 test('Classic HUD and next-piece preview derive from live Vuex game state', () => {

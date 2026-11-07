@@ -1,0 +1,211 @@
+// Gameplay rails: left = level and life-sized preview; right = score, progress,
+// and the most recent earned bonus. The existing well remains the focal point.
+@media (min-width: 921px)
+  .game-layout
+    grid-template-areas 'dashboard board right'
+    grid-template-columns minmax(225px, .9fr) minmax(0, 1.55fr) minmax(190px, .7fr)
+    grid-template-rows minmax(0, 1fr)
+
+  .dashboard-column
+    display flex
+    flex-direction column
+    align-items stretch
+    min-width 0
+
+  .dashboard-column .game-hud
+    position relative
+    z-index 2
+    display flex
+    flex-direction column
+    justify-content start
+    width 100%
+    height auto
+    padding clamp(9px, 1.2vh, 14px)
+
+  .dashboard-column .game-hud .hud-stat--level
+    width 100%
+    min-height 88px
+    padding 12px
+    background rgba(9, 10, 32, .9)
+
+  .dashboard-column .next-panel
+    grid-area auto
+    position relative
+    z-index 2
+    align-self stretch
+    width auto
+    height auto
+    min-height 158px
+    margin auto clamp(9px, 1.2vh, 14px)
+    padding 12px
+    background linear-gradient(155deg, rgba(22, 15, 47, .96), rgba(8, 11, 35, .96))
+
+  .dashboard-column .next-panel .next-piece
+    // Match the measured actual game-cell width, not a separate vh clamp.
+    --jstet-cell-size: var(--jstet-preview-cell-size, 30px)
+    margin 14px auto 6px
+    filter drop-shadow(0 0 8px rgba(64, 229, 255, .27))
+
+  .right-column
+    grid-area right
+    display flex
+    min-width 0
+    min-height 0
+
+  .right-column .game-hud
+    grid-area auto
+    display flex
+    flex-direction column
+    width 100%
+    height 100%
+    min-width 0
+    min-height 0
+    padding 0
+    border 0
+    background transparent
+    box-shadow none
+    gap clamp(9px, 1.5vh, 16px)
+
+  .right-column .game-hud .hud-stat
+    flex 0 0 auto
+    min-height 104px
+    padding clamp(12px, 1.5vh, 18px)
+    background linear-gradient(155deg, #1a1230, #080b23 85%)
+
+  .right-column .game-hud .hud-stat--score
+    min-height 128px
+
+  .right-column .game-hud .hud-stat--progress
+    min-height 107px
+
+  .right-column .game-hud .hud-stat--bonus
+    margin-top auto
+    min-height 97px
+    border-color rgba(241, 102, 190, .68)
+
+  .right-column .game-hud .hud-stat__number
+    font-size clamp(23px, 2.6vw, 38px)
+
+  .right-column .game-hud .hud-stat__number--score
+    font-size clamp(27px, 3vw, 42px)
+
+  .dashboard-column .level-meter
+    display flex
+
+// Phone composition follows the hand-drawn mockup: Level top-left,
+// Next centered on the left; Score and Blocks upper-right, Bonus lower-right.
+// Both HUD instances continue to share the same live Vuex state.
+@media (max-width: 920px)
+  .dashboard-column
+    grid-area stage
+    position relative
+    overflow visible
+
+  .dashboard-column .game-hud
+    position absolute
+    inset 0
+
+  .dashboard-column .game-hud .hud-stat--level
+    left 9px
+    right auto
+    top 9px
+    bottom auto
+
+  .dashboard-column .next-panel
+    position absolute
+    z-index 3
+    top 50%
+    left 9px
+    right auto
+    bottom auto
+    width var(--mobile-card-width)
+    min-height 0
+    margin 0
+    transform translateY(-50%)
+    align-self auto
+    justify-self auto
+
+  .dashboard-column .next-panel .next-piece
+    // Actual board cells supply the preferred size. Only the available side
+    // card width and the occupied shape columns can reduce preview cells.
+    --jstet-cell-size unquote('min(var(--jstet-preview-cell-size, 30px), calc((var(--mobile-card-width) - 12px) / var(--preview-columns, 3)))')
+    margin 7px auto 3px
+
+  .right-column
+    grid-area stage
+    position relative
+    z-index 2
+    width 100%
+    height 100%
+    min-width 0
+    min-height 0
+    pointer-events none
+
+  .right-column .game-hud
+    display block
+    position absolute
+    inset 0
+    width 100%
+    height 100%
+    padding 0
+    border 0
+    background transparent
+    box-shadow none
+
+  .right-column .game-hud .hud-stat
+    position absolute
+    display flex
+    flex-direction column
+    width var(--mobile-card-width)
+    min-width 0
+    min-height 0
+    height auto
+    margin 0
+    padding clamp(6px, 1.25vw, 12px)
+    gap 4px
+    border-radius 12px
+    background linear-gradient(155deg, rgba(26, 18, 48, .98), rgba(8, 11, 35, .97))
+
+  .right-column .game-hud .hud-stat--score
+    right 9px
+    left auto
+    top 9px
+    bottom auto
+
+  .right-column .game-hud .hud-stat--progress
+    right 9px
+    left auto
+    top unquote('calc(9px + clamp(62px, 10vw, 104px))')
+    bottom auto
+
+  .right-column .game-hud .hud-stat--bonus
+    right 9px
+    left auto
+    top auto
+    bottom 9px
+
+  .right-column .game-hud .hud-stat__number,
+  .right-column .game-hud .hud-stat__number--score
+    margin-top 0
+    font-size clamp(17px, 3vw, 29px)
+    line-height 1.1
+
+  .right-column .game-hud .hud-stat__label,
+  .right-column .game-hud .panel-heading
+    font-size clamp(9px, 1.5vw, 13px)
+
+@media (max-width: 640px)
+  .right-column .game-hud .hud-stat
+    padding 6px 5px
+    border-radius 9px
+
+  .right-column .game-hud .hud-stat__number,
+  .right-column .game-hud .hud-stat__number--score
+    font-size clamp(16px, 4vw, 22px)
+
+@media (max-width: 920px) and (max-height: 520px) and (orientation: landscape)
+  .right-column .game-hud .hud-stat--progress
+    top 67px
+
+  .dashboard-column .next-panel
+    top 50%

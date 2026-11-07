@@ -1,6 +1,13 @@
 <template>
   <div class="jstet-app"
-       :class="['theme-' + preferences.theme, { 'reduce-motion': preferences.reducedMotion, 'is-paused': status === 'paused' }]">
+       :class="[
+         'theme-' + preferences.theme,
+         {
+           'reduce-motion': preferences.reducedMotion,
+           'is-paused': status === 'paused',
+           'is-lab': naiveImplementation
+         }
+       ]">
     <div class="arcade-console">
       <header class="arcade-header">
         <div class="arcade-brand"
@@ -10,87 +17,118 @@
           <span class="arcade-brand__name">JSTET</span>
         </div>
 
-        <div v-if="!naiveImplementation"
-             class="mode-switch"
+        <div class="mode-switch"
              role="group"
              aria-label="Game mode">
           <button ref="modeTetcolor"
                   type="button"
                   class="mode-switch__button"
-                  :aria-pressed="mode === 'tetcolor'"
+                  :aria-pressed="!naiveImplementation && mode === 'tetcolor'"
                   @click="requestMode('tetcolor')">
             TetColor
           </button>
           <button ref="modeClassic"
                   type="button"
                   class="mode-switch__button"
-                  :aria-pressed="mode === 'classic'"
+                  :aria-pressed="!naiveImplementation && mode === 'classic'"
                   @click="requestMode('classic')">
             Classic
           </button>
-        </div>
-        <div v-else
-             class="mode-indicator"
-             aria-label="Current mode">
-          <span class="mode-indicator__dot"
-                aria-hidden="true"></span>Legacy Lab
+          <button ref="modeLegacy"
+                  type="button"
+                  class="mode-switch__button mode-switch__button--legacy"
+                  :aria-pressed="naiveImplementation"
+                  @click="requestMode('legacy')">
+            Legacy
+          </button>
         </div>
 
         <div v-if="!naiveImplementation"
              class="header-actions">
           <button type="button"
                   class="arcade-button arcade-button--primary"
+                  aria-label="New game"
+                  title="New Game (N)"
                   @click="createStakan">
-            New Game
+            <span class="header-action__label">New Game (N)</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M3 11a9 9 0 1 1 2.7 6.4" />
+              <path d="M3 4v7h7" />
+            </svg>
           </button>
           <button type="button"
                   class="arcade-button"
                   :disabled="status !== 'running' && status !== 'paused'"
+                  :aria-label="status === 'paused' ? 'Resume game' : 'Pause game'"
+                  :title="status === 'paused' ? 'Resume (P)' : 'Pause (P)'"
                   @click="togglePause">
-            {{ status === 'paused' ? 'Resume' : 'Pause' }}
+            <span class="header-action__label">{{ status === 'paused' ? 'Resume (P)' : 'Pause (P)' }}</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="currentColor"
+                 aria-hidden="true">
+              <path v-if="status === 'paused'"
+                    d="M7 4.5v15l12-7.5z" />
+              <path v-else
+                    d="M6 4h4v16H6zm8 0h4v16h-4z" />
+            </svg>
           </button>
           <button ref="settingsTrigger"
                   type="button"
                   class="arcade-button"
+                  aria-label="Settings"
+                  title="Settings (S)"
                   @click="openSettings">
-            Settings
+            <span class="header-action__label">Settings (S)</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path
+                d="M12 2.5l1.8 2.3 2.9-.1.9 2.8 2.6 1.3-.7 2.8 1.3 2.5-2.2 1.9-.5 2.9-2.9.4-2 2.1-2.5-1.4
+                   -2.8.7-1.3-2.6-2.8-.9.1-2.9L2.5 12l2.3-1.8-.1-2.9 2.8-.9 1.3-2.6 2.8.7z" />
+              <circle cx="12"
+                      cy="12"
+                      r="3.2" />
+            </svg>
           </button>
         </div>
-        <button v-else
-                type="button"
-                class="arcade-button"
-                @click="naive = false">
-          Back to game
-        </button>
       </header>
 
       <main v-if="!naiveImplementation"
             class="game-layout"
-            :aria-label="modeTitle + ' game'">
-        <CityscapeArt class="cityscape-column"
-                      aria-hidden="true" />
-        <GameHud class="stats-column"
-                 :mode="mode" />
+            :aria-label="modeTitle + ' game'"
+            :style="boardGeometry">
+        <aside class="dashboard-column"
+               aria-label="Level and next piece">
+          <CityscapeArt class="cityscape-column"
+                        aria-hidden="true" />
+          <GameHud class="stats-column stats-column--left"
+                   :mode="mode"
+                   section="left" />
+          <NextPiece class="preview-column" />
+        </aside>
 
         <section class="board-panel"
                  :class="'board-panel--' + mode"
                  aria-label="Playing field">
-          <div class="board-panel__top">
-            <span class="panel-eyebrow">PLAYFIELD / 01</span>
-            <span class="game-status"
-                  :class="'game-status--' + status"
-                  role="status"
-                  aria-live="polite">{{ statusLabel }}</span>
-          </div>
-          <div class="board-panel__well">
+          <div ref="wellContainer"
+               class="board-panel__well">
             <tetcolor />
           </div>
-          <div class="board-panel__bottom">
-            <span>{{ mode === 'classic' ? 'Clear full lines' : 'Color match' }}</span>
-            <span>{{ hard ? 'Hard drop' : 'Soft drop' }} <kbd>S</kbd></span>
-          </div>
           <Transition name="state-overlay">
-            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen && !pendingMode"
+            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen"
                  class="game-state-overlay"
                  role="dialog"
                  aria-modal="false"
@@ -107,12 +145,12 @@
                           type="button"
                           class="arcade-button arcade-button--primary"
                           @click="status === 'paused' ? togglePause() : createStakan()">
-                    {{ status === 'paused' ? 'Resume' : 'New Game' }}
+                    {{ status === 'paused' ? 'Resume (P)' : 'New Game (N)' }}
                   </button>
                   <button v-if="status === 'paused'"
                           type="button"
                           class="arcade-button"
-                          @click="createStakan">New Game</button>
+                          @click="createStakan">New Game (N)</button>
                 </div>
               </div>
             </div>
@@ -121,53 +159,21 @@
 
         <TouchControls :status="status"
                        :hard="hard" />
-        <NextPiece class="preview-column" />
-
-        <aside v-if="preferences.showHelp"
-               class="arcade-panel guide-column"
-               aria-label="How to play and keyboard controls">
-          <h2 class="panel-heading">{{ modeTitle }}</h2>
-          <div class="guide-example"
-               aria-hidden="true">
-            <span v-for="cell in (mode === 'classic' ? 6 : 3)"
-                  :key="cell"
-                  class="guide-example__block"
-                  :class="{ 'guide-example__block--classic': mode === 'classic' }"></span>
-          </div>
-          <span class="guide-example__caption">{{ mode === 'classic' ? 'FILL A LINE' : 'CONNECT THREE' }}</span>
-          <p>{{ modeDescription }}</p>
-          <div class="guide-divider"></div>
-          <h3>Controls</h3>
-          <dl class="control-guide">
-            <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Move</dd></div>
-            <div><dt><kbd>↑</kbd></dt><dd>Rotate</dd></div>
-            <div><dt><kbd>↓</kbd></dt><dd>Down</dd></div>
-            <div><dt><kbd>Space</kbd></dt><dd>Drop</dd></div>
-            <div><dt><kbd>P</kbd></dt><dd>Pause</dd></div>
-          </dl>
+        <aside class="right-column"
+               aria-label="Score and bonus">
+          <GameHud class="stats-column stats-column--right"
+                   :mode="mode"
+                   section="right" />
         </aside>
+
       </main>
 
       <main v-else
             class="lab-layout"
             aria-label="Legacy game laboratory">
-        <p class="lab-layout__notice">Legacy implementation — development view</p>
         <stakan />
       </main>
 
-      <footer class="arcade-footer">
-        <p v-if="!naiveImplementation && preferences.showHelp"
-           class="arcade-footer__help"><kbd>S</kbd> Drop mode · <kbd>Y</kbd> New Game · <kbd>P</kbd> Pause</p>
-        <span v-else>{{ naiveImplementation ? 'Legacy game laboratory' : modeTitle }}</span>
-        <details class="lab-entry">
-          <summary>Developer lab</summary>
-          <label>
-            <input type="checkbox"
-                   v-model="naive">
-            Legacy engine
-          </label>
-        </details>
-      </footer>
     </div>
 
     <div v-if="settingsOpen"
@@ -202,12 +208,6 @@
                    @change="persistPreferences">
             Reduced motion
           </label>
-          <label class="settings-check">
-            <input type="checkbox"
-                   v-model="preferences.showHelp"
-                   @change="persistPreferences">
-            Show keyboard help
-          </label>
         </fieldset>
 
         <fieldset class="settings-group">
@@ -228,7 +228,6 @@
                    @change="persistPreferences">
             Hard drop on Space
           </label>
-          <p class="settings-hint">Applies immediately. Press S to toggle during a game.</p>
         </fieldset>
 
         <fieldset class="settings-group">
@@ -253,27 +252,6 @@
       </section>
     </div>
 
-    <div v-if="pendingMode"
-         class="settings-backdrop"
-         @click.self="cancelMode">
-      <section ref="dialog"
-               class="arcade-dialog"
-               role="dialog"
-               aria-modal="true"
-               aria-labelledby="mode-confirm-heading"
-               tabindex="-1">
-        <h2 id="mode-confirm-heading">Start {{ pendingModeTitle }}?</h2>
-        <p>Your current game will be discarded. A new {{ pendingModeTitle }} game will start immediately.</p>
-        <div class="dialog-actions">
-          <button type="button"
-                  class="arcade-button"
-                  @click="cancelMode">Keep playing</button>
-          <button type="button"
-                  class="arcade-button arcade-button--primary"
-                  @click="confirmMode">Start {{ pendingModeTitle }}</button>
-        </div>
-      </section>
-    </div>
   </div>
 </template>
 
@@ -303,11 +281,10 @@ export default {
       preferences,
       pendingSingleBlock: options.singleBlock,
       settingsOpen: false,
-      pendingMode: null,
-      modalWasRunning: false,
       modernDispose: null,
       modernHandlers: [],
-      sounds: null
+      sounds: null,
+      previewCellSize: null
     }
   },
 
@@ -315,24 +292,19 @@ export default {
     naiveImplementation() {
       return this.naive
     },
+    boardGeometry() {
+      const { width, height } = this.$store.getters.getDimensions
+      return {
+        '--board-columns': Math.max(1, (width || 9) - 2),
+        '--board-rows': Math.max(1, (height || 19) - 1),
+        '--jstet-preview-cell-size': this.previewCellSize ? this.previewCellSize + 'px' : '30px'
+      }
+    },
     status() {
       return this.$store.state.status
     },
-    statusLabel() {
-      if (this.status === 'gameOver') return 'GAME OVER'
-      if (this.status === 'paused') return 'PAUSED'
-      return this.status === 'running' ? 'PLAYING' : 'READY'
-    },
     modeTitle() {
       return this.mode === 'classic' ? 'Classic' : 'TetColor'
-    },
-    pendingModeTitle() {
-      return this.pendingMode === 'classic' ? 'Classic' : 'TetColor'
-    },
-    modeDescription() {
-      return this.mode === 'classic'
-        ? 'Stack falling tetrominoes and clear complete horizontal lines.'
-        : 'Connect three or more matching blocks horizontally, vertically or diagonally.'
     },
     activeSingleBlock() {
       return this.$store.state.options ? this.$store.state.options.singleBlock : options.singleBlock
@@ -343,11 +315,14 @@ export default {
     naive(value) {
       if (value) this.stopModern()
       else this.startModern()
+      // v-if replaces the well element when leaving Legacy. Observe the new
+      // element rather than keeping a stale reference to the detached board.
+      this.$nextTick(() => this.observeWell())
     },
     status(value) {
       if (value !== 'paused' && value !== 'gameOver') return
       this.$nextTick(() => {
-        if (!this.settingsOpen && !this.pendingMode && !this.naive && this.$refs.statePrimary) {
+        if (!this.settingsOpen && !this.naive && this.$refs.statePrimary) {
           this.$refs.statePrimary.focus()
         }
       })
@@ -358,12 +333,40 @@ export default {
     this.setOptions(resolveRunOptions(options))
     this.startModern()
   },
+  mounted() {
+    if (typeof ResizeObserver !== 'undefined') {
+      this.wellResizeObserver = new ResizeObserver(() => this.syncPreviewCellSize())
+    }
+    this.$nextTick(() => this.observeWell())
+    window.addEventListener('resize', this.syncPreviewCellSize)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.syncPreviewCellSize)
+    if (this.wellResizeObserver) this.wellResizeObserver.disconnect()
+  },
   unmounted() {
     this.stopModern()
   },
 
   methods: {
     ...mapMutations(['setCells', 'setPieces', 'setPieceState', 'setLines', 'setScore', 'setBonus', 'setLevel', 'setOptions', 'setStatus']),
+
+    observeWell() {
+      if (this.wellResizeObserver) {
+        this.wellResizeObserver.disconnect()
+        if (this.$refs.wellContainer) this.wellResizeObserver.observe(this.$refs.wellContainer)
+      }
+      this.syncPreviewCellSize()
+    },
+
+    syncPreviewCellSize() {
+      const cell = this.$refs.wellContainer?.querySelector('.tetcolor-board .game-cell')
+      if (!cell) return
+      const size = cell.getBoundingClientRect().width
+      if (size > 0 && Math.abs(size - (this.previewCellSize || 0)) > 0.25) {
+        this.previewCellSize = size
+      }
+    },
 
     togglePause() {
       gameBus.emit('pause')
@@ -376,8 +379,7 @@ export default {
     },
 
     pauseForDialog() {
-      this.modalWasRunning = this.status === 'running'
-      if (this.modalWasRunning) this.togglePause()
+      if (this.status === 'running') this.togglePause()
       game.releaseControls()
     },
 
@@ -388,7 +390,7 @@ export default {
     },
 
     openSettings() {
-      if (this.naiveImplementation || this.settingsOpen || this.pendingMode) return
+      if (this.naiveImplementation || this.settingsOpen) return
       this.pauseForDialog()
       this.settingsOpen = true
       this.focusDialog()
@@ -397,48 +399,27 @@ export default {
     closeSettings() {
       if (!this.settingsOpen) return
       this.settingsOpen = false
-      if (this.modalWasRunning && this.status === 'paused') this.togglePause()
-      this.modalWasRunning = false
+      // Closing settings leaves an active session paused until the player resumes.
       this.$nextTick(() => {
-        if (this.$refs.settingsTrigger) this.$refs.settingsTrigger.focus()
+        const target = this.$refs.statePrimary || this.$refs.settingsTrigger
+        if (target) target.focus()
       })
     },
 
     requestMode(mode) {
-      if (mode === this.mode || this.naiveImplementation || this.pendingMode || this.settingsOpen) return
-      if (this.status !== 'running' && this.status !== 'paused') {
-        this.mode = mode
-        this.createStakan()
+      if (this.settingsOpen || (mode === 'legacy' && this.naiveImplementation)) return
+      if (mode === 'legacy') {
+        this.naive = true
         return
       }
-      this.pauseForDialog()
-      this.pendingMode = mode
-      this.focusDialog()
-    },
-
-    cancelMode() {
-      if (!this.pendingMode) return
-      const origin = this.pendingMode
-      this.pendingMode = null
-      if (this.modalWasRunning && this.status === 'paused') this.togglePause()
-      this.modalWasRunning = false
-      this.$nextTick(() => {
-        const ref = origin === 'classic' ? this.$refs.modeClassic : this.$refs.modeTetcolor
-        if (ref) ref.focus()
-      })
-    },
-
-    confirmMode() {
-      if (!this.pendingMode) return
-      const selected = this.pendingMode
-      this.pendingMode = null
-      this.modalWasRunning = false
-      this.mode = selected
-      this.createStakan()
-      this.$nextTick(() => {
-        const ref = selected === 'classic' ? this.$refs.modeClassic : this.$refs.modeTetcolor
-        if (ref) ref.focus()
-      })
+      if (!this.naiveImplementation && this.mode === mode) return
+      this.mode = mode
+      if (this.naiveImplementation) {
+        // The watcher mounts a fresh modern session with this selected mode.
+        this.naive = false
+      } else {
+        this.createStakan()
+      }
     },
 
     trapDialogFocus(e) {
@@ -505,6 +486,7 @@ export default {
       this.setPieces(createGamePieces(this.mode))
       this.setCells(createGameBoard(this.mode))
       gameBus.emit('start', rules)
+      this.$nextTick(() => this.syncPreviewCellSize())
     },
 
     onFocusLost() {
@@ -515,11 +497,10 @@ export default {
     },
 
     onKeyDown(e) {
-      if (this.settingsOpen || this.pendingMode) {
+      if (this.settingsOpen) {
         if (e.code === 'Escape') {
           e.preventDefault()
-          if (this.settingsOpen) this.closeSettings()
-          else this.cancelMode()
+          this.closeSettings()
         } else if (e.code === 'Tab') {
           this.trapDialogFocus(e)
         }
@@ -534,12 +515,9 @@ export default {
         ArrowUp: () => gameBus.emit('rotate:start'),
         ArrowLeft: () => gameBus.emit('left:start'),
         ArrowRight: () => gameBus.emit('right:start'),
-        KeyY: () => this.createStakan(),
+        KeyN: () => this.createStakan(),
         KeyP: () => gameBus.emit('pause'),
-        KeyS: () => {
-          this.hard = !this.hard
-          this.persistPreferences()
-        },
+        KeyS: () => this.openSettings(),
         Space: () => gameBus.emit('drop', this.hard)
       }
       const action = actions[e.code]
@@ -569,4 +547,7 @@ export default {
 @import './styles/arcade-shell.styl'
 @import './styles/arcade-stage4.styl'
 @import './styles/arcade-stage5.styl'
+@import './styles/arcade-responsive.styl'
+@import './styles/arcade-mobile.styl'
+@import './styles/arcade-rails.styl'
 </style>
