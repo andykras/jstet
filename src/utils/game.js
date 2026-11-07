@@ -32,7 +32,8 @@ const EMPTY_FX_CELLS = Object.freeze([])
 let clearFxCells = EMPTY_FX_CELLS
 
 const detectClears = (mode, detect) => {
-  const track = hasFxConsumer('fx:clear-start') || hasFxConsumer('fx:clear-step')
+  const track = hasFxConsumer('fx:clear-start') || hasFxConsumer('fx:clear-step') ||
+    hasFxConsumer('fx:combo') || hasFxConsumer('fx:cascade')
   const candidates = track ? captureClearCandidates($cells) : null
   const result = detect()
   clearFxCells = candidates ? markedClearFxCells(candidates, $cells) : EMPTY_FX_CELLS
@@ -88,6 +89,7 @@ export const game = {
   paused: false,
   debug: false,
   hardDropPending: false,
+  cascadeDepth: 0,
 
   // Configuring a run never mutates the shared defaults or Vuex hot-path data.
   configure(values) {
@@ -142,6 +144,7 @@ export const game = {
     this.paused = this.level = this.score = this.bonus = this.drop = this.totalLines = this.scheduled = 0
     this.matchStreak = 0
     this.chainBonus = 0
+    this.cascadeDepth = 0
     this.hardDropPending = false
     this.intervals = {}
     this.started = true
@@ -197,6 +200,7 @@ export const game = {
     }
 
     if ($three.size && this.interval(game.clearSpeed())) {
+      let cascadeBonusAwarded = 0
       const xy = $three.sorted[$three.sorted.length - 1]
       if (xy !== undefined) {
         const x = Math.floor(xy / $cells.height)
@@ -213,14 +217,23 @@ export const game = {
         clearFxCells = EMPTY_FX_CELLS
         if (($three = detectClears('tetcolor', getThreeBlock)).size) {
           $bus.emit('sound:clear')
+          game.cascadeDepth++
           game.chainBonus = cascadeBonus(game.chainBonus, game.bonusSize)
           game.bonus = game.chainBonus
           game.score += game.chainBonus
           $bus.emit('bonus', game.chainBonus)
+          cascadeBonusAwarded = game.chainBonus
         }
       }
       $bus.emit('lines', game.totalLines)
       $bus.emit('score', game.score)
+      if (cascadeBonusAwarded > 0) {
+        emitFx('fx:cascade', () => Object.freeze({
+          amount: cascadeBonusAwarded,
+          depth: game.cascadeDepth,
+          cells: clearFxCells
+        }))
+      }
     }
 
     if ($lines.length && this.interval(game.clearSpeed())) {
@@ -325,6 +338,7 @@ const update = (X, Y, R, action = 'gravity') => {
       game.hardDropPending = false
       $bus.emit('sound:drop')
       if (game.tetcolor) {
+        game.cascadeDepth = 0
         $three = detectClears('tetcolor', getThreeBlock)
         game.chainBonus = 0
         if ($three.size) {
@@ -335,6 +349,11 @@ const update = (X, Y, R, action = 'gravity') => {
             game.score += combo
             $bus.emit('bonus', combo)
             $bus.emit('score', game.score)
+            emitFx('fx:combo', () => Object.freeze({
+              amount: combo,
+              streak: game.matchStreak,
+              cells: clearFxCells
+            }))
           }
           $bus.emit('sound:clear')
         } else {
