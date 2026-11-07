@@ -6,13 +6,31 @@
          class="tetcolor-fx-cell"
          :class="'tetcolor-fx-cell--' + effect.type"
          :style="effectStyle(effect)"></div>
+    <div v-for="celebration in celebrations"
+         :key="'rim-' + celebration.id"
+         class="tetcolor-fx-rim"
+         :class="'tetcolor-fx-rim--' + celebration.kind"></div>
+    <div v-for="celebration in celebrations"
+         :key="'reward-' + celebration.id"
+         class="tetcolor-fx-celebration"
+         :class="[
+           'tetcolor-fx-celebration--' + celebration.kind,
+           'tetcolor-fx-celebration--tier-' + celebration.tier
+         ]"
+         :style="celebrationStyle(celebration)">
+      <span class="tetcolor-fx-celebration__name">{{ celebration.label }}</span>
+      <strong class="tetcolor-fx-celebration__amount">+{{ celebration.amount }}</strong>
+    </div>
   </div>
 </template>
 
 <script>
 import { gameBus } from '@/utils/gameBus.js'
+import { getFxAnchor } from '@/utils/visualFx.js'
 
 const MAX_EFFECTS = 24
+const MAX_CELEBRATIONS = 2
+const CELEBRATION_DURATION = 760
 const DURATION = Object.freeze({ move: 155, drop: 270, lock: 210, 'hard-lock': 250, charge: 235, clear: 340 })
 
 export default {
@@ -23,6 +41,7 @@ export default {
   data() {
     return {
       effects: [],
+      celebrations: [],
       nextId: 0,
       osReducedMotion: false
     }
@@ -48,6 +67,8 @@ export default {
       ['fx:lock', payload => this.onLock(payload)],
       ['fx:clear-start', payload => this.onClearStart(payload)],
       ['fx:clear-step', payload => this.onClearStep(payload)],
+      ['fx:combo', payload => this.onCombo(payload)],
+      ['fx:cascade', payload => this.onCascade(payload)],
       ['start', () => this.clear()],
       ['status', status => { if (status !== 'running') this.clear() }]
     ]
@@ -84,6 +105,46 @@ export default {
         '--fx-distance': effect.distance,
         '--fx-order': effect.order
       }
+    },
+    celebrationStyle(celebration) {
+      return {
+        '--fx-column': celebration.column + 0.5,
+        '--fx-row': celebration.row + 0.5
+      }
+    },
+    onCombo(payload) {
+      if (!payload || !Number.isInteger(payload.streak) || payload.streak < 2) return
+      this.celebrate('combo', payload, payload.streak)
+    },
+    onCascade(payload) {
+      if (!payload || !Number.isInteger(payload.depth) || payload.depth < 1) return
+      this.celebrate('cascade', payload, payload.depth)
+    },
+    celebrate(kind, payload, value) {
+      if (!this.running || this.reducedMotion || this.osReducedMotion || document.hidden ||
+        !Number.isInteger(payload.amount) || payload.amount <= 0) return
+      const anchor = getFxAnchor(payload.cells)
+      if (!anchor) return
+
+      if (this.celebrations.length >= MAX_CELEBRATIONS) {
+        const expired = this.celebrations.shift()
+        clearTimeout(this.timers.get(expired.id))
+        this.timers.delete(expired.id)
+      }
+      const celebration = {
+        id: ++this.nextId,
+        kind,
+        amount: payload.amount,
+        label: kind === 'combo' ? 'COMBO ×' + value : 'CASCADE ×' + value,
+        tier: Math.min(3, kind === 'combo' ? value - 1 : value),
+        ...anchor
+      }
+      this.celebrations.push(celebration)
+      this.timers.set(celebration.id, setTimeout(() => this.removeCelebration(celebration.id), CELEBRATION_DURATION))
+    },
+    removeCelebration(id) {
+      this.timers.delete(id)
+      this.celebrations = this.celebrations.filter(celebration => celebration.id !== id)
     },
     onMove(payload) {
       if (!payload || !payload.from || !payload.to) return
@@ -143,6 +204,7 @@ export default {
         this.timers.clear()
       }
       this.effects = []
+      this.celebrations = []
     },
     onHidden() {
       if (document.hidden) this.clear()
