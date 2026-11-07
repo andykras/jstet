@@ -1,6 +1,6 @@
 # JSTET — TetColor Visual FX 2077
 
-> Status: **IN PROGRESS — Stages 0–1 implemented; full-repository and browser QA pending**  
+> Status: **IN PROGRESS — Stages 0–2 implemented; full-repository and browser QA pending**  
 > Updated: 2026-11-07  
 > Branch: `feat/tetcolor-visual-fx-2077` (from the latest `master`)  
 > Scope: modern Arcade gameplay renderer; **no changes to the legacy implementation**  
@@ -92,7 +92,7 @@ Implementation:
 
 ### Stage 2 — Motion, hard drop and physical landing
 
-**Status:** [ ] Not started
+**Status:** [ ] Implementation committed; full-repository and real-browser QA pending — see [Stage 2 handoff](./tetcolor-visual-fx-2077-stage2.md).
 
 Visuals:
 - On lateral movement/rotation: a restrained ~80–150 ms edge/trail accent, never a full-board flash.
@@ -176,9 +176,9 @@ Do not add a new rendering engine, a heavy particle library, a new dependency fo
 
 - [ ] 0. Baseline and FX contracts — preference toggle, persistence and mapping implemented; full QA pending
 - [ ] 1. Glass material and active-piece lighting — code committed; full QA pending
-- [ ] 2. Movement, drop trails and landing impact
+- [ ] 2. Movement, drop trails and landing impact — code committed; full QA pending
 - [ ] 3. Match/line clear and particles
 - [ ] 4. Combo/cascade/bonus celebrations
 - [ ] 5. Final polish, mobile/performance regression and acceptance
 
-**Current checkpoint:** Stages 0 and 1 have code/tests/docs committed. No full-repository build/lint/test or real-browser/FPS verification is available in this session. Finish the [Stage 0 QA](./tetcolor-visual-fx-2077-stage0.md) and [Stage 1 QA](./tetcolor-visual-fx-2077-stage1.md) before claiming either stage accepted. Stage 2 will add discrete movement/lock events and transient visuals; it has not started. Keep the PR Draft, with no merge/deploy.
+**Current checkpoint:** Stages 0–2 are implemented and committed, with unit contracts and dedicated QA handoffs. The Stage 2 helper's 3 isolated Node tests passed, but the **repository** test/lint/build, actual Vue/Stylus compilation, browser/mobile checks and performance baseline remain pending. See [Stage 0](./tetcolor-visual-fx-2077-stage0.md), [Stage 1](./tetcolor-visual-fx-2077-stage1.md) and [Stage 2](./tetcolor-visual-fx-2077-stage2.md) handoffs. Next: finish QA, then Stage 3 (match/line-clear FX). Keep PR Draft; no merge/deploy.
