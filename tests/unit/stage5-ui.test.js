@@ -34,7 +34,7 @@ test('touch controls use only the existing game command bus', () => {
   }
   assert.ok(app.includes('<TouchControls :status="status"'))
   assert.ok(app.includes(':hard="hard"'))
-  assert.ok(app.includes("components: { GameHud, NextPiece, CityscapeArt, TouchControls }"))
+  assert.ok(app.includes("components: { GameHud, NextPiece, CityscapeArt, TouchControls, MobileTouchSurface }"))
 })
 
 test('touch ownership is released on pause, hidden page, blur and unmount', () => {

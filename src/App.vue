@@ -2,11 +2,13 @@
   <div class="jstet-app"
        :class="[
          'theme-' + preferences.theme,
+         'touch-mode-' + preferences.touchControlsMode,
          {
            'reduce-motion': preferences.reducedMotion,
            'fx-enabled': preferences.visualFxEnabled && !naiveImplementation,
            'is-running': status === 'running' && !naiveImplementation,
            'is-paused': status === 'paused',
+           'is-gameover': status === 'gameOver',
            'is-lab': naiveImplementation
          }
        ]">
@@ -131,6 +133,12 @@
             <tetcolor :visual-fx="preferences.visualFxEnabled"
                       :reduced-motion="preferences.reducedMotion" />
           </div>
+          <MobileTouchSurface v-if="preferences.touchControlsMode === 'gestures'"
+                              ref="mobileTouchSurface"
+                              :status="status"
+                              :hard="hard"
+                              :touch-fx-enabled="preferences.touchFxEnabled"
+                              :reduced-motion="preferences.reducedMotion" />
           <Transition name="state-overlay">
             <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen"
                  class="game-state-overlay"
@@ -236,8 +244,28 @@
             <input type="checkbox"
                    v-model="hard"
                    @change="persistPreferences">
-            Hard drop on Space
+            Hard drop (Space / swipe)
           </label>
+          <label class="settings-field">
+            <span>Mobile controls</span>
+            <select v-model="preferences.touchControlsMode"
+                    @change="persistPreferences">
+              <option value="gestures">Touch zones</option>
+              <option value="buttons">Buttons</option>
+            </select>
+          </label>
+          <label class="settings-check">
+            <input type="checkbox"
+                   v-model="preferences.touchFxEnabled"
+                   @change="persistPreferences">
+            Touch warp effect
+          </label>
+          <button type="button"
+                  class="arcade-button settings-replay"
+                  :disabled="preferences.touchControlsMode !== 'gestures'"
+                  @click="replayTouchHints">
+            Show touch hints again
+          </button>
         </fieldset>
 
         <fieldset class="settings-group">
@@ -271,6 +299,7 @@ import GameHud from '@/components/GameHud.vue'
 import CityscapeArt from '@/components/CityscapeArt.vue'
 import NextPiece from '@/components/NextPiece.vue'
 import TouchControls from '@/components/TouchControls.vue'
+import MobileTouchSurface from '@/components/MobileTouchSurface.vue'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
 import { setup, game } from '@/utils/game.js'
@@ -281,7 +310,7 @@ import options, { resolveRunOptions } from '@/game/options.js'
 
 export default {
   name: 'JstetApp',
-  components: { GameHud, NextPiece, CityscapeArt, TouchControls },
+  components: { GameHud, NextPiece, CityscapeArt, TouchControls, MobileTouchSurface },
   data() {
     const preferences = loadPreferences()
     return {
@@ -390,6 +419,10 @@ export default {
       savePreferences(this.preferences)
       if (!this.preferences.visualFxEnabled) gameBus.emit('fx:reset')
       if (this.sounds) this.sounds.setEnabled(this.preferences.soundEnabled)
+    },
+
+    replayTouchHints() {
+      if (this.$refs.mobileTouchSurface) this.$refs.mobileTouchSurface.replayHints()
     },
 
     pauseForDialog() {
@@ -591,4 +624,5 @@ export default {
 @import './styles/tetcolor-motion-fx.styl'
 @import './styles/tetcolor-clear-fx.styl'
 @import './styles/tetcolor-bonus-fx.styl'
+@import './styles/arcade-touch-surface.styl'
 </style>

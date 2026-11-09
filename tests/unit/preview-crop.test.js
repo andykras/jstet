@@ -32,12 +32,18 @@ test('preview is empty before a piece is available', () => {
   assert.deepEqual(getPreviewRows(null), [])
 })
 
-test('next-piece UI derives crop width from the current piece and limits by side-card width', () => {
+test('next-piece UI derives crop width from the current piece and keeps board-size cubes', () => {
   const component = read('src/components/NextPiece.vue')
   const rails = read('src/styles/arcade-rails.styl')
+  const maxfit = read('src/styles/arcade-mobile-maxfit.styl')
   assert.match(component, /getPreviewBounds\(this.previewSize, this.getNextValue\)/)
   assert.match(component, /getPreviewRows\(this.previewBounds\)/)
   assert.match(component, /'--preview-columns': previewColumns/)
   assert.match(component, /v-for="row in previewRows"/)
-  assert.match(rails, /--jstet-cell-size unquote\('min\(var\(--jstet-preview-cell-size, 30px\), calc\(\(var\(--mobile-card-width\) - 12px\) \/ var\(--preview-columns, 3\)\)\)'\)/)
+  // Preview cubes are exactly the playable board cells on every rail;
+  // per-piece rescaling (one huge cube, small triples) is gone.
+  assert.match(rails, /--jstet-cell-size: var\(--jstet-preview-cell-size, 30px\)/)
+  assert.match(maxfit, /--jstet-cell-size: var\(--jstet-preview-cell-size, 30px\)/)
+  assert.doesNotMatch(rails, /var\(--preview-columns, 3\)\)\)'/)
+  assert.doesNotMatch(maxfit, /var\(--preview-columns, 3\)\)\)'/)
 })
