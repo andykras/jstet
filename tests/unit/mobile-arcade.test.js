@@ -73,6 +73,27 @@ test('mobile controls place left/right on the left and Drop/Rotate on the right'
   assert.match(read('src/App.vue'), /ArrowDown: \(\) => gameBus\.emit\('down:start'\)/)
 })
 
+test('gesture mode reclaims the pad row while buttons mode keeps the prior layout', () => {
+  const surface = read('src/styles/arcade-touch-surface.styl')
+  const mobile = read('src/styles/arcade-mobile.styl')
+  const app = read('src/App.vue')
+  // Buttons mode keeps the classic stage/touch rows.
+  assert.match(mobile, /grid-template-areas 'stage' 'touch'/)
+  // Gesture mode collapses the pad row so the well grows taller.
+  assert.match(surface, /\.jstet-app\.touch-mode-gestures \.game-layout\n    grid-template-areas 'stage'\n    grid-template-rows minmax\(0, 1fr\)/)
+  assert.match(surface, /\.jstet-app\.touch-mode-gestures \.touch-pad\n    display none/)
+  // The surface covers the panel itself, with hints and warp layers non-interactive.
+  assert.match(surface, /\.mobile-touch-surface\n    position absolute\n    inset 0\n    z-index 4/)
+  assert.match(surface, /&__hints\n      position absolute\n      inset 0\n      pointer-events none/)
+  assert.match(surface, /&__warp/)
+  assert.match(surface, /&--inactive\n      pointer-events none/)
+  // The surface mounts only in gesture mode and reads live board geometry.
+  assert.match(app, /<MobileTouchSurface v-if="preferences\.touchControlsMode === 'gestures'"/)
+  const component = read('src/components/MobileTouchSurface.vue')
+  assert.match(component, /querySelector\('\.tetcolor-board'\)/)
+  assert.match(component, /board\.getBoundingClientRect\(\)/)
+})
+
 test('Legacy is desktop-only while TetColor and Classic stay in the mobile header', () => {
   const app = read('src/App.vue')
   const mobile = read('src/styles/arcade-mobile.styl')

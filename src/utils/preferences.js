@@ -20,7 +20,9 @@ export const normalizePreferences = value => {
     hardDrop: typeof source.hardDrop === 'boolean' ? source.hardDrop : DEFAULT_PREFERENCES.hardDrop,
     soundEnabled: typeof source.soundEnabled === 'boolean' ? source.soundEnabled : DEFAULT_PREFERENCES.soundEnabled,
     visualFxEnabled: typeof source.visualFxEnabled === 'boolean' ? source.visualFxEnabled : DEFAULT_PREFERENCES.visualFxEnabled,
-    touchControlsMode: ['gestures', 'buttons'].includes(source.touchControlsMode) ? source.touchControlsMode : DEFAULT_PREFERENCES.touchControlsMode,
+    touchControlsMode: ['gestures', 'buttons'].includes(source.touchControlsMode)
+      ? source.touchControlsMode
+      : DEFAULT_PREFERENCES.touchControlsMode,
     touchFxEnabled: typeof source.touchFxEnabled === 'boolean' ? source.touchFxEnabled : DEFAULT_PREFERENCES.touchFxEnabled
   }
 }

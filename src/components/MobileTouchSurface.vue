@@ -36,6 +36,7 @@
 <script>
 import { gameBus } from '@/utils/gameBus.js'
 import { createTouchInput } from '@/utils/touchInput.js'
+import { isSwipeDrop, isTap, pickZone } from '@/utils/touchGestures.js'
 
 const HINTS_KEY = 'jstet.touchHints.v1'
 const SWIPE_DISTANCE = 36
@@ -150,7 +151,8 @@ export default {
       const bounds = board.getBoundingClientRect()
       if (!bounds.width) return
 
-      const action = event.clientX < bounds.left ? 'left' : event.clientX > bounds.right ? 'right' : 'rotate'
+      const action = pickZone(bounds, event.clientX)
+      if (!action) return
       if (action !== 'rotate' && !this.input.press(event.pointerId, action)) return
 
       event.preventDefault()
@@ -166,9 +168,7 @@ export default {
     },
     maybeDrop(pointer, x, y) {
       if (pointer.action !== 'rotate' || pointer.dropped) return
-      const dx = x - pointer.x
-      const dy = y - pointer.y
-      if (dy < SWIPE_DISTANCE || dy < Math.abs(dx) * 1.25) return
+      if (!isSwipeDrop(pointer.x, pointer.y, x, y, SWIPE_DISTANCE)) return
       pointer.dropped = true
       gameBus.emit('drop', this.hard)
       this.learn('drop')
@@ -189,9 +189,7 @@ export default {
         this.input.release(event.pointerId)
         return
       }
-      const dx = event.clientX - pointer.x
-      const dy = event.clientY - pointer.y
-      if (!pointer.dropped && Math.hypot(dx, dy) <= TAP_TOLERANCE) {
+      if (!pointer.dropped && isTap(pointer.x, pointer.y, event.clientX, event.clientY, TAP_TOLERANCE)) {
         this.input.tap('rotate')
         this.learn('rotate')
       }
