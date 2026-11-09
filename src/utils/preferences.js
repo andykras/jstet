@@ -6,7 +6,9 @@ export const DEFAULT_PREFERENCES = Object.freeze({
   showHelp: true,
   hardDrop: false,
   soundEnabled: true,
-  visualFxEnabled: false
+  visualFxEnabled: false,
+  touchControlsMode: 'gestures',
+  touchFxEnabled: true
 })
 
 export const normalizePreferences = value => {
@@ -17,7 +19,9 @@ export const normalizePreferences = value => {
     showHelp: typeof source.showHelp === 'boolean' ? source.showHelp : DEFAULT_PREFERENCES.showHelp,
     hardDrop: typeof source.hardDrop === 'boolean' ? source.hardDrop : DEFAULT_PREFERENCES.hardDrop,
     soundEnabled: typeof source.soundEnabled === 'boolean' ? source.soundEnabled : DEFAULT_PREFERENCES.soundEnabled,
-    visualFxEnabled: typeof source.visualFxEnabled === 'boolean' ? source.visualFxEnabled : DEFAULT_PREFERENCES.visualFxEnabled
+    visualFxEnabled: typeof source.visualFxEnabled === 'boolean' ? source.visualFxEnabled : DEFAULT_PREFERENCES.visualFxEnabled,
+    touchControlsMode: ['gestures', 'buttons'].includes(source.touchControlsMode) ? source.touchControlsMode : DEFAULT_PREFERENCES.touchControlsMode,
+    touchFxEnabled: typeof source.touchFxEnabled === 'boolean' ? source.touchFxEnabled : DEFAULT_PREFERENCES.touchFxEnabled
   }
 }
 
