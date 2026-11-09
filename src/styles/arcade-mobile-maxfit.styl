@@ -50,7 +50,8 @@
 
   .dashboard-column .next-panel
     left 5px
-    width var(--mobile-card-width)
+    width max-content
+    min-width var(--mobile-card-width)
 
   .right-column .game-hud .hud-stat--score
     right 5px
@@ -64,9 +65,10 @@
     right 5px
     bottom 5px
 
-  // Give the preview the largest cells the real piece and rail permit.
+  // Preview cubes are exactly the playable board cells; the card follows the
+  // piece's own bounds instead of rescaling cubes per piece.
   .dashboard-column .next-panel .next-piece
-    --jstet-cell-size unquote('min(var(--jstet-preview-cell-size, 30px), calc((var(--mobile-card-width) - 14px) / var(--preview-columns, 3)))')
+    --jstet-cell-size: var(--jstet-preview-cell-size, 30px)
 
   // Bevelled, readable two-handed controls: left/right | DROP/rotate.
   .touch-pad

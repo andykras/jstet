@@ -84,7 +84,8 @@ export default {
   },
   watch: {
     enabled(value) {
-      if (!value) this.releaseAll()
+      if (value) this.reviveHints()
+      else this.releaseAll()
     },
     touchFxEnabled(value) {
       if (!value) this.clearWarps()
@@ -101,16 +102,25 @@ export default {
   mounted() {
     window.addEventListener('blur', this.releaseAll)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
+    gameBus.on('start', this.reviveHints)
   },
   beforeUnmount() {
     window.removeEventListener('blur', this.releaseAll)
     document.removeEventListener('visibilitychange', this.onVisibilityChange)
+    gameBus.off('start', this.reviveHints)
     this.releaseAll()
     this.clearWarps()
   },
   methods: {
     showHint(action) {
       return !this.hintsDismissed && !this.hintActions.includes(action)
+    },
+    // Every new run and every unpause replays the gesture hints, so a player
+    // who paused or restarted sees the gestures again instead of a blank pad.
+    reviveHints() {
+      this.hintsDismissed = false
+      this.hintActions = []
+      this.hintInteractions = 0
     },
     learn(action) {
       if (this.hintsDismissed) return

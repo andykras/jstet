@@ -8,6 +8,7 @@
            'fx-enabled': preferences.visualFxEnabled && !naiveImplementation,
            'is-running': status === 'running' && !naiveImplementation,
            'is-paused': status === 'paused',
+           'is-gameover': status === 'gameOver',
            'is-lab': naiveImplementation
          }
        ]">

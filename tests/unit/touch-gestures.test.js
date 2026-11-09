@@ -58,7 +58,7 @@ test('the gesture component wires pure recognition to the same bus commands', ()
   assert.match(surface, /releaseAll\(\) \{\n      this\.pointers\.clear\(\)\n      this\.input\.cancelAll\(\)/)
   for (const token of ["window.addEventListener('blur', this.releaseAll)",
     "document.addEventListener('visibilitychange', this.onVisibilityChange)",
-    'enabled(value) {\n      if (!value) this.releaseAll()\n    }']) {
+    'enabled(value) {\n      if (value) this.reviveHints()\n      else this.releaseAll()\n    }']) {
     assert.ok(surface.includes(token), token)
   }
   // Duplicate pointers never double-bind one direction.
@@ -68,6 +68,11 @@ test('the gesture component wires pure recognition to the same bus commands', ()
 
 test('touch hints dismiss per action, fade after three actions and replay on demand', () => {
   const surface = read('src/components/MobileTouchSurface.vue')
+  // A new run (gameBus start) and an unpause both replay the full hint set.
+  assert.match(surface, /reviveHints\(\) \{\n      this\.hintsDismissed = false\n      this\.hintActions = \[\]\n      this\.hintInteractions = 0\n    \}/)
+  assert.match(surface, /enabled\(value\) \{\n      if \(value\) this\.reviveHints\(\)\n      else this\.releaseAll\(\)\n    \}/)
+  assert.match(surface, /gameBus\.on\('start', this\.reviveHints\)/)
+  assert.match(surface, /gameBus\.off\('start', this\.reviveHints\)/)
   assert.match(surface, /showHint\(action\) \{\n      return !this\.hintsDismissed && !this\.hintActions\.includes\(action\)\n    \}/)
   assert.match(surface, /if \(this\.hintInteractions >= 3\) \{\n        this\.hintsDismissed = true\n        persistHintStatus\(true\)/)
   assert.match(surface, /replayHints\(\) \{\n      this\.hintsDismissed = false\n      this\.hintActions = \[\]\n      this\.hintInteractions = 0\n      persistHintStatus\(false\)\n    \}/)

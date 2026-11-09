@@ -266,8 +266,10 @@
     font-size clamp(24px, 5vw, 34px)
     line-height 1
 
-  // Paused state overlays the entire board including its indicators.
-  .jstet-app.is-paused .board-panel
+  // Paused and game-over states overlay the entire board including its
+  // indicators: the left rail (Next preview) must never cover the dialogs.
+  .jstet-app.is-paused .board-panel,
+  .jstet-app.is-gameover .board-panel
     z-index 5
 
 @media (max-width: 640px)
