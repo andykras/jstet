@@ -164,20 +164,25 @@ export default {
       this.showWarp(event, event.currentTarget.getBoundingClientRect())
       if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId)
     },
-    onPointerMove(event) {
-      const pointer = this.pointers.get(event.pointerId)
-      if (!pointer || pointer.action !== 'rotate' || pointer.dropped) return
-      const dx = event.clientX - pointer.x
-      const dy = event.clientY - pointer.y
+    maybeDrop(pointer, x, y) {
+      if (pointer.action !== 'rotate' || pointer.dropped) return
+      const dx = x - pointer.x
+      const dy = y - pointer.y
       if (dy < SWIPE_DISTANCE || dy < Math.abs(dx) * 1.25) return
       pointer.dropped = true
       gameBus.emit('drop', this.hard)
       this.learn('drop')
     },
+    onPointerMove(event) {
+      const pointer = this.pointers.get(event.pointerId)
+      if (pointer) this.maybeDrop(pointer, event.clientX, event.clientY)
+    },
     onPointerUp(event) {
       const pointer = this.pointers.get(event.pointerId)
       if (!pointer) return
       event.preventDefault()
+      // A fast swipe may deliver pointerup without a final pointermove.
+      this.maybeDrop(pointer, event.clientX, event.clientY)
       this.pointers.delete(event.pointerId)
 
       if (pointer.action !== 'rotate') {
