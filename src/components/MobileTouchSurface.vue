@@ -14,20 +14,61 @@
                      aria-hidden="true">
       <span v-if="showHint('left')"
             key="left"
-            class="mobile-touch-surface__hint mobile-touch-surface__hint--left">← MOVE</span>
+            class="mobile-touch-surface__hint mobile-touch-surface__hint--left">
+        <svg class="mobile-touch-surface__hint-icon"
+             viewBox="0 0 32 32"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="3.8"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true"><path d="M27 16H5 M14 7l-9 9 9 9" /></svg>
+        <span>MOVE</span>
+      </span>
       <span v-if="showHint('right')"
             key="right"
-            class="mobile-touch-surface__hint mobile-touch-surface__hint--right">MOVE →</span>
+            class="mobile-touch-surface__hint mobile-touch-surface__hint--right">
+        <span>MOVE</span>
+        <svg class="mobile-touch-surface__hint-icon"
+             viewBox="0 0 32 32"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="3.8"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true"><path d="M5 16h22 M18 7l9 9-9 9" /></svg>
+      </span>
       <span v-if="showHint('rotate')"
             key="rotate"
-            class="mobile-touch-surface__hint mobile-touch-surface__hint--rotate">↻ TAP</span>
+            class="mobile-touch-surface__hint mobile-touch-surface__hint--rotate">
+        <svg class="mobile-touch-surface__hint-icon"
+             viewBox="0 0 32 32"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="3.4"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true"><path d="M26 13A11 11 0 1 0 27 19 M26 5v8h-8" /></svg>
+        <span>TAP</span>
+      </span>
       <span v-if="showHint('drop')"
             key="drop"
-            class="mobile-touch-surface__hint mobile-touch-surface__hint--drop">↓ SWIPE · DROP</span>
+            class="mobile-touch-surface__hint mobile-touch-surface__hint--drop">
+        <svg class="mobile-touch-surface__hint-icon mobile-touch-surface__hint-icon--drop"
+             viewBox="0 0 32 32"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="3.8"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true"><path d="M16 4v23 M7 19l9 9 9-9" /></svg>
+        <span>SWIPE · DROP</span>
+      </span>
     </TransitionGroup>
     <span v-for="warp in warps"
           :key="warp.id"
           class="mobile-touch-surface__warp"
+          :class="'mobile-touch-surface__warp--' + warp.kind"
           :style="{ left: warp.x + 'px', top: warp.y + 'px' }"
           aria-hidden="true"></span>
   </section>
@@ -41,7 +82,7 @@ import { isSwipeDrop, isTap, pickZone } from '@/utils/touchGestures.js'
 const HINTS_KEY = 'jstet.touchHints.v1'
 const SWIPE_DISTANCE = 36
 const TAP_TOLERANCE = 18
-const WARP_DURATION = 320
+const WARP_DURATION = Object.freeze({ tap: 280, swipe: 300 })
 
 const hintsCompleted = () => {
   try {
@@ -72,7 +113,6 @@ export default {
     return {
       hintsDismissed: hintsCompleted(),
       hintActions: [],
-      hintInteractions: 0,
       warps: [],
       nextWarpId: 0
     }
@@ -120,13 +160,11 @@ export default {
     reviveHints() {
       this.hintsDismissed = false
       this.hintActions = []
-      this.hintInteractions = 0
     },
     learn(action) {
       if (this.hintsDismissed) return
       if (!this.hintActions.includes(action)) this.hintActions.push(action)
-      this.hintInteractions++
-      if (this.hintInteractions >= 3) {
+      if (this.hintActions.length === 4) {
         this.hintsDismissed = true
         persistHintStatus(true)
       }
@@ -134,17 +172,17 @@ export default {
     replayHints() {
       this.hintsDismissed = false
       this.hintActions = []
-      this.hintInteractions = 0
       persistHintStatus(false)
     },
-    showWarp(event, rect) {
+    showWarp(event, kind = 'tap') {
       if (!this.touchFxEnabled || this.reducedMotion) return
+      const rect = event.currentTarget.getBoundingClientRect()
       const id = ++this.nextWarpId
-      this.warps.push({ id, x: event.clientX - rect.left, y: event.clientY - rect.top })
+      this.warps.push({ id, kind, x: event.clientX - rect.left, y: event.clientY - rect.top })
       const timer = setTimeout(() => {
         this.warps = this.warps.filter(warp => warp.id !== id)
         this.warpTimers.delete(id)
-      }, WARP_DURATION)
+      }, WARP_DURATION[kind])
       this.warpTimers.set(id, timer)
     },
     clearWarps() {
@@ -172,27 +210,30 @@ export default {
         y: event.clientY,
         dropped: false
       })
-      if (action !== 'rotate') this.learn(action)
-      this.showWarp(event, event.currentTarget.getBoundingClientRect())
+      if (action !== 'rotate') {
+        this.learn(action)
+        this.showWarp(event)
+      }
       if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId)
     },
-    maybeDrop(pointer, x, y) {
+    maybeDrop(pointer, event) {
       if (pointer.action !== 'rotate' || pointer.dropped) return
-      if (!isSwipeDrop(pointer.x, pointer.y, x, y, SWIPE_DISTANCE)) return
+      if (!isSwipeDrop(pointer.x, pointer.y, event.clientX, event.clientY, SWIPE_DISTANCE)) return
       pointer.dropped = true
       gameBus.emit('drop', this.hard)
       this.learn('drop')
+      this.showWarp(event, 'swipe')
     },
     onPointerMove(event) {
       const pointer = this.pointers.get(event.pointerId)
-      if (pointer) this.maybeDrop(pointer, event.clientX, event.clientY)
+      if (pointer) this.maybeDrop(pointer, event)
     },
     onPointerUp(event) {
       const pointer = this.pointers.get(event.pointerId)
       if (!pointer) return
       event.preventDefault()
       // A fast swipe may deliver pointerup without a final pointermove.
-      this.maybeDrop(pointer, event.clientX, event.clientY)
+      this.maybeDrop(pointer, event)
       this.pointers.delete(event.pointerId)
 
       if (pointer.action !== 'rotate') {
@@ -202,6 +243,7 @@ export default {
       if (!pointer.dropped && isTap(pointer.x, pointer.y, event.clientX, event.clientY, TAP_TOLERANCE)) {
         this.input.tap('rotate')
         this.learn('rotate')
+        this.showWarp(event)
       }
     },
     onPointerCancel(event) {
