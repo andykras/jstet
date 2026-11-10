@@ -23,13 +23,6 @@
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
-    <div v-if="section !== 'left' && mode === 'tetcolor'"
-         :key="bonus"
-         class="hud-stat hud-stat--bonus">
-      <span class="hud-stat__label">Bonus</span>
-      <output class="hud-stat__number"
-              aria-live="polite">{{ bonus > 0 ? '+' + bonus : '—' }}</output>
-    </div>
   </section>
 </template>
 
@@ -46,8 +39,7 @@ export default {
     ...mapState({
       score: state => state.score,
       level: state => state.level,
-      blocks: state => state.lines,
-      bonus: state => state.bonus
+      blocks: state => state.lines
     }),
     progressLabel() {
       return this.mode === 'classic' ? 'Lines' : 'Blocks'
