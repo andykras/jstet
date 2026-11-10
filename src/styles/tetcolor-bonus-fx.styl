@@ -1,5 +1,5 @@
 // Bonus feedback is visible in every theme, even when optional Visual FX is off.
-// Render over the cleared group, rise gently and dissolve without blocking play.
+// Offset rewards above and outward from the cleared group, then fade gently.
 .tetcolor-board .bonus-reward-layer
   position absolute
   inset 0
@@ -9,7 +9,7 @@
 
 .tetcolor-board .bonus-reward
   position absolute
-  top unquote('clamp(78px, calc(var(--reward-row) * var(--jstet-cell-size)), calc(100% - 78px))')
+  top unquote('clamp(82px, calc(var(--reward-row) * var(--jstet-cell-size)), calc(100% - 82px))')
   left unquote('clamp(68px, calc(var(--reward-column) * var(--jstet-cell-size)), calc(100% - 68px))')
   display flex
   flex-direction column
@@ -21,7 +21,7 @@
   pointer-events none
   white-space nowrap
   color #fff4cb
-  filter drop-shadow(0 3px 2px rgba(24, 7, 35, .8)) drop-shadow(0 0 12px rgba(255, 163, 47, .55))
+  filter drop-shadow(0 3px 2px rgba(24, 7, 35, .48)) drop-shadow(0 0 8px rgba(255, 163, 47, .26))
   animation bonus-reward-rise 1250ms cubic-bezier(.16, .73, .34, 1) both
 
   &__kind
@@ -29,8 +29,8 @@
     font-size clamp(11px, 2.6vw, 17px)
     font-weight 900
     letter-spacing .21em
-    color #ffde9b
-    text-shadow 0 0 9px rgba(255, 191, 82, .9)
+    color #fbdc9f
+    text-shadow 0 0 7px rgba(255, 191, 82, .42)
 
   &__streak
     font-family ui-rounded, system-ui, sans-serif
@@ -38,9 +38,9 @@
     font-weight 1000
     line-height 1
     letter-spacing -.055em
-    color #fffaf0
-    -webkit-text-stroke .75px #ffb75b
-    text-shadow 0 2px 0 #ad5639, 0 0 14px rgba(255, 217, 105, .7)
+    color #fff5e0
+    -webkit-text-stroke .5px rgba(255, 183, 91, .75)
+    text-shadow 0 2px 0 rgba(143, 66, 43, .5), 0 0 10px rgba(255, 217, 105, .34)
 
   &__points
     font-family ui-rounded, system-ui, sans-serif
@@ -48,36 +48,36 @@
     font-weight 900
     line-height 1.1
     font-variant-numeric tabular-nums
-    color #ffd879
-    text-shadow 0 1px 0 #8e4c30, 0 0 12px rgba(255, 189, 56, .75)
+    color #ffdfa2
+    text-shadow 0 1px 0 rgba(142, 76, 48, .52), 0 0 9px rgba(255, 189, 56, .35)
 
   &--cascade
-    filter drop-shadow(0 3px 2px rgba(8, 21, 45, .9)) drop-shadow(0 0 14px rgba(68, 216, 255, .65))
+    filter drop-shadow(0 3px 2px rgba(8, 21, 45, .55)) drop-shadow(0 0 9px rgba(68, 216, 255, .30))
 
     .bonus-reward__kind
       color #a7efff
-      text-shadow 0 0 9px rgba(102, 222, 255, .85)
+      text-shadow 0 0 7px rgba(102, 222, 255, .42)
 
     .bonus-reward__streak
-      -webkit-text-stroke .75px #74defd
-      text-shadow 0 2px 0 #246c99, 0 0 15px rgba(101, 225, 255, .73)
+      -webkit-text-stroke .5px rgba(116, 222, 253, .7)
+      text-shadow 0 2px 0 rgba(36, 108, 153, .5), 0 0 10px rgba(101, 225, 255, .35)
 
     .bonus-reward__points
       color #baf8ff
-      text-shadow 0 1px 0 #246c99, 0 0 12px rgba(83, 208, 255, .8)
+      text-shadow 0 1px 0 rgba(36, 108, 153, .5), 0 0 9px rgba(83, 208, 255, .36)
 
 @keyframes bonus-reward-rise
   0%
     opacity 0
     transform translate(-50%, -38%) scale(.76)
   16%
-    opacity 1
-    transform translate(-50%, -53%) scale(1.07)
+    opacity .76
+    transform translate(-50%, -53%) scale(1.05)
   58%
-    opacity 1
+    opacity .76
     transform translate(-50%, -67%) scale(1)
   82%
-    opacity .82
+    opacity .50
   100%
     opacity 0
     transform translate(-50%, -116%) scale(.95)
@@ -86,8 +86,10 @@
 .jstet-app.reduce-motion .tetcolor-board .bonus-reward
   animation none
   transform translate(-50%, -50%)
+  opacity .76
 
 @media (prefers-reduced-motion: reduce)
   .tetcolor-board .bonus-reward
     animation none
     transform translate(-50%, -50%)
+    opacity .76
