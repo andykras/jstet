@@ -15,6 +15,7 @@
     </div>
     <VisualFxOverlay v-if="visualFx"
                      :reduced-motion="reducedMotion" />
+    <BonusRewardOverlay />
   </div>
 </template>
 
@@ -22,10 +23,11 @@
 import { mapGetters } from 'vuex'
 import { isActivePieceCell } from '@/utils/visualFx.js'
 import VisualFxOverlay from '@/components/VisualFxOverlay.vue'
+import BonusRewardOverlay from '@/components/BonusRewardOverlay.vue'
 
 export default {
   name: 'TetcolorBoard',
-  components: { VisualFxOverlay },
+  components: { VisualFxOverlay, BonusRewardOverlay },
   props: {
     visualFx: { type: Boolean, default: false },
     reducedMotion: { type: Boolean, default: false }
@@ -62,6 +64,7 @@ export default {
 
 <style lang="stylus" scoped>
 .tetcolor-board
+  position relative
   display flex
   flex-direction column-reverse
   width max-content
