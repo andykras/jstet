@@ -1,136 +1,93 @@
-// Visual FX 2077 / Stage 4 — rewards are presentation-only and strictly opt-in.
-// A small local award and short rim pulse communicate real, positive engine
-// bonuses. Never cover the entire playfield with opaque effects.
-.jstet-app.fx-enabled .tetcolor-fx-celebration
+// Bonus feedback is visible in every theme, even when optional Visual FX is off.
+// Render over the cleared group, rise gently and dissolve without blocking play.
+.tetcolor-board .bonus-reward-layer
   position absolute
+  inset 0
   z-index 4
-  top unquote('clamp(27px, calc(var(--fx-row) * var(--jstet-cell-size)), calc(100% - 27px))')
-  left unquote('clamp(57px, calc(var(--fx-column) * var(--jstet-cell-size)), calc(100% - 57px))')
+  overflow hidden
+  pointer-events none
+
+.tetcolor-board .bonus-reward
+  position absolute
+  top unquote('clamp(78px, calc(var(--reward-row) * var(--jstet-cell-size)), calc(100% - 78px))')
+  left unquote('clamp(68px, calc(var(--reward-column) * var(--jstet-cell-size)), calc(100% - 68px))')
   display flex
   flex-direction column
   align-items center
-  gap 2px
-  min-width 84px
-  max-width 96%
-  padding 4px 9px 5px
-  border 1px solid rgba(255, 198, 116, 0.75)
-  border-radius 7px
-  background linear-gradient(145deg, rgba(56, 18, 65, 0.94), rgba(17, 15, 42, 0.95))
-  color #ffeab5
-  text-shadow 0 0 9px rgba(255, 189, 79, 0.38)
-  box-shadow 0 0 12px rgba(252, 172, 72, 0.26), inset 0 1px rgba(255, 244, 218, 0.25)
+  justify-content center
+  gap 1px
+  min-width 118px
+  max-width 94%
   pointer-events none
   white-space nowrap
-  animation fx-reward-rise 760ms cubic-bezier(.18, .76, .3, 1) both
+  color #fff4cb
+  filter drop-shadow(0 3px 2px rgba(24, 7, 35, .8)) drop-shadow(0 0 12px rgba(255, 163, 47, .55))
+  animation bonus-reward-rise 1250ms cubic-bezier(.16, .73, .34, 1) both
 
-  &__name
+  &__kind
     font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
-    font-size clamp(9px, 1.9vw, 12px)
+    font-size clamp(11px, 2.6vw, 17px)
     font-weight 900
-    letter-spacing 0.035em
+    letter-spacing .21em
+    color #ffde9b
+    text-shadow 0 0 9px rgba(255, 191, 82, .9)
 
-  &__amount
-    font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
-    font-size clamp(14px, 2.4vw, 21px)
+  &__streak
+    font-family ui-rounded, system-ui, sans-serif
+    font-size clamp(42px, 10vw, 70px)
+    font-weight 1000
+    line-height 1
+    letter-spacing -.055em
+    color #fffaf0
+    -webkit-text-stroke .75px #ffb75b
+    text-shadow 0 2px 0 #ad5639, 0 0 14px rgba(255, 217, 105, .7)
+
+  &__points
+    font-family ui-rounded, system-ui, sans-serif
+    font-size clamp(26px, 6.2vw, 42px)
+    font-weight 900
     line-height 1.1
-    font-weight 900
     font-variant-numeric tabular-nums
-    color #ffffff
-
-  &--tier-2
-    border-width 2px
-    box-shadow 0 0 17px rgba(252, 172, 72, 0.43), inset 0 1px rgba(255, 244, 218, 0.31)
-
-  &--tier-3
-    border-width 2px
-    box-shadow 0 0 23px rgba(252, 172, 72, 0.58), inset 0 1px rgba(255, 244, 218, 0.38)
+    color #ffd879
+    text-shadow 0 1px 0 #8e4c30, 0 0 12px rgba(255, 189, 56, .75)
 
   &--cascade
-    border-color rgba(120, 218, 255, 0.85)
-    background linear-gradient(145deg, rgba(16, 45, 72, 0.95), rgba(12, 20, 49, 0.95))
-    color #baf4ff
-    text-shadow 0 0 9px rgba(130, 221, 255, 0.4)
-    box-shadow 0 0 15px rgba(103, 212, 255, 0.3), inset 0 1px rgba(227, 251, 255, 0.22)
+    filter drop-shadow(0 3px 2px rgba(8, 21, 45, .9)) drop-shadow(0 0 14px rgba(68, 216, 255, .65))
 
-    &.tetcolor-fx-celebration--tier-2
-      box-shadow 0 0 18px rgba(103, 212, 255, 0.43), inset 0 1px rgba(227, 251, 255, 0.28)
+    .bonus-reward__kind
+      color #a7efff
+      text-shadow 0 0 9px rgba(102, 222, 255, .85)
 
-    &.tetcolor-fx-celebration--tier-3
-      box-shadow 0 0 24px rgba(103, 212, 255, 0.58), inset 0 1px rgba(227, 251, 255, 0.34)
+    .bonus-reward__streak
+      -webkit-text-stroke .75px #74defd
+      text-shadow 0 2px 0 #246c99, 0 0 15px rgba(101, 225, 255, .73)
 
-// Cascade: a localized expanding energy wave, distinct from the warm combo pop.
-.jstet-app.fx-enabled .tetcolor-fx-pulse
-  display none
+    .bonus-reward__points
+      color #baf8ff
+      text-shadow 0 1px 0 #246c99, 0 0 12px rgba(83, 208, 255, .8)
 
-  &--cascade
-    position absolute
-    z-index 3
-    top unquote('calc(var(--fx-row) * var(--jstet-cell-size))')
-    left unquote('calc(var(--fx-column) * var(--jstet-cell-size))')
-    display block
-    width unquote('calc(2.6 * var(--jstet-cell-size))')
-    height unquote('calc(2.6 * var(--jstet-cell-size))')
-    border 2px solid rgba(117, 230, 255, 0.85)
-    border-radius 50%
-    background radial-gradient(circle, rgba(111, 222, 255, 0.16), transparent 68%)
-    box-shadow 0 0 13px rgba(91, 225, 255, 0.34)
-    pointer-events none
-    animation fx-cascade-ripple 580ms ease-out both
-
-@keyframes fx-cascade-ripple
-  from
-    opacity 0.88
-    transform translate(-50%, -50%) scale(0.45)
-  to
+@keyframes bonus-reward-rise
+  0%
     opacity 0
-    transform translate(-50%, -50%) scale(1.7)
-
-.jstet-app.fx-enabled .tetcolor-fx-rim
-  position absolute
-  z-index 3
-  inset 2px
-  border 2px solid rgba(255, 180, 91, 0.85)
-  border-radius 8px
-  box-shadow inset 0 0 12px rgba(255, 171, 70, 0.35), 0 0 10px rgba(255, 162, 55, 0.36)
-  pointer-events none
-  animation fx-reward-rim 560ms ease-out both
-
-  &--cascade
-    border-color rgba(98, 218, 255, 0.85)
-    box-shadow inset 0 0 12px rgba(84, 202, 255, 0.35), 0 0 10px rgba(84, 202, 255, 0.36)
-
-@keyframes fx-reward-rise
-  from
-    opacity 0
-    transform translate(-50%, 6px) scale(0.88)
-  24%
+    transform translate(-50%, -38%) scale(.76)
+  16%
     opacity 1
-    transform translate(-50%, -9px) scale(1.02)
+    transform translate(-50%, -53%) scale(1.07)
   58%
     opacity 1
-    transform translate(-50%, -15px) scale(1)
-  to
+    transform translate(-50%, -67%) scale(1)
+  82%
+    opacity .82
+  100%
     opacity 0
-    transform translate(-50%, -25px) scale(0.97)
+    transform translate(-50%, -116%) scale(.95)
 
-@keyframes fx-reward-rim
-  from
-    opacity 0
-    transform scale(0.995)
-  25%
-    opacity 0.94
-    transform scale(1)
-  to
-    opacity 0
-    transform scale(1)
-
-.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-celebration,
-.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-rim,
-.jstet-app.fx-enabled.reduce-motion .tetcolor-fx-pulse
-  display none
+// Reduced motion keeps the reward readable but does not animate its travel.
+.jstet-app.reduce-motion .tetcolor-board .bonus-reward
+  animation none
+  transform translate(-50%, -50%)
 
 @media (prefers-reduced-motion: reduce)
-  .jstet-app.fx-enabled .tetcolor-fx-celebration,
-  .jstet-app.fx-enabled .tetcolor-fx-rim,
-  .jstet-app.fx-enabled .tetcolor-fx-pulse
-    display none
+  .tetcolor-board .bonus-reward
+    animation none
+    transform translate(-50%, -50%)
