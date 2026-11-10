@@ -79,27 +79,9 @@ import { gameBus } from '@/utils/gameBus.js'
 import { createTouchInput } from '@/utils/touchInput.js'
 import { isSwipeDrop, isTap, pickZone } from '@/utils/touchGestures.js'
 
-const HINTS_KEY = 'jstet.touchHints.v1'
 const SWIPE_DISTANCE = 36
 const TAP_TOLERANCE = 18
 const WARP_DURATION = Object.freeze({ tap: 280, swipe: 300 })
-
-const hintsCompleted = () => {
-  try {
-    return localStorage.getItem(HINTS_KEY) === 'done'
-  } catch (_) {
-    return false
-  }
-}
-
-const persistHintStatus = complete => {
-  try {
-    if (complete) localStorage.setItem(HINTS_KEY, 'done')
-    else localStorage.removeItem(HINTS_KEY)
-  } catch (_) {
-    // Storage is optional (private mode / restricted browsers).
-  }
-}
 
 export default {
   name: 'MobileTouchSurface',
@@ -111,7 +93,7 @@ export default {
   },
   data() {
     return {
-      hintsDismissed: hintsCompleted(),
+      hintsDismissed: false,
       hintActions: [],
       warps: [],
       nextWarpId: 0
@@ -164,15 +146,10 @@ export default {
     learn(action) {
       if (this.hintsDismissed) return
       if (!this.hintActions.includes(action)) this.hintActions.push(action)
-      if (this.hintActions.length === 4) {
-        this.hintsDismissed = true
-        persistHintStatus(true)
-      }
+      if (this.hintActions.length === 4) this.hintsDismissed = true
     },
     replayHints() {
-      this.hintsDismissed = false
-      this.hintActions = []
-      persistHintStatus(false)
+      this.reviveHints()
     },
     showWarp(event, kind = 'tap') {
       if (!this.touchFxEnabled || this.reducedMotion) return
