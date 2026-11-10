@@ -68,7 +68,8 @@ export default {
   display flex
   flex-direction column-reverse
   width max-content
-  overflow hidden
+  // Allow reward typography to float beyond the well without clipping.
+  overflow visible
   border 1px solid rgba(255, 195, 115, 0.7)
   background #0a1026
   box-shadow 0 0 0 3px rgba(244, 160, 56, 0.14), 0 12px 38px rgba(2, 3, 18, 0.55)
