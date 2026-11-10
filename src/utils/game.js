@@ -11,6 +11,7 @@ import { getPieceFxCells, captureClearCandidates, markedClearFxCells, mergeClear
 
 // todo clear measure!!!!!!!!!!!!!!!
 const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
+const BONUS_HOLD_MS = 270
 // let item = { T: 0 }
 let item = {}
 let $cells = null
@@ -67,12 +68,12 @@ export function setup(bus) {
   bus.on('fx:reset', resetFx)
   const detach = attachGameCommands(bus, {
     input(type) {
-      if (game.started && !game.paused) events.emit(type)
+      if (game.started && !game.paused && !game.bonusHoldUntil) events.emit(type)
     },
     start: values => game.start(values),
     pause: () => game.togglePause(),
     drop(hard) {
-      if (!game.started || game.paused) return
+      if (!game.started || game.paused || game.bonusHoldUntil) return
       if (hard) dropDown()
       else game.drop++
     },
@@ -102,6 +103,8 @@ export const game = {
   debug: false,
   hardDropPending: false,
   cascadeDepth: 0,
+  bonusHoldPending: false,
+  bonusHoldUntil: 0,
 
   // Configuring a run never mutates the shared defaults or Vuex hot-path data.
   configure(values) {
@@ -117,8 +120,11 @@ export const game = {
   togglePause() {
     if (!this.started) return
     const now = performance.now()
-    if (this.paused) this.startedTime += now - this.pausedAt
-    else this.pausedAt = now
+    if (this.paused) {
+      const pausedFor = now - this.pausedAt
+      this.startedTime += pausedFor
+      if (this.bonusHoldUntil) this.bonusHoldUntil += pausedFor
+    } else this.pausedAt = now
     this.paused = !this.paused
     this.releaseControls()
     this.status = this.paused ? 'paused' : 'running'
@@ -131,6 +137,8 @@ export const game = {
     this.started = false
     this.paused = false
     this.hardDropPending = false
+    this.bonusHoldPending = false
+    this.bonusHoldUntil = 0
     clearFxCells = EMPTY_FX_CELLS
     this.releaseControls()
     if (this.status !== 'idle') {
@@ -158,6 +166,8 @@ export const game = {
     this.chainBonus = 0
     this.cascadeDepth = 0
     this.hardDropPending = false
+    this.bonusHoldPending = false
+    this.bonusHoldUntil = 0
     this.intervals = {}
     this.started = true
     this.status = 'running'
@@ -206,6 +216,18 @@ export const game = {
       return
     }
 
+    // Keep the next piece still briefly after the last rewarded clear.
+    // The engine clock, including gravity, resumes only when the hold ends.
+    if (this.bonusHoldUntil) {
+      if (this.currentTime < this.bonusHoldUntil) {
+        this.id = requestAnimationFrame(this.loop.bind(this))
+        return
+      }
+      this.startedTime += BONUS_HOLD_MS
+      this.bonusHoldUntil = 0
+      this.intervals = { [this.levelTime * 1000]: this.intervals[this.levelTime * 1000] }
+    }
+
     if (!game.paused && game.level < game.maxLevel - 1 && this.interval(game.levelTime * 1000)) {
       $bus.emit('level', ++game.level)
       console.log({ speed: game.speed() })
@@ -235,6 +257,7 @@ export const game = {
           game.score += game.chainBonus
           $bus.emit('bonus', game.chainBonus)
           cascadeBonusAwarded = game.chainBonus
+          game.bonusHoldPending = true
         }
       }
       $bus.emit('lines', game.totalLines)
@@ -256,6 +279,16 @@ export const game = {
       game.score += cleared * game.scorePart * 10 * (game.level + 1)
       $bus.emit('lines', game.totalLines)
       $bus.emit('score', game.score)
+    }
+
+    // Wait until all cascade cells have finished clearing before the short
+    // reward dwell; do not hold between individual cells or cascade rounds.
+    if (game.bonusHoldPending && !$three.size && !$lines.length) {
+      game.bonusHoldPending = false
+      game.bonusHoldUntil = this.currentTime + BONUS_HOLD_MS
+      this.releaseControls()
+      this.id = requestAnimationFrame(this.loop.bind(this))
+      return
     }
 
     if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
@@ -357,6 +390,7 @@ const update = (X, Y, R, action = 'gravity') => {
           game.matchStreak++
           const combo = comboBonusForStreak(game.matchStreak, game.scorePart)
           if (combo > 0) {
+            game.bonusHoldPending = true
             game.bonus = combo
             game.score += combo
             $bus.emit('bonus', combo)
