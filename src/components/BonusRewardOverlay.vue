@@ -48,9 +48,13 @@ export default {
   },
   methods: {
     rewardStyle(reward) {
+      const { width } = this.$store.getters.getDimensions
+      const playableColumns = Math.max(1, (width || 9) - 2)
+      // Move the label above and toward the nearest side, away from cleared blocks.
+      const side = reward.column < playableColumns / 2 ? -1 : 1
       return {
-        '--reward-column': reward.column + 0.5,
-        '--reward-row': reward.row + 0.5
+        '--reward-column': reward.column + 0.5 + side * 2,
+        '--reward-row': Math.max(0.5, reward.row - 1.8)
       }
     },
     onReward(kind, payload) {
