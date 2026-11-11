@@ -47,51 +47,71 @@ test('the gesture component wires pure recognition to the same bus commands', ()
   const surface = read('src/components/MobileTouchSurface.vue')
   assert.match(surface, /import \{ isSwipeDrop, isTap, pickZone \} from '@\/utils\/touchGestures\.js'/)
   assert.match(surface, /const action = pickZone\(bounds, event\.clientX\)/)
-  assert.match(surface, /if \(!isSwipeDrop\(pointer\.x, pointer\.y, x, y, SWIPE_DISTANCE\)\) return/)
-  assert.match(surface, /pointer\.dropped = true\n      gameBus\.emit\('drop', this\.hard\)/)
+  assert.match(surface, /if \(!isSwipeDrop\(pointer\.x, pointer\.y, event\.clientX, event\.clientY, SWIPE_DISTANCE\)\) return/)
+  assert.match(surface, /pointer\.dropped = true/)
+  assert.match(surface, /gameBus\.emit\('drop', this\.hard\)/)
   assert.match(surface, /this\.input\.tap\('rotate'\)/)
   // A swipe must not rotate: the tap path is skipped once a drop was emitted.
   assert.match(surface, /if \(!pointer\.dropped && isTap\(/)
+  // A swipe takes precedence over a held side zone and cancels that hold.
+  assert.match(surface, /\/\/ Swipe takes precedence over a side-zone hold, even when initiated there\.\n      if \(pointer\.action !== 'rotate'\) this\.input\.release\(event\.pointerId, true\)/)
   // Held directions release on pointerup, cancel, pause, blur and hidden tab.
   assert.match(surface, /this\.input\.release\(event\.pointerId\)/)
   assert.match(surface, /this\.input\.release\(event\.pointerId, true\)/)
   assert.match(surface, /releaseAll\(\) \{\n      this\.pointers\.clear\(\)\n      this\.input\.cancelAll\(\)/)
   for (const token of ["window.addEventListener('blur', this.releaseAll)",
     "document.addEventListener('visibilitychange', this.onVisibilityChange)",
-    'enabled(value) {\n      if (value) this.reviveHints()\n      else this.releaseAll()\n    }']) {
+    'enabled(value) {\n      if (!value) this.releaseAll()\n    }']) {
     assert.ok(surface.includes(token), token)
   }
   // Duplicate pointers never double-bind one direction.
   assert.match(surface, /if \(this\.pointers\.has\(event\.pointerId\)\) return/)
   assert.match(surface, /createTouchInput\(command => gameBus\.emit\(command\)\)/)
+  // Warp feedback is short-lived, kind-specific, and freed when replaced by a swipe.
+  assert.match(surface, /const WARP_DURATION = Object\.freeze\(\{ tap: 280, swipe: 300 \}\)/)
+  assert.match(surface, /this\.showWarp\(event, 'swipe'\)/)
+  assert.match(surface, /this\.removeWarp\(pointer\.warpId\)/)
+  assert.match(surface, /'mobile-touch-surface__warp--' \+ warp\.kind/)
 })
 
-test('touch hints dismiss per action, fade after three actions and replay on demand', () => {
+test('touch hints are preference-driven sessions: per-action dismiss and on-demand replay', () => {
   const surface = read('src/components/MobileTouchSurface.vue')
-  // A new run (gameBus start) and an unpause both replay the full hint set.
-  assert.match(surface, /reviveHints\(\) \{\n      this\.hintsDismissed = false\n      this\.hintActions = \[\]\n      this\.hintInteractions = 0\n    \}/)
-  assert.match(surface, /enabled\(value\) \{\n      if \(value\) this\.reviveHints\(\)\n      else this\.releaseAll\(\)\n    \}/)
+  // Hints come from App preferences and count real mobile games, not unpauses.
+  assert.match(surface, /showHints: \{ type: Boolean, default: true \}/)
+  assert.match(surface, /hintGamesSeen: \{ type: Number, default: 0 \}/)
+  assert.match(surface, /showHint\(action\) \{\n      return this\.showHints && this\.hintsActive && !this\.hintActions\.includes\(action\)\n    \}/)
+  // Each learned gesture dismisses its own hint; all four together close the session.
+  assert.match(surface, /learn\(action\) \{\n      if \(!this\.hintsActive \|\| this\.hintActions\.includes\(action\)\) return\n      this\.hintActions\.push\(action\)\n      if \(this\.hintActions\.length === 4\) this\.hintsActive = false\n    \}/)
+  // A new run replays hints only while the onboarding window is open.
+  assert.match(surface, /reviveHints\(\) \{\n      this\.hintActions = \[\]\n      this\.hintsActive = this\.showHints && this\.isMobileLayout\(\) && this\.hintGamesSeen < 3\n      if \(this\.hintsActive\) this\.\$emit\('hint-game-start'\)\n    \}/)
   assert.match(surface, /gameBus\.on\('start', this\.reviveHints\)/)
   assert.match(surface, /gameBus\.off\('start', this\.reviveHints\)/)
-  assert.match(surface, /showHint\(action\) \{\n      return !this\.hintsDismissed && !this\.hintActions\.includes\(action\)\n    \}/)
-  assert.match(surface, /if \(this\.hintInteractions >= 3\) \{\n        this\.hintsDismissed = true\n        persistHintStatus\(true\)/)
-  assert.match(surface, /replayHints\(\) \{\n      this\.hintsDismissed = false\n      this\.hintActions = \[\]\n      this\.hintInteractions = 0\n      persistHintStatus\(false\)\n    \}/)
-  assert.match(surface, /const HINTS_KEY = 'jstet\.touchHints\.v1'/)
-  assert.match(surface, /localStorage\.getItem\(HINTS_KEY\) === 'done'/)
-  for (const label of ['← MOVE', 'MOVE →', '↻ TAP', '↓ SWIPE · DROP']) {
+  assert.match(surface, /if \(this\.enabled && this\.isMobileLayout\(\)\) this\.reviveHints\(\)/)
+  assert.match(surface, /replayHints\(\) \{\n      if \(!this\.showHints\) return\n      this\.hintsActive = true\n      this\.hintActions = \[\]\n    \}/)
+  // The component no longer owns hint persistence: App counts games in preferences.
+  assert.doesNotMatch(surface, /localStorage|HINTS_KEY/)
+  for (const label of ['MOVE', 'TAP', 'SWIPE · DROP']) {
     assert.ok(surface.includes(label), label)
   }
   const app = read('src/App.vue')
+  assert.match(app, /:show-hints="preferences\.showTouchHints"/)
+  assert.match(app, /:hint-games-seen="preferences\.touchHintGamesSeen"/)
+  assert.match(app, /@hint-game-start="countTouchHintGame"/)
+  assert.match(app, /countTouchHintGame\(\) \{\n      if \(!this\.preferences\.showTouchHints \|\| this\.preferences\.touchHintGamesSeen >= 3\) return\n      this\.preferences\.touchHintGamesSeen\+\+\n      this\.persistPreferences\(\)\n    \}/)
   assert.match(app, /replayTouchHints\(\) \{\n      if \(this\.\$refs\.mobileTouchSurface\) this\.\$refs\.mobileTouchSurface\.replayHints\(\)\n    \}/)
-  assert.match(app, /:disabled="preferences\.touchControlsMode !== 'gestures'"/)
+  assert.match(app, /:disabled="preferences\.touchControlsMode !== 'gestures' \|\| !preferences\.showTouchHints"/)
 })
 
 test('touch preferences default to gestures plus warp and survive old saves', () => {
   const prefs = read('src/utils/preferences.js')
   assert.match(prefs, /touchControlsMode: 'gestures'/)
   assert.match(prefs, /touchFxEnabled: true/)
+  assert.match(prefs, /showTouchHints: true/)
+  assert.match(prefs, /touchHintGamesSeen: 0/)
   assert.match(prefs, /\['gestures', 'buttons'\]\.includes\(source\.touchControlsMode\)/)
   assert.match(prefs, /touchFxEnabled: typeof source\.touchFxEnabled === 'boolean' \? source\.touchFxEnabled : DEFAULT_PREFERENCES\.touchFxEnabled/)
+  assert.match(prefs, /showTouchHints: typeof source\.showTouchHints === 'boolean' \? source\.showTouchHints : DEFAULT_PREFERENCES\.showTouchHints/)
+  assert.match(prefs, /Math\.max\(0, Math\.min\(3, source\.touchHintGamesSeen\)\)/)
   const app = read('src/App.vue')
   assert.match(app, /'touch-mode-' \+ preferences\.touchControlsMode/)
   assert.match(app, /<MobileTouchSurface v-if="preferences\.touchControlsMode === 'gestures'"/)

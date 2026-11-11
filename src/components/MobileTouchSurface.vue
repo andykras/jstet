@@ -1,7 +1,7 @@
 <template>
   <section class="mobile-touch-surface"
            :class="{ 'mobile-touch-surface--inactive': !enabled }"
-           aria-label="Touch controls: tap left or right of the board to move, tap the board to rotate, swipe down anywhere in the play area to drop"
+           aria-label="Touch controls: tap left or right of the board to move, tap the board to rotate, swipe down anywhere to drop"
            @pointerdown="onPointerDown"
            @pointermove="onPointerMove"
            @pointerup="onPointerUp"
