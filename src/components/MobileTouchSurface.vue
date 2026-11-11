@@ -129,13 +129,24 @@ export default {
     window.addEventListener('blur', this.releaseAll)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
     gameBus.on('start', this.reviveHints)
+    this.mobileMedia = typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 920px)')
+      : null
+    if (this.mobileMedia) {
+      if (this.mobileMedia.addEventListener) this.mobileMedia.addEventListener('change', this.onViewportChange)
+      else this.mobileMedia.addListener(this.onViewportChange)
+    }
     // Initial App-created game starts before this child is mounted.
-    if (this.enabled) this.reviveHints()
+    if (this.enabled && this.isMobileLayout()) this.reviveHints()
   },
   beforeUnmount() {
     window.removeEventListener('blur', this.releaseAll)
     document.removeEventListener('visibilitychange', this.onVisibilityChange)
     gameBus.off('start', this.reviveHints)
+    if (this.mobileMedia) {
+      if (this.mobileMedia.removeEventListener) this.mobileMedia.removeEventListener('change', this.onViewportChange)
+      else this.mobileMedia.removeListener(this.onViewportChange)
+    }
     this.releaseAll()
     this.clearWarps()
   },
@@ -143,10 +154,19 @@ export default {
     showHint(action) {
       return this.showHints && this.hintsActive && !this.hintActions.includes(action)
     },
-    // Onboarding appears for the first three games, not every pause/resume.
+    isMobileLayout() {
+      return !this.mobileMedia || this.mobileMedia.matches
+    },
+    onViewportChange(event) {
+      if (!event.matches) {
+        this.hintsActive = false
+        this.releaseAll()
+      } else if (this.enabled) this.reviveHints()
+    },
+    // Count actual mobile games, not desktop sessions or unpauses.
     reviveHints() {
       this.hintActions = []
-      this.hintsActive = this.showHints && this.hintGamesSeen < 3
+      this.hintsActive = this.showHints && this.isMobileLayout() && this.hintGamesSeen < 3
       if (this.hintsActive) this.$emit('hint-game-start')
     },
     learn(action) {
