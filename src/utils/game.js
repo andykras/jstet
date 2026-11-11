@@ -309,6 +309,11 @@ export const game = {
     // reward dwell; do not hold between individual cells or cascade rounds.
     if (game.bonusHoldPending && !$three.size && !$lines.length) {
       game.bonusHoldPending = false
+      // A second reward can arrive during the first hold via manual Drop.
+      // Preserve already-frozen gravity time before restarting the dwell.
+      if (game.bonusHoldUntil) {
+        game.gravityPauseOffset += this.currentTime - game.gravityHoldStart
+      }
       game.gravityHoldStart = this.currentTime
       game.bonusHoldUntil = this.currentTime + BONUS_HOLD_MS
     }
