@@ -1,7 +1,7 @@
 <template>
   <section class="mobile-touch-surface"
            :class="{ 'mobile-touch-surface--inactive': !enabled }"
-           aria-label="Touch controls: tap left or right of the board to move, tap the board to rotate, swipe down on the board to drop"
+           aria-label="Touch controls: tap left or right of the board to move, tap the board to rotate, swipe down anywhere in the play area to drop"
            @pointerdown="onPointerDown"
            @pointermove="onPointerMove"
            @pointerup="onPointerUp"
@@ -89,11 +89,13 @@ export default {
     status: { type: String, required: true },
     hard: { type: Boolean, default: false },
     touchFxEnabled: { type: Boolean, default: true },
-    reducedMotion: { type: Boolean, default: false }
+    reducedMotion: { type: Boolean, default: false },
+    showHints: { type: Boolean, default: true },
+    hintGamesSeen: { type: Number, default: 0 }
   },
   data() {
     return {
-      hintsDismissed: false,
+      hintsActive: false,
       hintActions: [],
       warps: [],
       nextWarpId: 0
@@ -106,8 +108,10 @@ export default {
   },
   watch: {
     enabled(value) {
-      if (value) this.reviveHints()
-      else this.releaseAll()
+      if (!value) this.releaseAll()
+    },
+    showHints(value) {
+      if (!value) this.hintsActive = false
     },
     touchFxEnabled(value) {
       if (!value) this.clearWarps()
@@ -125,6 +129,8 @@ export default {
     window.addEventListener('blur', this.releaseAll)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
     gameBus.on('start', this.reviveHints)
+    // Initial App-created game starts before this child is mounted.
+    if (this.enabled) this.reviveHints()
   },
   beforeUnmount() {
     window.removeEventListener('blur', this.releaseAll)
@@ -135,21 +141,23 @@ export default {
   },
   methods: {
     showHint(action) {
-      return !this.hintsDismissed && !this.hintActions.includes(action)
+      return this.showHints && this.hintsActive && !this.hintActions.includes(action)
     },
-    // Every new run and every unpause replays the gesture hints, so a player
-    // who paused or restarted sees the gestures again instead of a blank pad.
+    // Onboarding appears for the first three games, not every pause/resume.
     reviveHints() {
-      this.hintsDismissed = false
       this.hintActions = []
+      this.hintsActive = this.showHints && this.hintGamesSeen < 3
+      if (this.hintsActive) this.$emit('hint-game-start')
     },
     learn(action) {
-      if (this.hintsDismissed) return
-      if (!this.hintActions.includes(action)) this.hintActions.push(action)
-      if (this.hintActions.length === 4) this.hintsDismissed = true
+      if (!this.hintsActive || this.hintActions.includes(action)) return
+      this.hintActions.push(action)
+      if (this.hintActions.length === 4) this.hintsActive = false
     },
     replayHints() {
-      this.reviveHints()
+      if (!this.showHints) return
+      this.hintsActive = true
+      this.hintActions = []
     },
     showWarp(event, kind = 'tap') {
       if (!this.touchFxEnabled || this.reducedMotion) return
@@ -161,6 +169,13 @@ export default {
         this.warpTimers.delete(id)
       }, WARP_DURATION[kind])
       this.warpTimers.set(id, timer)
+      return id
+    },
+    removeWarp(id) {
+      if (!id) return
+      clearTimeout(this.warpTimers.get(id))
+      this.warpTimers.delete(id)
+      this.warps = this.warps.filter(warp => warp.id !== id)
     },
     clearWarps() {
       for (const timer of this.warpTimers.values()) clearTimeout(timer)
@@ -185,18 +200,18 @@ export default {
         action,
         x: event.clientX,
         y: event.clientY,
-        dropped: false
+        dropped: false,
+        warpId: action !== 'rotate' ? this.showWarp(event) : null
       })
-      if (action !== 'rotate') {
-        this.learn(action)
-        this.showWarp(event)
-      }
       if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId)
     },
     maybeDrop(pointer, event) {
-      if (pointer.action !== 'rotate' || pointer.dropped) return
+      if (pointer.dropped) return
       if (!isSwipeDrop(pointer.x, pointer.y, event.clientX, event.clientY, SWIPE_DISTANCE)) return
       pointer.dropped = true
+      // Swipe takes precedence over a side-zone hold, even when initiated there.
+      if (pointer.action !== 'rotate') this.input.release(event.pointerId, true)
+      this.removeWarp(pointer.warpId)
       gameBus.emit('drop', this.hard)
       this.learn('drop')
       this.showWarp(event, 'swipe')
@@ -214,7 +229,10 @@ export default {
       this.pointers.delete(event.pointerId)
 
       if (pointer.action !== 'rotate') {
-        this.input.release(event.pointerId)
+        if (!pointer.dropped) {
+          this.input.release(event.pointerId)
+          this.learn(pointer.action)
+        }
         return
       }
       if (!pointer.dropped && isTap(pointer.x, pointer.y, event.clientX, event.clientY, TAP_TOLERANCE)) {
