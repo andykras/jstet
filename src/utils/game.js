@@ -68,12 +68,12 @@ export function setup(bus) {
   bus.on('fx:reset', resetFx)
   const detach = attachGameCommands(bus, {
     input(type) {
-      if (game.started && !game.paused && !game.bonusHoldUntil) events.emit(type)
+      if (game.started && !game.paused) events.emit(type)
     },
     start: values => game.start(values),
     pause: () => game.togglePause(),
     drop(hard) {
-      if (!game.started || game.paused || game.bonusHoldUntil) return
+      if (!game.started || game.paused) return
       if (hard) dropDown()
       else game.drop++
     },
@@ -105,6 +105,8 @@ export const game = {
   cascadeDepth: 0,
   bonusHoldPending: false,
   bonusHoldUntil: 0,
+  gravityHoldStart: 0,
+  gravityPauseOffset: 0,
 
   // Configuring a run never mutates the shared defaults or Vuex hot-path data.
   configure(values) {
@@ -123,7 +125,10 @@ export const game = {
     if (this.paused) {
       const pausedFor = now - this.pausedAt
       this.startedTime += pausedFor
-      if (this.bonusHoldUntil) this.bonusHoldUntil += pausedFor
+      if (this.bonusHoldUntil) {
+        this.bonusHoldUntil += pausedFor
+        this.gravityHoldStart += pausedFor
+      }
     } else this.pausedAt = now
     this.paused = !this.paused
     this.releaseControls()
@@ -139,6 +144,9 @@ export const game = {
     this.hardDropPending = false
     this.bonusHoldPending = false
     this.bonusHoldUntil = 0
+    this.gravityHoldStart = 0
+    this.gravityPauseOffset = 0
+    this.gravityIntervals = {}
     clearFxCells = EMPTY_FX_CELLS
     this.releaseControls()
     if (this.status !== 'idle') {
@@ -168,7 +176,10 @@ export const game = {
     this.hardDropPending = false
     this.bonusHoldPending = false
     this.bonusHoldUntil = 0
+    this.gravityHoldStart = 0
+    this.gravityPauseOffset = 0
     this.intervals = {}
+    this.gravityIntervals = {}
     this.started = true
     this.status = 'running'
 
@@ -192,8 +203,25 @@ export const game = {
     return count > this.intervals[delta] + 1
   },
 
+  // Gravity has its own logical clock: only automatic falling is held for
+  // BONUS_HOLD_MS. Clearing, levels, touch input and manual Down keep running.
+  gravityElapsed() {
+    let elapsed = this.currentTime - this.startedTime - this.gravityPauseOffset
+    if (this.bonusHoldUntil) elapsed -= Math.max(0, this.currentTime - this.gravityHoldStart)
+    return elapsed
+  },
+
+  gravityInterval(delta) {
+    const count = this.gravityElapsed() / delta
+    this.gravityIntervals[delta] = this.gravityIntervals[delta] ?? count
+    return count > this.gravityIntervals[delta] + 1
+  },
+
   increase() {
-    for (let [key] of Object.entries(this.intervals)) if (this.interval(key)) this.intervals[key]++
+    for (const [key] of Object.entries(this.intervals)) if (this.interval(key)) this.intervals[key]++
+    for (const [key] of Object.entries(this.gravityIntervals)) {
+      if (this.gravityInterval(key)) this.gravityIntervals[key]++
+    }
   },
 
   loop() {
@@ -216,16 +244,12 @@ export const game = {
       return
     }
 
-    // Keep the next piece still briefly after the last rewarded clear.
-    // The engine clock, including gravity, resumes only when the hold ends.
-    if (this.bonusHoldUntil) {
-      if (this.currentTime < this.bonusHoldUntil) {
-        this.id = requestAnimationFrame(this.loop.bind(this))
-        return
-      }
-      this.startedTime += BONUS_HOLD_MS
+    // Complete only the gravity hold. Never pause the whole simulation:
+    // controls must stay responsive throughout the reward moment.
+    if (this.bonusHoldUntil && this.currentTime >= this.bonusHoldUntil) {
+      this.gravityPauseOffset += this.bonusHoldUntil - this.gravityHoldStart
       this.bonusHoldUntil = 0
-      this.intervals = { [this.levelTime * 1000]: this.intervals[this.levelTime * 1000] }
+      this.gravityHoldStart = 0
     }
 
     if (!game.paused && game.level < game.maxLevel - 1 && this.interval(game.levelTime * 1000)) {
@@ -285,13 +309,13 @@ export const game = {
     // reward dwell; do not hold between individual cells or cascade rounds.
     if (game.bonusHoldPending && !$three.size && !$lines.length) {
       game.bonusHoldPending = false
+      game.gravityHoldStart = this.currentTime
       game.bonusHoldUntil = this.currentTime + BONUS_HOLD_MS
-      this.releaseControls()
-      this.id = requestAnimationFrame(this.loop.bind(this))
-      return
     }
 
-    if (!game.paused && this.interval(game.speed())) update(item.X, item.Y - 1, item.R)
+    if (!game.paused && !game.bonusHoldUntil && this.gravityInterval(game.speed())) {
+      update(item.X, item.Y - 1, item.R)
+    }
     if (events.left.active(this.currentTime)) update(item.X - 1, item.Y, item.R, 'left')
     if (events.right.active(this.currentTime)) update(item.X + 1, item.Y, item.R, 'right')
     if (events.rotate.active(this.currentTime)) update(item.X, item.Y, item.R + 1, 'rotate')
@@ -417,6 +441,7 @@ const update = (X, Y, R, action = 'gravity') => {
 
       // reset all timers for next piece, except level timer
       game.intervals = { [game.levelTime * 1000]: game.intervals[game.levelTime * 1000] }
+      game.gravityIntervals = {}
     } else {
       game.hardDropPending = false
       game.started = false
