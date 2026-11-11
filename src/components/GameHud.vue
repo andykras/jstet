@@ -23,17 +23,58 @@
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
+    <Transition name="bonus-hud">
+      <div v-if="section !== 'left' && mode === 'tetcolor' && displayBonus > 0"
+           class="hud-stat hud-stat--bonus">
+        <span class="hud-stat__label">Bonus</span>
+        <output class="hud-stat__number"
+                aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
+      </div>
+    </Transition>
   </section>
 </template>
 
 <script>
 import { mapState } from 'vuex'
+import { gameBus } from '@/utils/gameBus.js'
 
 export default {
   name: 'GameHud',
   props: {
     mode: { type: String, default: 'tetcolor' },
     section: { type: String, default: 'all' }
+  },
+  data() {
+    return { displayBonus: 0 }
+  },
+  mounted() {
+    if (this.section === 'left') return
+    this.bonusTimer = null
+    this.bonusHandler = value => this.onBonus(value)
+    this.gameStartHandler = () => this.clearBonus()
+    gameBus.on('bonus', this.bonusHandler)
+    gameBus.on('start', this.gameStartHandler)
+  },
+  beforeUnmount() {
+    if (this.bonusHandler) gameBus.off('bonus', this.bonusHandler)
+    if (this.gameStartHandler) gameBus.off('start', this.gameStartHandler)
+    clearTimeout(this.bonusTimer)
+  },
+  methods: {
+    onBonus(value) {
+      clearTimeout(this.bonusTimer)
+      if (!Number.isFinite(value) || value <= 0) {
+        this.displayBonus = 0
+        return
+      }
+      this.displayBonus = value
+      // Each award restarts the dwell, even when successive amounts are equal.
+      this.bonusTimer = setTimeout(() => { this.displayBonus = 0 }, 2600)
+    },
+    clearBonus() {
+      clearTimeout(this.bonusTimer)
+      this.displayBonus = 0
+    }
   },
   computed: {
     ...mapState({
@@ -53,3 +94,21 @@ export default {
   }
 }
 </script>
+
+<style lang="stylus">
+.bonus-hud-enter-active
+  transition opacity 260ms ease, transform 260ms ease
+
+.bonus-hud-leave-active
+  transition opacity 750ms ease, transform 750ms ease
+
+.bonus-hud-enter-from,
+.bonus-hud-leave-to
+  opacity 0
+  transform translateY(8px)
+
+@media (prefers-reduced-motion: reduce)
+  .bonus-hud-enter-active,
+  .bonus-hud-leave-active
+    transition none
+</style>
