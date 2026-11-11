@@ -32,19 +32,24 @@
     grid-area auto
     position relative
     z-index 2
-    align-self stretch
-    width auto
+    align-self center
+    width max-content
+    min-width 148px
+    max-width 100%
     height auto
-    min-height 158px
-    margin auto clamp(9px, 1.2vh, 14px)
-    padding 12px
-    background linear-gradient(155deg, rgba(22, 15, 47, .96), rgba(8, 11, 35, .96))
+    min-height 0
+    margin 16px auto 0
+    padding 11px 13px 12px
+    background linear-gradient(155deg, rgba(30, 21, 61, .57), rgba(10, 14, 37, .53))
+    border-color rgba(251, 166, 91, .48)
+    backdrop-filter blur(8px)
+    -webkit-backdrop-filter blur(8px)
 
   .dashboard-column .next-panel .next-piece
-    // Match the measured actual game-cell width, not a separate vh clamp.
-    --jstet-cell-size: var(--jstet-preview-cell-size, 30px)
-    margin 14px auto 6px
-    filter drop-shadow(0 0 8px rgba(64, 229, 255, .27))
+    // Desktop preview is compact, while mobile still mirrors board cell size.
+    --jstet-cell-size: unquote('min(var(--jstet-preview-cell-size, 30px), 30px)')
+    margin 10px auto 3px
+    filter drop-shadow(0 0 7px rgba(64, 229, 255, .17))
 
   .right-column
     grid-area right
@@ -114,6 +119,10 @@
   .dashboard-column .next-panel
     position absolute
     z-index 3
+    background linear-gradient(155deg, rgba(30, 21, 61, .63), rgba(10, 14, 37, .59))
+    border-color rgba(251, 166, 91, .53)
+    backdrop-filter blur(7px)
+    -webkit-backdrop-filter blur(7px)
     // Symmetry with the right rail: NEXT sits directly under the Level card.
     top unquote('calc(9px + clamp(62px, 10vw, 104px))')
     left 9px
