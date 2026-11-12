@@ -46,19 +46,26 @@ test('a tap stays within the tolerance circle of its start', () => {
 test('the gesture component wires pure recognition to the same bus commands', () => {
   const surface = read('src/components/MobileTouchSurface.vue')
   assert.match(surface, /import \{ isSwipeDrop, isTap, pickZone \} from '@\/utils\/touchGestures\.js'/)
-  assert.match(surface, /const action = pickZone\(bounds, event\.clientX\)/)
-  assert.match(surface, /if \(!isSwipeDrop\(pointer\.x, pointer\.y, event\.clientX, event\.clientY, SWIPE_DISTANCE\)\) return/)
-  assert.match(surface, /pointer\.dropped = true/)
-  assert.match(surface, /gameBus\.emit\('drop', this\.hard\)/)
+  assert.match(surface, /const zone = pickZone\(bounds, event\.clientX\)/)
+  // Side zones defer to a hold timer: only a steady press starts repeating movement.
+  assert.match(surface, /pointer\.holdTimer = setTimeout\(/)
+  assert.match(surface, /if \(!isTap\(pointer\.x, pointer\.y, pointer\.lastX, pointer\.lastY, 9\)\) return/)
+  assert.match(surface, /pointer\.gesture = 'hold'/)
+  // Classification happens on the whole displacement, swipe-down wins first and
+  // cancels an active hold; no tap-rotate fallback after a drop.
+  assert.match(surface, /recognizeGesture\(pointer, event\) \{\n      if \(pointer\.gesture === 'drop' \|\| pointer\.gesture === 'horizontal'\) return/)
+  assert.match(surface, /if \(isSwipeDrop\(pointer\.x, pointer\.y, event\.clientX, event\.clientY, SWIPE_DISTANCE\)\) \{\n        if \(pointer\.gesture === 'hold'\) this\.input\.release\(event\.pointerId, true\)\n        pointer\.gesture = 'drop'\n        gameBus\.emit\('drop', this\.hard\)/)
+  // Horizontal swipes move with the existing repeat timing, like held directions.
+  assert.match(surface, /Math\.abs\(dx\) < SIDE_SWIPE_DISTANCE \|\| Math\.abs\(dx\) < Math\.abs\(dy\) \* 1\.35/)
+  assert.match(surface, /pointer\.gesture = 'horizontal'/)
   assert.match(surface, /this\.input\.tap\('rotate'\)/)
-  // A swipe must not rotate: the tap path is skipped once a drop was emitted.
-  assert.match(surface, /if \(!pointer\.dropped && isTap\(/)
-  // A swipe takes precedence over a held side zone and cancels that hold.
-  assert.match(surface, /\/\/ Swipe takes precedence over a side-zone hold, even when initiated there\.\n      if \(pointer\.action !== 'rotate'\) this\.input\.release\(event\.pointerId, true\)/)
-  // Held directions release on pointerup, cancel, pause, blur and hidden tab.
-  assert.match(surface, /this\.input\.release\(event\.pointerId\)/)
+  assert.match(surface, /this\.input\.tap\(pointer\.zone\)/)
+  // Fast flicks are classified on pointerup even without a pointermove.
+  assert.match(surface, /\/\/ Fast flicks are recognized on release even without a pointermove\.\n      this\.recognizeGesture\(pointer, event\)/)
+  // Holds and horizontal repeats release on pointerup, cancel, pause, blur, hidden tab.
+  assert.match(surface, /if \(pointer\.gesture === 'hold' \|\| pointer\.gesture === 'horizontal'\) \{\n        this\.input\.release\(event\.pointerId\)\n        return\n      \}/)
   assert.match(surface, /this\.input\.release\(event\.pointerId, true\)/)
-  assert.match(surface, /releaseAll\(\) \{\n      this\.pointers\.clear\(\)\n      this\.input\.cancelAll\(\)/)
+  assert.match(surface, /releaseAll\(\) \{\n      for \(const pointer of this\.pointers\.values\(\)\) this\.clearHoldTimer\(pointer\)\n      this\.pointers\.clear\(\)\n      this\.input\.cancelAll\(\)/)
   for (const token of ["window.addEventListener('blur', this.releaseAll)",
     "document.addEventListener('visibilitychange', this.onVisibilityChange)",
     'enabled(value) {\n      if (!value) this.releaseAll()\n    }']) {
@@ -70,7 +77,6 @@ test('the gesture component wires pure recognition to the same bus commands', ()
   // Warp feedback is short-lived, kind-specific, and freed when replaced by a swipe.
   assert.match(surface, /const WARP_DURATION = Object\.freeze\(\{ tap: 280, swipe: 300 \}\)/)
   assert.match(surface, /this\.showWarp\(event, 'swipe'\)/)
-  assert.match(surface, /this\.removeWarp\(pointer\.warpId\)/)
   assert.match(surface, /'mobile-touch-surface__warp--' \+ warp\.kind/)
 })
 
@@ -90,7 +96,7 @@ test('touch hints are preference-driven sessions: per-action dismiss and on-dema
   assert.match(surface, /replayHints\(\) \{\n      if \(!this\.showHints\) return\n      this\.hintsActive = true\n      this\.hintActions = \[\]\n    \}/)
   // The component no longer owns hint persistence: App counts games in preferences.
   assert.doesNotMatch(surface, /localStorage|HINTS_KEY/)
-  for (const label of ['MOVE', 'TAP', 'SWIPE · DROP']) {
+  for (const label of ['SWIPE', 'TAP', 'SWIPE · DROP']) {
     assert.ok(surface.includes(label), label)
   }
   const app = read('src/App.vue')
