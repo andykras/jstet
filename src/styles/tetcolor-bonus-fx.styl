@@ -21,7 +21,7 @@
   pointer-events none
   white-space nowrap
   color #fff4cb
-  filter drop-shadow(0 3px 2px rgba(24, 7, 35, .48)) drop-shadow(0 0 8px rgba(255, 163, 47, .26))
+  filter drop-shadow(0 3px 2px rgba(24, 7, 35, .38)) drop-shadow(0 0 7px rgba(255, 163, 47, .17))
   animation bonus-reward-rise 1250ms cubic-bezier(.16, .73, .34, 1) both
 
   &__kind
@@ -52,7 +52,7 @@
     text-shadow 0 1px 0 rgba(142, 76, 48, .52), 0 0 9px rgba(255, 189, 56, .35)
 
   &--cascade
-    filter drop-shadow(0 3px 2px rgba(8, 21, 45, .55)) drop-shadow(0 0 9px rgba(68, 216, 255, .30))
+    filter drop-shadow(0 3px 2px rgba(8, 21, 45, .40)) drop-shadow(0 0 7px rgba(68, 216, 255, .18))
 
     .bonus-reward__kind
       color #a7efff
@@ -71,13 +71,13 @@
     opacity 0
     transform translate(-50%, -38%) scale(.76)
   16%
-    opacity .76
+    opacity .57
     transform translate(-50%, -53%) scale(1.05)
   58%
-    opacity .76
+    opacity .57
     transform translate(-50%, -67%) scale(1)
   82%
-    opacity .50
+    opacity .34
   100%
     opacity 0
     transform translate(-50%, -116%) scale(.95)
@@ -86,10 +86,10 @@
 .jstet-app.reduce-motion .tetcolor-board .bonus-reward
   animation none
   transform translate(-50%, -50%)
-  opacity .76
+  opacity .57
 
 @media (prefers-reduced-motion: reduce)
   .tetcolor-board .bonus-reward
     animation none
     transform translate(-50%, -50%)
-    opacity .76
+    opacity .57
