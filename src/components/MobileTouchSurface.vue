@@ -1,7 +1,7 @@
 <template>
   <section class="mobile-touch-surface"
            :class="{ 'mobile-touch-surface--inactive': !enabled }"
-           aria-label="Touch controls: tap left or right of the board to move, tap the board to rotate, swipe down anywhere to drop"
+           aria-label="Touch controls: swipe left or right to move, tap at the sides to move, tap the board to rotate, swipe down anywhere to drop"
            @pointerdown="onPointerDown"
            @pointermove="onPointerMove"
            @pointerup="onPointerUp"
@@ -23,12 +23,12 @@
              stroke-linecap="round"
              stroke-linejoin="round"
              aria-hidden="true"><path d="M27 16H5 M14 7l-9 9 9 9" /></svg>
-        <span>MOVE</span>
+        <span>SWIPE</span>
       </span>
       <span v-if="showHint('right')"
             key="right"
             class="mobile-touch-surface__hint mobile-touch-surface__hint--right">
-        <span>MOVE</span>
+        <span>SWIPE</span>
         <svg class="mobile-touch-surface__hint-icon"
              viewBox="0 0 32 32"
              fill="none"
@@ -80,7 +80,9 @@ import { createTouchInput } from '@/utils/touchInput.js'
 import { isSwipeDrop, isTap, pickZone } from '@/utils/touchGestures.js'
 
 const SWIPE_DISTANCE = 36
+const SIDE_SWIPE_DISTANCE = 30
 const TAP_TOLERANCE = 18
+const HOLD_DELAY_MS = 230
 const WARP_DURATION = Object.freeze({ tap: 280, swipe: 300 })
 
 export default {
@@ -202,6 +204,13 @@ export default {
       this.warpTimers.clear()
       this.warps = []
     },
+    clearHoldTimer(pointer) {
+      if (pointer.holdTimer !== null) clearTimeout(pointer.holdTimer)
+      pointer.holdTimer = null
+    },
+    // Do not emit a side-zone move on pointerdown: it might become a Drop
+    // swipe. Only a completed tap, recognized horizontal swipe, or a steady
+    // long press is allowed to move the piece.
     onPointerDown(event) {
       if (!this.enabled || (event.pointerType === 'mouse' && event.button !== 0)) return
       if (this.pointers.has(event.pointerId)) return
@@ -211,66 +220,105 @@ export default {
       const bounds = board.getBoundingClientRect()
       if (!bounds.width) return
 
-      const action = pickZone(bounds, event.clientX)
-      if (!action) return
-      if (action !== 'rotate' && !this.input.press(event.pointerId, action)) return
+      const zone = pickZone(bounds, event.clientX)
+      if (!zone) return
 
       event.preventDefault()
-      this.pointers.set(event.pointerId, {
-        action,
+      const pointer = {
+        zone,
         x: event.clientX,
         y: event.clientY,
-        dropped: false,
-        warpId: action !== 'rotate' ? this.showWarp(event) : null
-      })
+        lastX: event.clientX,
+        lastY: event.clientY,
+        target: event.currentTarget,
+        gesture: null,
+        holdTimer: null
+      }
+      this.pointers.set(event.pointerId, pointer)
+
+      if (zone !== 'rotate') {
+        pointer.holdTimer = setTimeout(() => {
+          pointer.holdTimer = null
+          if (!this.enabled || this.pointers.get(event.pointerId) !== pointer || pointer.gesture) return
+          if (!isTap(pointer.x, pointer.y, pointer.lastX, pointer.lastY, 9)) return
+          if (!this.input.press(event.pointerId, zone)) return
+          pointer.gesture = 'hold'
+          this.learn(zone)
+          this.showWarp({ clientX: pointer.x, clientY: pointer.y, currentTarget: pointer.target })
+        }, HOLD_DELAY_MS)
+      }
       if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId)
     },
-    maybeDrop(pointer, event) {
-      if (pointer.dropped) return
-      if (!isSwipeDrop(pointer.x, pointer.y, event.clientX, event.clientY, SWIPE_DISTANCE)) return
-      pointer.dropped = true
-      // Swipe takes precedence over a side-zone hold, even when initiated there.
-      if (pointer.action !== 'rotate') this.input.release(event.pointerId, true)
-      this.removeWarp(pointer.warpId)
-      gameBus.emit('drop', this.hard)
-      this.learn('drop')
-      this.showWarp(event, 'swipe')
+    // Classify the complete displacement from pointerdown. Whichever swipe
+    // wins gets exclusive ownership of this pointer: no false side-zone tap.
+    recognizeGesture(pointer, event) {
+      if (pointer.gesture === 'drop' || pointer.gesture === 'horizontal') return
+      pointer.lastX = event.clientX
+      pointer.lastY = event.clientY
+      const dx = event.clientX - pointer.x
+      const dy = event.clientY - pointer.y
+      if (Math.hypot(dx, dy) > TAP_TOLERANCE) this.clearHoldTimer(pointer)
+
+      if (isSwipeDrop(pointer.x, pointer.y, event.clientX, event.clientY, SWIPE_DISTANCE)) {
+        if (pointer.gesture === 'hold') this.input.release(event.pointerId, true)
+        pointer.gesture = 'drop'
+        gameBus.emit('drop', this.hard)
+        this.learn('drop')
+        this.showWarp(event, 'swipe')
+        return
+      }
+
+      if (pointer.gesture === 'hold') return
+      if (Math.abs(dx) < SIDE_SWIPE_DISTANCE || Math.abs(dx) < Math.abs(dy) * 1.35) return
+      const direction = dx < 0 ? 'left' : 'right'
+      if (!this.input.press(event.pointerId, direction)) return
+      pointer.gesture = 'horizontal'
+      this.learn(direction)
+      this.showWarp(event)
     },
     onPointerMove(event) {
       const pointer = this.pointers.get(event.pointerId)
-      if (pointer) this.maybeDrop(pointer, event)
+      if (pointer) this.recognizeGesture(pointer, event)
     },
     onPointerUp(event) {
       const pointer = this.pointers.get(event.pointerId)
       if (!pointer) return
       event.preventDefault()
-      // A fast swipe may deliver pointerup without a final pointermove.
-      this.maybeDrop(pointer, event)
+      // Fast flicks are recognized on release even without a pointermove.
+      this.recognizeGesture(pointer, event)
+      this.clearHoldTimer(pointer)
       this.pointers.delete(event.pointerId)
 
-      if (pointer.action !== 'rotate') {
-        if (!pointer.dropped) {
-          this.input.release(event.pointerId)
-          this.learn(pointer.action)
-        }
+      if (pointer.gesture === 'drop') return
+      if (pointer.gesture === 'hold' || pointer.gesture === 'horizontal') {
+        this.input.release(event.pointerId)
         return
       }
-      if (!pointer.dropped && isTap(pointer.x, pointer.y, event.clientX, event.clientY, TAP_TOLERANCE)) {
+      if (!isTap(pointer.x, pointer.y, event.clientX, event.clientY, TAP_TOLERANCE)) return
+
+      if (pointer.zone === 'rotate') {
         this.input.tap('rotate')
         this.learn('rotate')
-        this.showWarp(event)
+      } else {
+        this.input.tap(pointer.zone)
+        this.learn(pointer.zone)
       }
+      this.showWarp(event)
     },
     onPointerCancel(event) {
       const pointer = this.pointers.get(event.pointerId)
       if (!pointer) return
+      this.clearHoldTimer(pointer)
       this.pointers.delete(event.pointerId)
-      if (pointer.action !== 'rotate') this.input.release(event.pointerId, true)
+      if (pointer.gesture === 'hold' || pointer.gesture === 'horizontal') {
+        this.input.release(event.pointerId, true)
+      }
     },
     onVisibilityChange() {
       if (document.hidden) this.releaseAll()
     },
     releaseAll() {
+      for (const pointer of this.pointers.values()) this.clearHoldTimer(pointer)
       this.pointers.clear()
       this.input.cancelAll()
     }
