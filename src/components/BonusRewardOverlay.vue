@@ -53,8 +53,8 @@ export default {
       // Move the label above and toward the nearest side, away from cleared blocks.
       const side = reward.column < playableColumns / 2 ? -1 : 1
       return {
-        '--reward-column': reward.column + 0.5 + side * 2,
-        '--reward-row': Math.max(0.5, reward.row - 1.8)
+        '--reward-column': reward.column + 0.5 + side * 2.5,
+        '--reward-row': reward.row - 3.1
       }
     },
     onReward(kind, payload) {
