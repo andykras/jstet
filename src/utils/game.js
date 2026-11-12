@@ -70,6 +70,9 @@ export function setup(bus) {
     input(type) {
       if (game.started && !game.paused) events.emit(type)
     },
+    dragMove(targetX) {
+      if (game.started && !game.paused) moveToColumn(targetX)
+    },
     start: values => game.start(values),
     pause: () => game.togglePause(),
     drop(hard) {
@@ -489,6 +492,20 @@ const update = (X, Y, R, action = 'gravity') => {
 //   }
 //   $bus.emit('lines', game.totalLines++)
 // }
+
+// Touch drag expresses a target column, not a synthetic key hold.
+// Move one cell at a time through update()/set() so collisions and the
+// existing piece FX work identically to keyboard movement.
+const moveToColumn = targetX => {
+  if (!Number.isFinite(targetX) || !Number.isInteger(item.X) || !$cells) return
+  const destination = Math.max(0, Math.min($cells.width - 1, Math.trunc(targetX)))
+  while (item.X !== destination) {
+    const before = item.X
+    const step = destination > before ? 1 : -1
+    update(before + step, item.Y, item.R, step > 0 ? 'right' : 'left')
+    if (item.X === before) break // Wall, settled block or active clearing.
+  }
+}
 
 const dropDown = _ => {
   const clearing = game.singleBlock && ($lines.length > 0 || $three.size > 0)
