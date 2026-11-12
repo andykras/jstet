@@ -96,16 +96,21 @@ export default {
 </script>
 
 <style lang="stylus">
+// The cabinet's original bonus-reveal animation used fill-mode: both and
+// pinned opacity at 1, overriding Vue's leave transition.
+.game-hud .hud-stat--bonus
+  animation none
+
 .bonus-hud-enter-active
-  transition opacity 260ms ease, transform 260ms ease
+  transition opacity 320ms ease-out, transform 320ms ease-out
 
 .bonus-hud-leave-active
-  transition opacity 750ms ease, transform 750ms ease
+  transition opacity 1550ms cubic-bezier(.28, .03, .65, 1), transform 1550ms ease-out
 
 .bonus-hud-enter-from,
 .bonus-hud-leave-to
   opacity 0
-  transform translateY(8px)
+  transform translateY(10px)
 
 @media (prefers-reduced-motion: reduce)
   .bonus-hud-enter-active,
