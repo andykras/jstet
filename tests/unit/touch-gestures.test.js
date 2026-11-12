@@ -47,37 +47,56 @@ test('the gesture component wires pure recognition to the same bus commands', ()
   const surface = read('src/components/MobileTouchSurface.vue')
   assert.match(surface, /import \{ isSwipeDrop, isTap, pickZone \} from '@\/utils\/touchGestures\.js'/)
   assert.match(surface, /const zone = pickZone\(bounds, event\.clientX\)/)
-  // Side zones defer to a hold timer: only a steady press starts repeating movement.
-  assert.match(surface, /pointer\.holdTimer = setTimeout\(/)
-  assert.match(surface, /if \(!isTap\(pointer\.x, pointer\.y, pointer\.lastX, pointer\.lastY, 9\)\) return/)
-  assert.match(surface, /pointer\.gesture = 'hold'/)
-  // Classification happens on the whole displacement, swipe-down wins first and
-  // cancels an active hold; no tap-rotate fallback after a drop.
-  assert.match(surface, /recognizeGesture\(pointer, event\) \{\n      if \(pointer\.gesture === 'drop' \|\| pointer\.gesture === 'horizontal'\) return/)
-  assert.match(surface, /if \(isSwipeDrop\(pointer\.x, pointer\.y, event\.clientX, event\.clientY, SWIPE_DISTANCE\)\) \{\n        if \(pointer\.gesture === 'hold'\) this\.input\.release\(event\.pointerId, true\)\n        pointer\.gesture = 'drop'\n        gameBus\.emit\('drop', this\.hard\)/)
-  // Horizontal swipes move with the existing repeat timing, like held directions.
-  assert.match(surface, /Math\.abs\(dx\) < SIDE_SWIPE_DISTANCE \|\| Math\.abs\(dx\) < Math\.abs\(dy\) \* 1\.35/)
-  assert.match(surface, /pointer\.gesture = 'horizontal'/)
+  // Touches stay undecided on pointerdown; the piece position and cell size are
+  // captured so drag targets stay relative to the finger's start.
+  assert.match(surface, /const pieceX = this\.\$store\.state\.item\?\.X/)
+  assert.match(surface, /const cellWidth = cell\?\.getBoundingClientRect\(\)\.width \|\| bounds\.width \/ columns/)
+  assert.match(surface, /gesture: null/)
+  // Whole-displacement classification: drop wins first, drag needs a single
+  // owner, and horizontal movement is dominant over vertical drift.
+  assert.match(surface, /recognizeGesture\(pointer, event\) \{\n      if \(pointer\.gesture === 'drop'\) return/)
+  assert.match(surface, /const dropX = pointer\.gesture === 'drag' \? pointer\.dropAnchorX : pointer\.x/)
+  assert.match(surface, /if \(isSwipeDrop\(dropX, dropY, event\.clientX, event\.clientY, SWIPE_DISTANCE\)\) \{/)
+  assert.match(surface, /const threshold = Math\.max\(8, pointer\.cellWidth \* DRAG_THRESHOLD_RATIO\)/)
+  assert.match(surface, /Math\.abs\(dx\) < threshold \|\| Math\.abs\(dx\) < Math\.abs\(dy\) \* 1\.35/)
+  assert.match(surface, /if \(this\.dragOwner !== null && this\.dragOwner !== event\.pointerId\) return/)
+  assert.match(surface, /pointer\.gesture = 'drag'/)
+  assert.match(surface, /if \(pointer\.gesture !== 'drag'\) return/)
+  assert.match(surface, /const cells = Math\.sign\(dx\) \* Math\.round\(Math\.abs\(dx\) \/ pointer\.cellWidth\)/)
+  assert.match(surface, /gameBus\.emit\('drag:move', pointer\.pieceX \+ cells\)/)
+  assert.match(surface, /this\.showWarp\(event, 'swipe'\)/)
+  // Fast flicks classify on pointerup; taps land exactly once afterwards.
+  assert.match(surface, /\/\/ Fast flicks can arrive only as pointerup without a final move\.\n      this\.recognizeGesture\(pointer, event\)/)
   assert.match(surface, /this\.input\.tap\('rotate'\)/)
   assert.match(surface, /this\.input\.tap\(pointer\.zone\)/)
-  // Fast flicks are classified on pointerup even without a pointermove.
-  assert.match(surface, /\/\/ Fast flicks are recognized on release even without a pointermove\.\n      this\.recognizeGesture\(pointer, event\)/)
-  // Holds and horizontal repeats release on pointerup, cancel, pause, blur, hidden tab.
-  assert.match(surface, /if \(pointer\.gesture === 'hold' \|\| pointer\.gesture === 'horizontal'\) \{\n        this\.input\.release\(event\.pointerId\)\n        return\n      \}/)
-  assert.match(surface, /this\.input\.release\(event\.pointerId, true\)/)
-  assert.match(surface, /releaseAll\(\) \{\n      for \(const pointer of this\.pointers\.values\(\)\) this\.clearHoldTimer\(pointer\)\n      this\.pointers\.clear\(\)\n      this\.input\.cancelAll\(\)/)
+  // Ownership and holds release everywhere: pointerup, cancel, pause, blur, hidden tab.
+  assert.match(surface, /if \(this\.dragOwner === event\.pointerId\) this\.dragOwner = null/)
+  assert.match(surface, /releaseAll\(\) \{\n      this\.pointers\.clear\(\)\n      this\.dragOwner = null\n      this\.input\.cancelAll\(\)/)
   for (const token of ["window.addEventListener('blur', this.releaseAll)",
     "document.addEventListener('visibilitychange', this.onVisibilityChange)",
     'enabled(value) {\n      if (!value) this.releaseAll()\n    }']) {
     assert.ok(surface.includes(token), token)
   }
-  // Duplicate pointers never double-bind one direction.
   assert.match(surface, /if \(this\.pointers\.has\(event\.pointerId\)\) return/)
   assert.match(surface, /createTouchInput\(command => gameBus\.emit\(command\)\)/)
   // Warp feedback is short-lived, kind-specific, and freed when replaced by a swipe.
   assert.match(surface, /const WARP_DURATION = Object\.freeze\(\{ tap: 280, swipe: 300 \}\)/)
   assert.match(surface, /this\.showWarp\(event, 'swipe'\)/)
   assert.match(surface, /'mobile-touch-surface__warp--' \+ warp\.kind/)
+})
+
+test('the engine resolves drags cell by cell through the shared movement path', () => {
+  const engine = read('src/utils/game.js')
+  const commands = read('src/utils/gameCommands.js')
+  // Drag targets a column and steps one cell at a time through update(), so
+  // collisions and piece FX behave exactly like keyboard movement.
+  assert.match(engine, /dragMove\(targetX\) \{\n      if \(game\.started && !game\.paused\) moveToColumn\(targetX\)\n    \}/)
+  assert.match(engine, /const moveToColumn = targetX => \{/)
+  assert.match(engine, /const destination = Math\.max\(0, Math\.min\(\$cells\.width - 1, Math\.trunc\(targetX\)\)\)/)
+  assert.match(engine, /update\(before \+ step, item\.Y, item\.R, step > 0 \? 'right' : 'left'\)/)
+  assert.match(engine, /if \(item\.X === before\) break \/\/ Wall, settled block or active clearing\./)
+  // The command is optional: engines without it keep working unchanged.
+  assert.match(commands, /if \(actions\.dragMove\) on\('drag:move', position => actions\.dragMove\(position\)\)/)
 })
 
 test('touch hints are preference-driven sessions: per-action dismiss and on-demand replay', () => {
