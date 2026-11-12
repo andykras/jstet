@@ -49,3 +49,24 @@ Do not run GitHub Actions, merge, or deploy without explicit authorization. Retu
 - **No phantom horizontal movement on Drop:** formerly side-zone `pointerdown` dispatched `left:start` or `right:start` before knowing whether a downward swipe was intended. The new recognizer defers that command until the action is identified: a valid short tap on pointerup, an intentional stationary hold, or a horizontal swipe. On downward swipe the pointer is claimed by Drop and never triggers the side-zone tap/press. The same fast-swipe classification runs on pointerup, covering flicks with no intermediate move. A *later separate tap*, while the piece descends, still moves normally.
 - **QA specifically required:** fast downward swipes beginning on both side rails (must Drop exactly once and move **zero** cells horizontally), fast horizontal swipes starting in the well (must move, not rotate), deliberately repeated taps during falling, long stationary left/right hold and repeat timing, diagonal/slow swipes, pointer cancel/blur/pause, no stale timers or stuck directions, invisible state when touch hints are switched off. Verify visual HUD fade after timeout and after a zero bonus event.
 - **Execution constraints:** implementation only; no test authoring, test runs, GitHub Actions, merge, or deployment in this pass. Agent handles QA and tests.
+
+## Drag control (2026-11-12 — replaces horizontal swipe/hold behavior above)
+
+- **Side-zone tap:** one left/right step on pointerup, unchanged. **Board tap:** rotate, unchanged. **Downward swipe from any point:** Drop, still obeys Hard Drop setting.
+- **Horizontal finger tracking (Drag):** immediately recognize intentional horizontal movement, anywhere on the mobile play panel. Measure actual game-cell width from the board DOM once on pointerdown; capture the live piece's starting X. Target column is `startingPieceX + sign(dx) * round(abs(dx) / cellWidth)`, not an absolute finger-to-column snap. No jump at first touch, no auto-repeat, and reversing finger direction returns the figure toward its starting column.
+- Emit `drag:move` with the target column. The engine walks one cell at a time through the existing `update()/set()` collision path, stops at walls or locked pieces, and publishes the ordinary piece update/FX. Desktop physical-key behavior and optional mobile Buttons pad are unchanged.
+- After initial horizontal drag, a deliberate downward movement from the last horizontal step can still trigger Drop; no side-zone tap or extra move is emitted for a fresh downward swipe.
+- Removed the **230ms long-hold repeat** from the gesture surface (not from physical keyboard / Buttons controls); long stationary presses simply become one tap on release.
+- On pause, blur, visibility change, cancellation, or unmount, clear pointer state and any input pending taps. Multi-touch can still tap/rotate while a single pointer owns Drag; the second pointer cannot override the drag owner.
+- Left/right onboarding labels now say **DRAG**, not SWIPE. They continue to appear for the first three games according to the existing preference.
+
+### Agent QA additions
+
+1. Start Drag from **left rail**, **well**, and **right rail**. Move 1, 2, 3 cell widths and back, including reversing several times without releasing the pointer. Confirm no initial snap and no key-repeat-driven drift.
+2. Press against wall/settled blocks, drag farther, then reverse; the piece must stay within legal cells and follow the return. Check that collision failure cannot freeze the drag's target tracking.
+3. Drag while gravity is active and during the 270ms bonus gravity hold; vertical piece motion must remain independent of horizontal finger displacement.
+4. Down-swipe from each zone must Drop **exactly once**, with no phantom lateral step. Test one fast flick with only pointerup, slow downward swipe, diagonal movement, and down-swipe after first dragging horizontally.
+5. Tap left/right still gives one step, board tap rotates, long stationary side press **does not** auto-repeat, and a later separate tap during a fall still moves as usual.
+6. Confirm desktop keyboard and optional Buttons mode are unaffected. Update existing gesture/source tests to match the new drag protocol. Do not run GitHub Actions or deploy without authorization.
+
+**Implementation only in this turn:** no test files written or tests/builds run.
