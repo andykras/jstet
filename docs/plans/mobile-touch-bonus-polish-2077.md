@@ -70,3 +70,19 @@ Do not run GitHub Actions, merge, or deploy without explicit authorization. Retu
 6. Confirm desktop keyboard and optional Buttons mode are unaffected. Update existing gesture/source tests to match the new drag protocol. Do not run GitHub Actions or deploy without authorization.
 
 **Implementation only in this turn:** no test files written or tests/builds run.
+
+## Vertical gesture lock (2026-11-14)
+
+**Problem:** During finger-tracked Drag, a downward Drop swipe could continue emitting `drag:move` commands until the full 36px Drop threshold was reached. Small sideways drift near the end of a swipe could move the piece one cell left or right immediately before dropping.
+
+**Fix (in this Draft PR):**
+
+- Add `isVerticalIntent()` in `src/utils/touchGestures.js`: a downward displacement of at least **12px**, predominant over horizontal displacement by the same 1.25 ratio used by the existing swipe recognizer, locks the gesture as vertical.
+- In `MobileTouchSurface.vue`, all swipes use `dropAnchorX/Y`: the original touch point, or the **last committed horizontal Drag step**. Recognize the vertical lock **before** another horizontal drag can be dispatched. Once locked, the pointer does not issue `drag:move`, even if it drifts sideways afterward.
+- Drop remains **immediate at 36px downward** from the saved anchor, with no timeout or artificial delay. After a vertical lock, horizontal drift is ignored when deciding whether to finish the Drop. A fast flick with only a `pointerup` still triggers exactly one Drop. Held Drag movement, reversals, side taps, well taps and keyboard/Button controls keep their previous behavior.
+- The lock is per-pointer, is cleared by the normal pointerup/cancel/blur/pause/unmount lifecycle, and never changes gameplay timing or collision logic.
+- Updated `tests/unit/touch-gestures.test.js` (12 test cases now): lock threshold/vertical dominance, fresh downward swipes, horizontal/tap independence, and drag→vertical lock→Drop drift scenario. **12/12 tests passed in an isolated JS harness executing the exact checked-in helper and test bodies with checked-in source strings.** The actual repository `npm run test:unit`, lint, build and browser QA were not run here because a Git checkout and dependencies are not available in this environment. The component's actual method also passed 11 additional direct behavior assertions in the isolated harness.
+
+**Browser acceptance:** On Android Chrome, drag the piece left 1–3 columns, then move the finger downward slowly. After 12px of predominant downward movement the piece must **stop moving horizontally**; at 36px it must Drop from that same column, even with late sideways finger jitter. Repeat with drag to the right, fast downward flicks from both rails, pure horizontal drags, reverse drags, and short taps. Verify single Drop, no unintended rotation, and no new input latency. Run full unit tests, lint and build locally before merging.
+
+**No GitHub Actions, merge or deployment** were performed.
