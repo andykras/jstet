@@ -55,7 +55,7 @@ test('downward intent stays bound to the latest committed drag position', () => 
   assert.equal(228 - anchor.y >= 36, true)
   // A locked vertical gesture uses only dy, even if the final finger
   // position drifts sideways after direction recognition.
-  assert.equal(isSwipeDrop(anchor.x, anchor.y, 94, 228), false)
+  assert.equal(isSwipeDrop(anchor.x, anchor.y, 100, 228), false)
   assert.equal(228 - anchor.y >= 36, true)
 })
 
