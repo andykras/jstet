@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { isSwipeDrop, isTap, pickZone } from '../../src/utils/touchGestures.js'
+import { isSwipeDrop, isVerticalIntent, isTap, pickZone } from '../../src/utils/touchGestures.js'
 
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
 
@@ -34,6 +34,38 @@ test('a drop swipe travels 36px down and stays predominantly vertical', () => {
   assert.equal(isSwipeDrop(100, 400, 180, 400), false)
 })
 
+
+test('vertical intent locks at 12px before the 36px Drop threshold', () => {
+  assert.equal(isVerticalIntent(100, 100, 100, 111), false)
+  assert.equal(isVerticalIntent(100, 100, 100, 112), true)
+  assert.equal(isSwipeDrop(100, 100, 100, 112), false)
+  assert.equal(isVerticalIntent(100, 100, 106, 115), true)
+  assert.equal(isVerticalIntent(100, 100, 122, 113), false)
+  assert.equal(isVerticalIntent(100, 100, 100, 88), false)
+  assert.equal(isVerticalIntent(100, 100, 130, 100), false)
+})
+
+test('downward intent stays bound to the latest committed drag position', () => {
+  // After an intentional 2-cell drag the component updates the Drop anchor.
+  // A 12px downward displacement then locks the column; subsequent sideways
+  // drift must not unlock it or emit another drag:move.
+  const anchor = { x: 66, y: 190 }
+  assert.equal(isVerticalIntent(anchor.x, anchor.y, 68, 202), true)
+  assert.equal(isSwipeDrop(anchor.x, anchor.y, 68, 202), false)
+  assert.equal(228 - anchor.y >= 36, true)
+  // A locked vertical gesture uses only dy, even if the final finger
+  // position drifts sideways after direction recognition.
+  assert.equal(isSwipeDrop(anchor.x, anchor.y, 94, 228), false)
+  assert.equal(228 - anchor.y >= 36, true)
+})
+
+test('horizontal drags and short taps are not mistaken for Drop', () => {
+  assert.equal(isVerticalIntent(100, 100, 120, 108), false)
+  assert.equal(isVerticalIntent(100, 100, 140, 100), false)
+  assert.equal(isSwipeDrop(100, 100, 140, 100), false)
+  assert.equal(isTap(100, 100, 106, 106), true)
+})
+
 test('a tap stays within the tolerance circle of its start', () => {
   assert.equal(isTap(100, 400, 108, 406), true)
   assert.equal(isTap(100, 400, 100, 418), true)
@@ -45,7 +77,7 @@ test('a tap stays within the tolerance circle of its start', () => {
 
 test('the gesture component wires pure recognition to the same bus commands', () => {
   const surface = read('src/components/MobileTouchSurface.vue')
-  assert.match(surface, /import \{ isSwipeDrop, isTap, pickZone \} from '@\/utils\/touchGestures\.js'/)
+  assert.match(surface, /import \{ isSwipeDrop, isVerticalIntent, isTap, pickZone \} from '@\/utils\/touchGestures\.js'/)
   assert.match(surface, /const zone = pickZone\(bounds, event\.clientX\)/)
   // Touches stay undecided on pointerdown; the piece position and cell size are
   // captured so drag targets stay relative to the finger's start.
@@ -55,8 +87,16 @@ test('the gesture component wires pure recognition to the same bus commands', ()
   // Whole-displacement classification: drop wins first, drag needs a single
   // owner, and horizontal movement is dominant over vertical drift.
   assert.match(surface, /recognizeGesture\(pointer, event\) \{\n      if \(pointer\.gesture === 'drop'\) return/)
-  assert.match(surface, /const dropX = pointer\.gesture === 'drag' \? pointer\.dropAnchorX : pointer\.x/)
-  assert.match(surface, /if \(isSwipeDrop\(dropX, dropY, event\.clientX, event\.clientY, SWIPE_DISTANCE\)\) \{/)
+  assert.match(surface, /const dropX = pointer\.dropAnchorX/)
+  assert.match(surface, /const dropY = pointer\.dropAnchorY/)
+  assert.match(surface, /const isDrop = pointer\.gesture === 'vertical'/)
+  assert.match(surface, /event\.clientY - dropY >= SWIPE_DISTANCE/)
+  assert.match(surface, /isSwipeDrop\(dropX, dropY, event\.clientX, event\.clientY, SWIPE_DISTANCE\)/)
+  assert.match(surface, /if \(isDrop\) \{/)
+  assert.match(surface, /if \(pointer\.gesture === 'vertical'\) return/)
+  assert.match(surface, /if \(isVerticalIntent\(dropX, dropY, event\.clientX, event\.clientY, VERTICAL_LOCK_DISTANCE\)\) \{/)
+  assert.match(surface, /pointer\.gesture = 'vertical'/)
+  assert.match(surface, /const VERTICAL_LOCK_DISTANCE = 12/)
   assert.match(surface, /const threshold = Math\.max\(8, pointer\.cellWidth \* DRAG_THRESHOLD_RATIO\)/)
   assert.match(surface, /Math\.abs\(dx\) < threshold \|\| Math\.abs\(dx\) < Math\.abs\(dy\) \* 1\.35/)
   assert.match(surface, /if \(this\.dragOwner !== null && this\.dragOwner !== event\.pointerId\) return/)
