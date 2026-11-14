@@ -23,18 +23,20 @@
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
-    <div v-if="section !== 'left' && mode === 'tetcolor'"
-         :key="bonus"
-         class="hud-stat hud-stat--bonus">
-      <span class="hud-stat__label">Bonus</span>
-      <output class="hud-stat__number"
-              aria-live="polite">{{ bonus > 0 ? '+' + bonus : '—' }}</output>
-    </div>
+    <Transition name="bonus-hud">
+      <div v-if="section !== 'left' && mode === 'tetcolor' && displayBonus > 0"
+           class="hud-stat hud-stat--bonus">
+        <span class="hud-stat__label">Bonus</span>
+        <output class="hud-stat__number"
+                aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
+      </div>
+    </Transition>
   </section>
 </template>
 
 <script>
 import { mapState } from 'vuex'
+import { gameBus } from '@/utils/gameBus.js'
 
 export default {
   name: 'GameHud',
@@ -42,12 +44,43 @@ export default {
     mode: { type: String, default: 'tetcolor' },
     section: { type: String, default: 'all' }
   },
+  data() {
+    return { displayBonus: 0 }
+  },
+  mounted() {
+    if (this.section === 'left') return
+    this.bonusTimer = null
+    this.bonusHandler = value => this.onBonus(value)
+    this.gameStartHandler = () => this.clearBonus()
+    gameBus.on('bonus', this.bonusHandler)
+    gameBus.on('start', this.gameStartHandler)
+  },
+  beforeUnmount() {
+    if (this.bonusHandler) gameBus.off('bonus', this.bonusHandler)
+    if (this.gameStartHandler) gameBus.off('start', this.gameStartHandler)
+    clearTimeout(this.bonusTimer)
+  },
+  methods: {
+    onBonus(value) {
+      clearTimeout(this.bonusTimer)
+      if (!Number.isFinite(value) || value <= 0) {
+        this.displayBonus = 0
+        return
+      }
+      this.displayBonus = value
+      // Each award restarts the dwell, even when successive amounts are equal.
+      this.bonusTimer = setTimeout(() => { this.displayBonus = 0 }, 2600)
+    },
+    clearBonus() {
+      clearTimeout(this.bonusTimer)
+      this.displayBonus = 0
+    }
+  },
   computed: {
     ...mapState({
       score: state => state.score,
       level: state => state.level,
-      blocks: state => state.lines,
-      bonus: state => state.bonus
+      blocks: state => state.lines
     }),
     progressLabel() {
       return this.mode === 'classic' ? 'Lines' : 'Blocks'
@@ -61,3 +94,26 @@ export default {
   }
 }
 </script>
+
+<style lang="stylus">
+// The cabinet's original bonus-reveal animation used fill-mode: both and
+// pinned opacity at 1, overriding Vue's leave transition.
+.game-hud .hud-stat--bonus
+  animation none
+
+.bonus-hud-enter-active
+  transition opacity 320ms ease-out, transform 320ms ease-out
+
+.bonus-hud-leave-active
+  transition opacity 1550ms cubic-bezier(.28, .03, .65, 1), transform 1550ms ease-out
+
+.bonus-hud-enter-from,
+.bonus-hud-leave-to
+  opacity 0
+  transform translateY(10px)
+
+@media (prefers-reduced-motion: reduce)
+  .bonus-hud-enter-active,
+  .bonus-hud-leave-active
+    transition none
+</style>

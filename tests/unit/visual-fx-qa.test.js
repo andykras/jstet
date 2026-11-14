@@ -98,7 +98,7 @@ test('FX overlay uses bounded fair sampling and cancels every timed effect', () 
   assert.match(overlay, /clearTimeout\(this\.timers\.get\(expired\.id\)\)/)
   assert.match(overlay, /for \(const timer of this\.timers\.values\(\)\) clearTimeout\(timer\)/)
   assert.match(overlay, /this\.effects = \[\]/)
-  assert.match(overlay, /this\.celebrations = \[\]/)
+  assert.doesNotMatch(overlay, /celebrations/)
   assert.match(css, /pointer-events none/)
 })
 
@@ -106,10 +106,15 @@ test('all FX layers are scoped; baseline cell material remains untouched', () =>
   const app = read('src/App.vue')
   const baseline = read('src/styles/game-cells.styl')
   for (const path of [
-    'tetcolor-visual-fx.styl', 'tetcolor-motion-fx.styl', 'tetcolor-clear-fx.styl', 'tetcolor-bonus-fx.styl'
+    'tetcolor-visual-fx.styl', 'tetcolor-motion-fx.styl', 'tetcolor-clear-fx.styl'
   ]) {
     assert.ok(app.includes(`@import './styles/${path}'`), path)
     assert.match(read(`src/styles/${path}`), /\.jstet-app\.fx-enabled/)
   }
-  assert.doesNotMatch(baseline, /fx-active|fx-enabled|fx-clear|fx-reward/)
+  // Bonus feedback is deliberately NOT fx-scoped: it works with FX off too.
+  assert.ok(app.includes(`@import './styles/tetcolor-bonus-fx.styl'`))
+  const bonus = read('src/styles/tetcolor-bonus-fx.styl')
+  assert.match(bonus, /\.tetcolor-board \.bonus-reward-layer/)
+  assert.doesNotMatch(bonus, /\.jstet-app\.fx-enabled/)
+  assert.doesNotMatch(baseline, /fx-active|fx-enabled|fx-clear|fx-reward|bonus-reward/)
 })

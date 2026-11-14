@@ -46,13 +46,14 @@ test('mobile stage places Level and Next left; Score, Blocks and Bonus right', (
   assert.match(hud, /hud-stat--progress/)
   assert.match(hud, /hud-stat--bonus/)
   assert.match(rails, /\.dashboard-column \.game-hud \.hud-stat--level\n    left 9px/)
-  assert.match(rails, /\.dashboard-column \.next-panel\n    position absolute\n    z-index 3\n(?:    \/\/[^\n]*\n)*    top unquote\('calc\(9px \+ clamp\(62px, 10vw, 104px\)\)'\)/)
+  assert.match(rails, /\.dashboard-column \.next-panel\n    position absolute\n    z-index 3\n(?:    [^\n]*\n)*    top unquote\('calc\(9px \+ clamp\(62px, 10vw, 104px\)\)'\)/)
   assert.doesNotMatch(rails, /\.dashboard-column \.next-panel\n(?:[^\n]*\n)*?    transform translateY\(-50%\)/)
   assert.match(rails, /\.right-column \.game-hud \.hud-stat--score\n    right 9px\n    left auto\n    top 9px/)
   assert.match(rails, /\.right-column \.game-hud \.hud-stat--progress\n    right 9px\n    left auto\n    top unquote/)
   assert.match(rails, /\.right-column \.game-hud \.hud-stat--bonus\n    right 9px\n    left auto\n    top auto\n    bottom 9px/)
   assert.match(hud, /mode === 'tetcolor'/)
-  assert.match(hud, /bonus > 0 \? '\+' \+ bonus : '—'/)
+  assert.match(hud, /displayBonus > 0/)
+  assert.match(hud, /\+{{ displayBonus\.toLocaleString\('en-US'\) }}/)
 })
 
 test('mobile controls place left/right on the left and Drop/Rotate on the right', () => {

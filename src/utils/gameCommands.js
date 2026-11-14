@@ -18,6 +18,9 @@ export function attachGameCommands(bus, actions) {
   for (const name of ['start', 'pause', 'drop', 'fill', 'next']) {
     on(name, value => actions[name](value))
   }
+  // Continuous touch drag targets a column directly; key-repeat input stays
+  // reserved for taps, physical keys and optional button controls.
+  if (actions.dragMove) on('drag:move', position => actions.dragMove(position))
 
   return () => {
     for (const [name, listener] of subscriptions) bus.off(name, listener)

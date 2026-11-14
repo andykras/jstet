@@ -138,6 +138,9 @@
                               :status="status"
                               :hard="hard"
                               :touch-fx-enabled="preferences.touchFxEnabled"
+                              :show-hints="preferences.showTouchHints"
+                              :hint-games-seen="preferences.touchHintGamesSeen"
+                              @hint-game-start="countTouchHintGame"
                               :reduced-motion="preferences.reducedMotion" />
           <Transition name="state-overlay">
             <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen"
@@ -172,7 +175,7 @@
         <TouchControls :status="status"
                        :hard="hard" />
         <aside class="right-column"
-               aria-label="Score and bonus">
+               aria-label="Score, blocks and bonus">
           <GameHud class="stats-column stats-column--right"
                    :mode="mode"
                    section="right" />
@@ -260,9 +263,15 @@
                    @change="persistPreferences">
             Touch warp effect
           </label>
+          <label class="settings-check">
+            <input type="checkbox"
+                   v-model="preferences.showTouchHints"
+                   @change="onTouchHintsToggle">
+            Show touch hints (first 3 games)
+          </label>
           <button type="button"
                   class="arcade-button settings-replay"
-                  :disabled="preferences.touchControlsMode !== 'gestures'"
+                  :disabled="preferences.touchControlsMode !== 'gestures' || !preferences.showTouchHints"
                   @click="replayTouchHints">
             Show touch hints again
           </button>
@@ -419,6 +428,18 @@ export default {
       savePreferences(this.preferences)
       if (!this.preferences.visualFxEnabled) gameBus.emit('fx:reset')
       if (this.sounds) this.sounds.setEnabled(this.preferences.soundEnabled)
+    },
+
+    countTouchHintGame() {
+      if (!this.preferences.showTouchHints || this.preferences.touchHintGamesSeen >= 3) return
+      this.preferences.touchHintGamesSeen++
+      this.persistPreferences()
+    },
+
+    onTouchHintsToggle() {
+      if (this.preferences.showTouchHints) this.preferences.touchHintGamesSeen = 0
+      this.persistPreferences()
+      if (this.preferences.showTouchHints) this.replayTouchHints()
     },
 
     replayTouchHints() {

@@ -19,6 +19,15 @@ export function isSwipeDrop(startX, startY, x, y, distance = 36) {
   return dy >= distance && dy >= Math.abs(dx) * 1.25
 }
 
+// Lock a downward gesture before it reaches the full Drop distance. This
+// prevents small sideways finger drift from moving the active piece while
+// the player is committing to a vertical swipe.
+export function isVerticalIntent(startX, startY, x, y, distance = 12) {
+  const dx = x - startX
+  const dy = y - startY
+  return dy >= distance && dy >= Math.abs(dx) * 1.25
+}
+
 // A tap keeps the pointer within `tolerance` px of its start.
 export function isTap(startX, startY, x, y, tolerance = 18) {
   return Math.hypot(x - startX, y - startY) <= tolerance

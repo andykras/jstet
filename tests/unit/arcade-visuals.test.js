@@ -24,9 +24,10 @@ test('pause and game-over overlays expose real actions and focus behavior', () =
   }
 })
 
-test('HUD uses real Vuex values for animated score, bonus and level progress', () => {
+test('HUD uses real Vuex values for animated score, transient bonus and level progress', () => {
   const hud = read('src/components/GameHud.vue')
-  for (const token of [':key="score"', ':key="bonus"', 'class="level-meter"',
+  for (const token of [':key="score"', 'name="bonus-hud"', 'displayBonus > 0',
+    'aria-live="polite"', 'class="level-meter"',
     'v-for="value in maxLevel"', 'this.$store.state.options.maxLevel']) {
     assert.ok(hud.includes(token), token)
   }
