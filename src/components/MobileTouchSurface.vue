@@ -77,9 +77,10 @@
 <script>
 import { gameBus } from '@/utils/gameBus.js'
 import { createTouchInput } from '@/utils/touchInput.js'
-import { isSwipeDrop, isTap, pickZone } from '@/utils/touchGestures.js'
+import { isSwipeDrop, isVerticalIntent, isTap, pickZone } from '@/utils/touchGestures.js'
 
 const SWIPE_DISTANCE = 36
+const VERTICAL_LOCK_DISTANCE = 12
 const TAP_TOLERANCE = 18
 const DRAG_THRESHOLD_RATIO = 0.45
 const WARP_DURATION = Object.freeze({ tap: 280, swipe: 300 })
@@ -243,15 +244,27 @@ export default {
       if (pointer.gesture === 'drop') return
       const dx = event.clientX - pointer.x
       const dy = event.clientY - pointer.y
-      const dropX = pointer.gesture === 'drag' ? pointer.dropAnchorX : pointer.x
-      const dropY = pointer.gesture === 'drag' ? pointer.dropAnchorY : pointer.y
+      // A drag keeps its latest committed cell as the vertical-swipe anchor.
+      // Once vertical intent is recognized, never update that anchor or X again.
+      const dropX = pointer.dropAnchorX
+      const dropY = pointer.dropAnchorY
+      const isDrop = pointer.gesture === 'vertical'
+        ? event.clientY - dropY >= SWIPE_DISTANCE
+        : isSwipeDrop(dropX, dropY, event.clientX, event.clientY, SWIPE_DISTANCE)
 
-      if (isSwipeDrop(dropX, dropY, event.clientX, event.clientY, SWIPE_DISTANCE)) {
+      if (isDrop) {
         pointer.gesture = 'drop'
         if (this.dragOwner === event.pointerId) this.dragOwner = null
         gameBus.emit('drop', this.hard)
         this.learn('drop')
         this.showWarp(event, 'swipe')
+        return
+      }
+
+      if (pointer.gesture === 'vertical') return
+      if (isVerticalIntent(dropX, dropY, event.clientX, event.clientY, VERTICAL_LOCK_DISTANCE)) {
+        pointer.gesture = 'vertical'
+        if (this.dragOwner === event.pointerId) this.dragOwner = null
         return
       }
 
