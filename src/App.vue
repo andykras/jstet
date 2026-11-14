@@ -189,6 +189,9 @@
         <stakan />
       </main>
 
+      <span class="build-badge"
+            aria-hidden="true">{{ buildId }}</span>
+
     </div>
 
     <div v-if="settingsOpen"
@@ -357,6 +360,9 @@ export default {
     },
     activeSingleBlock() {
       return this.$store.state.options ? this.$store.state.options.singleBlock : options.singleBlock
+    },
+    buildId() {
+      return import.meta.env.VITE_BUILD_ID || 'dev'
     }
   },
 
@@ -646,4 +652,25 @@ export default {
 @import './styles/tetcolor-clear-fx.styl'
 @import './styles/tetcolor-bonus-fx.styl'
 @import './styles/arcade-touch-surface.styl'
+
+// Discreet build marker: which commit is deployed, without stealing attention.
+.build-badge
+  position fixed
+  right 7px
+  bottom 5px
+  z-index 1
+  pointer-events none
+  user-select none
+  font-family ui-monospace, 'SFMono-Regular', Consolas, monospace
+  font-size 9px
+  line-height 1
+  letter-spacing .04em
+  color rgba(255, 255, 255, .26)
+
+@media (max-width: 920px)
+  .build-badge
+    // Sit above the thumb pad instead of under the buttons.
+    bottom 58px
+    right 6px
+    font-size 8px
 </style>

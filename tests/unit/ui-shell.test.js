@@ -28,6 +28,18 @@ test('the shell uses functional controls without exposing developer options in t
   assert.doesNotMatch(app, /{{\s*\$store\.state\.options\s*}}/)
 })
 
+test('a discreet build badge shows which commit is deployed', () => {
+  const app = read('src/App.vue')
+  const config = read('vite.config.mjs')
+  assert.match(config, /'import\.meta\.env\.VITE_BUILD_ID': JSON\.stringify\(buildId\)/)
+  assert.match(config, /git rev-parse --short HEAD/)
+  assert.match(app, /class="build-badge"/)
+  assert.match(app, /aria-hidden="true"/)
+  assert.match(app, /buildId\(\) \{\n      return import\.meta\.env\.VITE_BUILD_ID \|\| 'dev'\n    \}/)
+  assert.match(app, /\.build-badge\n  position fixed/)
+  assert.match(app, /pointer-events none/)
+})
+
 test('the responsive shell preserves the shared board cell geometry', () => {
   const styles = read('src/styles/arcade-shell.styl')
   const cells = read('src/styles/game-cells.styl')
