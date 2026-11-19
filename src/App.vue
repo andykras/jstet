@@ -281,17 +281,16 @@
         </fieldset>
 
         <fieldset class="settings-group">
-          <legend>Next game</legend>
+          <legend>Game rules</legend>
           <label class="settings-field">
             <span>{{ mode === 'classic' ? 'Clear lines' : 'Clear matches' }}</span>
-            <select v-model="pendingSingleBlock">
+            <select v-model="preferences.singleBlock"
+                    @change="onClearModeChange">
               <option :value="true">One at a time</option>
               <option :value="false">All at once</option>
             </select>
           </label>
-          <p class="settings-hint">Changes the clearing sequence and takes effect on your next game.</p>
-          <p v-if="pendingSingleBlock !== activeSingleBlock"
-             class="settings-note">This rule change is queued for the next game.</p>
+          <p class="settings-hint">Saved for future games. Changing it now starts a new game.</p>
         </fieldset>
 
         <div class="dialog-actions">
@@ -330,7 +329,6 @@ export default {
       mode: 'tetcolor',
       hard: preferences.hardDrop,
       preferences,
-      pendingSingleBlock: options.singleBlock,
       settingsOpen: false,
       autoPaused: false,
       modernDispose: null,
@@ -357,9 +355,6 @@ export default {
     },
     modeTitle() {
       return this.mode === 'classic' ? 'Classic' : 'TetColor'
-    },
-    activeSingleBlock() {
-      return this.$store.state.options ? this.$store.state.options.singleBlock : options.singleBlock
     },
     buildId() {
       return import.meta.env.VITE_BUILD_ID || 'dev'
@@ -434,6 +429,14 @@ export default {
       savePreferences(this.preferences)
       if (!this.preferences.visualFxEnabled) gameBus.emit('fx:reset')
       if (this.sounds) this.sounds.setEnabled(this.preferences.soundEnabled)
+    },
+
+    // Clearing order is a run-level rule, so applying it starts a fresh
+    // session instead of leaving the choice queued behind the current game.
+    onClearModeChange() {
+      this.persistPreferences()
+      this.createStakan()
+      this.closeSettings()
     },
 
     countTouchHintGame() {
@@ -558,7 +561,7 @@ export default {
       const rules = resolveRunOptions({
         ...this.$store.state.options,
         tetcolor: this.mode === 'tetcolor',
-        singleBlock: this.pendingSingleBlock
+        singleBlock: this.preferences.singleBlock
       })
       this.setOptions(rules)
       this.setPieces(createGamePieces(this.mode))

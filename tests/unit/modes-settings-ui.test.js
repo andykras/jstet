@@ -28,16 +28,28 @@ test('all three modes switch immediately without a confirmation dialog', () => {
   assert.doesNotMatch(app, /pendingMode|confirmMode|cancelMode|Your current game will be discarded/)
 })
 
-test('the settings use live preferences and next-game rule application', () => {
+test('the settings use live preferences', () => {
   const app = read('src/App.vue')
   assert.match(app, /v-model="preferences.theme"/)
   assert.match(app, /v-model="preferences.reducedMotion"/)
-  assert.match(app, /v-model="pendingSingleBlock"/)
-  assert.match(app, /singleBlock: this.pendingSingleBlock/)
-  assert.match(app, /savePreferences\(this.preferences\)/)
-  assert.match(app, /if \(this.status === 'running'\) this.togglePause\(\)/)
+  assert.match(app, /v-model="preferences.singleBlock"/)
+  assert.match(app, /singleBlock: this\.preferences\.singleBlock/)
+  assert.match(app, /savePreferences\(this\.preferences\)/)
+  assert.match(app, /if \(this\.status === 'running'\) this\.togglePause\(\)/)
   assert.match(app, /Closing settings leaves an active session paused/)
   assert.doesNotMatch(app, /modalWasRunning/)
+})
+
+test('the clearing rule is saved and applied by starting a new game immediately', () => {
+  const app = read('src/App.vue')
+  const prefs = read('src/utils/preferences.js')
+  assert.match(prefs, /singleBlock: true/)
+  assert.match(prefs, /singleBlock: typeof source\.singleBlock === 'boolean' \? source\.singleBlock : DEFAULT_PREFERENCES\.singleBlock/)
+  assert.match(app, /@change="onClearModeChange"/)
+  assert.match(app, /onClearModeChange\(\) \{\n      this\.persistPreferences\(\)\n      this\.createStakan\(\)\n      this\.closeSettings\(\)\n    \}/)
+  // No queued-rule messaging: the choice applies at once.
+  assert.doesNotMatch(app, /queued for the next game/)
+  assert.doesNotMatch(app, /pendingSingleBlock/)
 })
 
 test('Classic HUD and next-piece preview derive from live Vuex game state', () => {

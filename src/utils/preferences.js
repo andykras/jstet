@@ -10,7 +10,8 @@ export const DEFAULT_PREFERENCES = Object.freeze({
   touchControlsMode: 'gestures',
   touchFxEnabled: true,
   showTouchHints: true,
-  touchHintGamesSeen: 0
+  touchHintGamesSeen: 0,
+  singleBlock: true
 })
 
 export const normalizePreferences = value => {
@@ -29,7 +30,8 @@ export const normalizePreferences = value => {
     showTouchHints: typeof source.showTouchHints === 'boolean' ? source.showTouchHints : DEFAULT_PREFERENCES.showTouchHints,
     touchHintGamesSeen: Number.isInteger(source.touchHintGamesSeen)
       ? Math.max(0, Math.min(3, source.touchHintGamesSeen))
-      : DEFAULT_PREFERENCES.touchHintGamesSeen
+      : DEFAULT_PREFERENCES.touchHintGamesSeen,
+    singleBlock: typeof source.singleBlock === 'boolean' ? source.singleBlock : DEFAULT_PREFERENCES.singleBlock
   }
 }
 
