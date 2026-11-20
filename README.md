@@ -70,6 +70,19 @@ separately deployed [Worker/D1 leaderboard API](leaderboard-api/README.md).
 Do not deploy the API or switch the public PWA to it without verifying CORS, migrations,
 manual moderation, mobile interaction and the non-cheat-proof score model first.
 
+### Visual-only preview (no backend)
+
+For a specifically authorized non-master preview build, set
+`VITE_LEADERBOARD_PREVIEW=1` at build time. The sample score list is visible **only**
+when the page URL includes `?leaderboardPreview=1`; it is visibly labeled
+"SAMPLE DATA", cannot publish scores and never writes to D1. All other visitors
+see the normal disconnected state until the API is deployed.
+
+The Mac deploy script accepts `ALLOW_DEPLOY_NON_MASTER=1 VISUAL_PREVIEW_SKIP_QA=1`
+for this preview. Unit tests and lint are skipped, but a production build,
+artifact checks, HTTPS checks and atomic rollback safeguards remain in place.
+Default deployments still run the full QA commands.
+
 ## Deployment and offline use
 
 The site is a static build in `dist/`. Vite uses the relative base `./`, allowing deployment at a subdirectory path. `public/manifest.json` and icons are copied to the build, and `vite-plugin-pwa` generates `service-worker.js`; registration remains in `src/registerServiceWorker.js`. Service workers require HTTPS or localhost. Verify offline reload using the **production preview**, not only the development server.
