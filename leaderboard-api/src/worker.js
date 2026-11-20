@@ -3,7 +3,6 @@ const RULESET = 'arcade-v1'
 const MODES = new Set(['tetcolor', 'classic'])
 const PERIODS = new Set(['week', 'all'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const TOKEN = /^[a-f0-9]{64}$/i
 const MAX_BODY_SIZE = 2048
 const TOP_SIZE = 20
 
@@ -184,7 +183,11 @@ export async function handleRequest(request, env) {
     if (!env.DB) return cors(json({ error: 'Database binding is missing.' }, 503))
     const url = new URL(request.url)
     let result
-    if (url.pathname === '/api/v1/leaderboard' && request.method === 'GET') result = await leaderboard(request, env, url)
+    if (url.pathname === '/api/v1/health' && request.method === 'GET') {
+      // A database query ensures the schema exists before the frontend uses the API.
+      await env.DB.prepare('SELECT id FROM players LIMIT 1').first()
+      result = json({ status: 'ok', ruleset: RULESET })
+    } else if (url.pathname === '/api/v1/leaderboard' && request.method === 'GET') result = await leaderboard(request, env, url)
     else if (url.pathname === '/api/v1/players' && request.method === 'POST') result = await createPlayer(request, env)
     else if (url.pathname === '/api/v1/scores' && request.method === 'POST') result = await postScore(request, env)
     else result = json({ error: 'Endpoint not found.' }, 404)
