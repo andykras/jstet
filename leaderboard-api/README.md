@@ -37,8 +37,11 @@ health probes and atomic release/rollback protection. It is disabled by default
 and not permitted on `master`.
 
 If the Worker or D1 is not provisioned, deploy the frontend for visual review
-with the API URL unset; its leaderboard shows local records plus an honest
-"not connected" state. Do not expose a fake public ranking as live data.
+with the API URL unset. You can explicitly set `VITE_LEADERBOARD_PREVIEW=1`
+during a non-master preview build. Sample standings are then accessible only
+at `?leaderboardPreview=1`, conspicuously labeled as simulated and incapable
+of submitting scores. Every other URL shows the disconnected state and
+local personal records. Never present sample scores as live rankings.
 
 For abuse cleanup, a Cloudflare D1 operator may inspect player IDs and remove
 unwanted results directly with Wrangler D1 commands, preserving an operational
