@@ -171,10 +171,15 @@
                 <h2 id="game-state-heading">{{ status === 'paused' ? 'PAUSED' : 'GAME OVER' }}</h2>
                 <p v-if="status === 'gameOver'"
                    class="game-state-overlay__summary">Final score <strong>{{ $store.state.score.toLocaleString('en-US') }}</strong></p>
+                <p v-if="status === 'gameOver' && newPersonalBest"
+                   class="game-state-overlay__record">NEW PERSONAL BEST</p>
                 <p v-if="status === 'gameOver' && scoreSubmission.status === 'sent'"
                    class="game-state-overlay__summary"
                    role="status">Score published to the leaderboard.</p>
-                <p v-else
+                <p v-if="status === 'gameOver' && scoreSubmission.status === 'error'"
+                   class="game-state-overlay__summary"
+                   role="status">Could not publish. Open Leaderboard to retry.</p>
+                <p v-if="status === 'paused'"
                    class="game-state-overlay__summary">Your board is ready whenever you are.</p>
                 <div class="game-state-overlay__actions">
                   <button ref="statePrimary"
@@ -344,8 +349,11 @@ import NextPiece from '@/components/NextPiece.vue'
 import TouchControls from '@/components/TouchControls.vue'
 import MobileTouchSurface from '@/components/MobileTouchSurface.vue'
 import Leaderboard from '@/components/Leaderboard.vue'
+import { readPersonalBest, recordPersonalBest } from '@/utils/personalBest.js'
 import { canRankRun, completedRun } from '@/utils/leaderboardRules.js'
-import { leaderboardConfigured, readLeaderboardPlayer, publishLeaderboardRun } from '@/utils/leaderboardClient.js'
+import {
+  leaderboardConfigured, readLeaderboardPlayer, isLeaderboardAutoPublishEnabled, publishLeaderboardRun
+} from '@/utils/leaderboardClient.js'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
 import { setup, game } from '@/utils/game.js'
@@ -368,6 +376,8 @@ export default {
       leaderboardOpen: false,
       runId: null,
       lastRun: null,
+      localBest: readPersonalBest('tetcolor', preferences.singleBlock),
+      newPersonalBest: false,
       scoreSubmission: { status: 'idle', error: '' },
       autoPaused: false,
       modernDispose: null,
@@ -566,9 +576,12 @@ export default {
         durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime))
       })
       this.lastRun = run
+      const personal = recordPersonalBest(run)
+      this.localBest = personal.score
+      this.newPersonalBest = personal.improved
       this.scoreSubmission = { status: 'idle', error: '' }
-      // No tracking or network submission before the player explicitly joins.
-      if (leaderboardConfigured && canRankRun(run) && readLeaderboardPlayer()) this.sendCompletedRun()
+      // No network submission until the player opts in and keeps auto-publishing enabled.
+      if (leaderboardConfigured && canRankRun(run) && isLeaderboardAutoPublishEnabled()) this.sendCompletedRun()
     },
 
     async sendCompletedRun() {
@@ -648,6 +661,8 @@ export default {
       if (!this.modernDispose) return
       this.runId = crypto.randomUUID()
       this.lastRun = null
+      this.localBest = readPersonalBest(this.mode, this.preferences.singleBlock)
+      this.newPersonalBest = false
       this.scoreSubmission = { status: 'idle', error: '' }
       const rules = resolveRunOptions({
         ...this.$store.state.options,
@@ -677,7 +692,7 @@ export default {
       gameBus.emit('pause')
     },
     onFocusGain() {
-      if (!this.autoPaused || this.settingsOpen || this.status !== 'paused') return
+      if (!this.autoPaused || this.settingsOpen || this.leaderboardOpen || this.status !== 'paused') return
       this.autoPaused = false
       gameBus.emit('pause')
     },
