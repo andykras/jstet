@@ -171,6 +171,9 @@
                 <h2 id="game-state-heading">{{ status === 'paused' ? 'PAUSED' : 'GAME OVER' }}</h2>
                 <p v-if="status === 'gameOver'"
                    class="game-state-overlay__summary">Final score <strong>{{ $store.state.score.toLocaleString('en-US') }}</strong></p>
+                <p v-if="status === 'gameOver' && scoreSubmission.status === 'sent'"
+                   class="game-state-overlay__summary"
+                   role="status">Score published to the leaderboard.</p>
                 <p v-else
                    class="game-state-overlay__summary">Your board is ready whenever you are.</p>
                 <div class="game-state-overlay__actions">
