@@ -195,7 +195,7 @@
                   <button v-if="status === 'gameOver'"
                           type="button"
                           class="arcade-button"
-                          @click="openLeaderboard">Leaderboard / Publish score</button>
+                          @click="openLeaderboard">Leaderboard</button>
                 </div>
               </div>
             </div>
@@ -557,7 +557,10 @@ export default {
     closeLeaderboard() {
       this.leaderboardOpen = false
       // Like Settings, closing an overlay does not unexpectedly resume a run.
-      this.$nextTick(() => this.$refs.leaderboardTrigger?.focus())
+      this.$nextTick(() => {
+        const target = this.$refs.statePrimary || this.$refs.leaderboardTrigger
+        if (target) target.focus()
+      })
     },
 
     onScorePublished(runId) {
