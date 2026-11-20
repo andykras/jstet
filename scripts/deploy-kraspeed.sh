@@ -42,9 +42,18 @@ case "$SHA" in
 esac
 
 printf '==> Building JSTET on Mac: %s (%s)\n' "$SHA" "$BRANCH"
+if [ -z "${VITE_LEADERBOARD_API_URL:-}" ]; then
+  printf 'NOTE: VITE_LEADERBOARD_API_URL is unset; online rankings will be unavailable in this build.\n'
+fi
 npm install --no-audit --no-fund
-npm run test:unit
-npm run lint
+if [ "${VISUAL_PREVIEW_SKIP_QA:-0}" = "1" ]; then
+  [ "$BRANCH" != "master" ] && [ "${ALLOW_DEPLOY_NON_MASTER:-0}" = "1" ] ||
+    fail "Visual-preview QA bypass is allowed only for explicitly authorized non-master releases"
+  printf '==> Visual-preview mode: skipping unit tests and ESLint; production build and deploy checks remain enabled.\n'
+else
+  npm run test:unit
+  npm run lint
+fi
 npm run build
 
 for file in index.html manifest.json service-worker.js \
