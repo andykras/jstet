@@ -52,6 +52,20 @@ npm run preview       # local production preview
 
 The historical `npm run serve` alias also starts Vite.
 
+## Leaderboard
+
+The optional **Leaderboard** panel compares TetColor and Classic scores separately, with
+weekly (Monday 00:00 UTC) and all-time rankings. Only standard one-at-a-time clearing
+qualifies. Players can publish a completed game under a nickname without registering;
+joining explicitly opts in to publishing later eligible runs from the same browser.
+The player credential lives in localStorage, so clearing browser data loses the profile.
+
+The game remains fully playable if the API is offline or not configured. Configure
+`VITE_LEADERBOARD_API_URL` at **build time** to connect the static PWA to the
+separately deployed [Worker/D1 leaderboard API](leaderboard-api/README.md).
+Do not deploy the API or switch the public PWA to it without verifying CORS, migrations,
+manual moderation, mobile interaction and the non-cheat-proof score model first.
+
 ## Deployment and offline use
 
 The site is a static build in `dist/`. Vite uses the relative base `./`, allowing deployment at a subdirectory path. `public/manifest.json` and icons are copied to the build, and `vite-plugin-pwa` generates `service-worker.js`; registration remains in `src/registerServiceWorker.js`. Service workers require HTTPS or localhost. Verify offline reload using the **production preview**, not only the development server.
