@@ -13,6 +13,8 @@
         <div>
           <span class="leaderboard-kicker">ARCADE 2077</span>
           <h2 id="leaderboard-heading">LEADERBOARD</h2>
+          <span v-if="preview"
+                class="leaderboard-demo-label">SAMPLE DATA / VISUAL PREVIEW</span>
         </div>
         <button type="button"
                 class="dialog-close"
@@ -46,11 +48,16 @@
         <strong>{{ personalBest ? formatLeaderboardScore(personalBest) : '—' }}</strong>
       </div>
 
-      <p v-if="!configured"
+      <p v-if="!configured && !preview"
          class="leaderboard-notice">
         Online rankings are not connected yet. You can keep playing normally.
       </p>
       <template v-else>
+        <p v-if="preview"
+           class="leaderboard-demo-notice"
+           role="status">
+          SAMPLE SCORES — not real players or live rankings. Score publication is disabled in this preview.
+        </p>
         <p class="leaderboard-period-note">
           {{ period === 'week' ? 'Weekly scores reset Monday at 00:00 UTC.' : 'Best scores since launch.' }}
           Only standard clearing rules qualify.
@@ -84,7 +91,7 @@
         <p v-else
            class="leaderboard-notice">No published records yet. Be the first!</p>
 
-        <div v-if="profile"
+        <div v-if="profile && !preview"
              class="leaderboard-personal">
           <div>
             <span>Online best · {{ profile.nickname }}</span>
@@ -95,7 +102,7 @@
             <strong>{{ !loading && !loadError && mine ? '#' + mine.rank : '—' }}</strong>
           </div>
         </div>
-        <div v-if="profile"
+        <div v-if="profile && !preview"
              class="leaderboard-preferences">
           <label>
             <input type="checkbox"
@@ -111,7 +118,7 @@
              role="alert">{{ profileError }}</p>
         </div>
 
-        <section v-if="pendingRun && pendingRun.mode === mode"
+        <section v-if="!preview && pendingRun && pendingRun.mode === mode"
                  class="leaderboard-publish"
                  aria-label="Publish completed game">
           <h3>LAST RUN · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
@@ -152,7 +159,9 @@
           </template>
         </section>
         <p class="leaderboard-disclaimer">
-          Scores are submitted by browsers and are not yet verified against replays.
+          {{ preview
+            ? 'Visual preview only. These rows are simulated and never sent to the leaderboard service.'
+            : 'Scores are submitted by browsers and are not yet verified against replays.' }}
         </p>
       </template>
     </section>
@@ -162,6 +171,7 @@
 <script>
 import { canRankRun, formatLeaderboardScore, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
 import { readPersonalBest } from '@/utils/personalBest.js'
+import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
   leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard,
   registerLeaderboardPlayer, publishLeaderboardRun, isLeaderboardAutoPublishEnabled,
@@ -182,6 +192,7 @@ export default {
       mode: this.defaultMode,
       period: 'week',
       configured: leaderboardConfigured,
+      preview: leaderboardPreviewEnabled && !leaderboardConfigured,
       profile: readLeaderboardPlayer(),
       nickname: '',
       entries: [],
@@ -214,6 +225,14 @@ export default {
     canRankRun,
     formatLeaderboardScore,
     async refresh() {
+      if (this.preview) {
+        this.sequence++
+        this.loading = false
+        this.loadError = ''
+        this.mine = null
+        this.entries = leaderboardPreviewEntries(this.mode, this.period)
+        return
+      }
       if (!this.configured) return
       const requestId = ++this.sequence
       this.loading = true
