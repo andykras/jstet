@@ -23,3 +23,9 @@ export const completedRun = ({ runId, mode, singleBlock, score, lines, level, du
 })
 
 export const formatLeaderboardScore = value => Number(value || 0).toLocaleString('en-US')
+
+export const normalizeLeaderboardNickname = value => {
+  if (typeof value !== 'string') return null
+  const nickname = value.trim().normalize('NFC')
+  return /^[\p{L}\p{N}_-]{3,16}$/u.test(nickname) ? nickname : null
+}
