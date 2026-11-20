@@ -335,3 +335,20 @@
 
   .leaderboard-personal strong
     font-size 19px
+
+@media (min-width: 921px) and (max-width: 1180px)
+  // Preserve horizontal space for the mode selector on small desktops.
+  .header-actions .arcade-button
+    flex 0 0 auto
+    width 41px
+    height 40px
+    min-width 0
+    padding 7px
+
+  .header-action__label
+    display none
+
+  .header-action__icon
+    display block
+    width 19px
+    height 19px
