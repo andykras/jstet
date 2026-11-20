@@ -59,8 +59,12 @@ weekly (Monday 00:00 UTC) and all-time rankings. Only standard one-at-a-time cle
 qualifies. Players can publish a completed game under a nickname without registering;
 joining explicitly opts in to publishing later eligible runs from the same browser.
 The player credential lives in localStorage, so clearing browser data loses the profile.
+Users can disable automatic submissions or forget the local profile from the leaderboard.
+Already published scores remain public when a device forgets its profile.
 
-The game remains fully playable if the API is offline or not configured. Configure
+Personal best scores are also saved locally, independently of API availability and
+separately by game mode and clearing rule. The game remains fully playable if the
+API is offline or not configured. Configure
 `VITE_LEADERBOARD_API_URL` at **build time** to connect the static PWA to the
 separately deployed [Worker/D1 leaderboard API](leaderboard-api/README.md).
 Do not deploy the API or switch the public PWA to it without verifying CORS, migrations,
