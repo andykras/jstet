@@ -84,6 +84,24 @@
                     d="M6 4h4v16H6zm8 0h4v16h-4z" />
             </svg>
           </button>
+          <button ref="leaderboardTrigger"
+                  type="button"
+                  class="arcade-button"
+                  aria-label="Leaderboard"
+                  title="Leaderboard"
+                  @click="openLeaderboard">
+            <span class="header-action__label">Leaderboard</span>
+            <svg class="header-action__icon"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M8 4h8v6a4 4 0 0 1-8 0V4zM8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 14v5m-5 2h10" />
+            </svg>
+          </button>
           <button ref="settingsTrigger"
                   type="button"
                   class="arcade-button"
@@ -143,7 +161,7 @@
                               @hint-game-start="countTouchHintGame"
                               :reduced-motion="preferences.reducedMotion" />
           <Transition name="state-overlay">
-            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen"
+            <div v-if="(status === 'paused' || status === 'gameOver') && !settingsOpen && !leaderboardOpen"
                  class="game-state-overlay"
                  role="dialog"
                  aria-modal="false"
@@ -166,6 +184,10 @@
                           type="button"
                           class="arcade-button"
                           @click="createStakan">New Game (N)</button>
+                  <button v-if="status === 'gameOver'"
+                          type="button"
+                          class="arcade-button"
+                          @click="openLeaderboard">Leaderboard / Publish score</button>
                 </div>
               </div>
             </div>
@@ -193,6 +215,13 @@
             aria-hidden="true">{{ buildId }}</span>
 
     </div>
+
+    <Leaderboard v-if="leaderboardOpen"
+                 :default-mode="mode"
+                 :pending-run="lastRun"
+                 :submission="scoreSubmission"
+                 @published="onScorePublished"
+                 @close="closeLeaderboard" />
 
     <div v-if="settingsOpen"
          class="settings-backdrop"
@@ -311,6 +340,9 @@ import CityscapeArt from '@/components/CityscapeArt.vue'
 import NextPiece from '@/components/NextPiece.vue'
 import TouchControls from '@/components/TouchControls.vue'
 import MobileTouchSurface from '@/components/MobileTouchSurface.vue'
+import Leaderboard from '@/components/Leaderboard.vue'
+import { canRankRun, completedRun } from '@/utils/leaderboardRules.js'
+import { leaderboardConfigured, readLeaderboardPlayer, publishLeaderboardRun } from '@/utils/leaderboardClient.js'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
 import { setup, game } from '@/utils/game.js'
@@ -321,7 +353,7 @@ import options, { resolveRunOptions } from '@/game/options.js'
 
 export default {
   name: 'JstetApp',
-  components: { GameHud, NextPiece, CityscapeArt, TouchControls, MobileTouchSurface },
+  components: { GameHud, NextPiece, CityscapeArt, TouchControls, MobileTouchSurface, Leaderboard },
   data() {
     const preferences = loadPreferences()
     return {
@@ -330,6 +362,10 @@ export default {
       hard: preferences.hardDrop,
       preferences,
       settingsOpen: false,
+      leaderboardOpen: false,
+      runId: null,
+      lastRun: null,
+      scoreSubmission: { status: 'idle', error: '' },
       autoPaused: false,
       modernDispose: null,
       modernHandlers: [],
@@ -373,7 +409,7 @@ export default {
       if (value === 'gameOver') this.autoPaused = false
       if (value !== 'paused' && value !== 'gameOver') return
       this.$nextTick(() => {
-        if (!this.settingsOpen && !this.naive && this.$refs.statePrimary) {
+        if (!this.settingsOpen && !this.leaderboardOpen && !this.naive && this.$refs.statePrimary) {
           this.$refs.statePrimary.focus()
         }
       })
@@ -467,7 +503,7 @@ export default {
     },
 
     openSettings() {
-      if (this.naiveImplementation || this.settingsOpen) return
+      if (this.naiveImplementation || this.settingsOpen || this.leaderboardOpen) return
       this.pauseForDialog()
       this.settingsOpen = true
       this.focusDialog()
@@ -484,7 +520,7 @@ export default {
     },
 
     requestMode(mode) {
-      if (this.settingsOpen || (mode === 'legacy' && this.naiveImplementation)) return
+      if (this.settingsOpen || this.leaderboardOpen || (mode === 'legacy' && this.naiveImplementation)) return
       if (mode === 'legacy') {
         this.naive = true
         return
@@ -496,6 +532,54 @@ export default {
         this.naive = false
       } else {
         this.createStakan()
+      }
+    },
+
+    openLeaderboard() {
+      if (this.naiveImplementation || this.settingsOpen || this.leaderboardOpen) return
+      this.pauseForDialog()
+      this.leaderboardOpen = true
+    },
+
+    closeLeaderboard() {
+      this.leaderboardOpen = false
+      // Like Settings, closing an overlay does not unexpectedly resume a run.
+      this.$nextTick(() => this.$refs.leaderboardTrigger?.focus())
+    },
+
+    onScorePublished(runId) {
+      if (this.lastRun?.runId === runId) this.scoreSubmission = { status: 'sent', error: '' }
+    },
+
+    onRunComplete() {
+      if (!this.runId || this.naiveImplementation) return
+      const run = completedRun({
+        runId: this.runId,
+        mode: this.mode,
+        singleBlock: this.preferences.singleBlock,
+        score: this.$store.state.score,
+        lines: this.$store.state.lines,
+        level: this.$store.state.level,
+        durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime))
+      })
+      this.lastRun = run
+      this.scoreSubmission = { status: 'idle', error: '' }
+      // No tracking or network submission before the player explicitly joins.
+      if (leaderboardConfigured && canRankRun(run) && readLeaderboardPlayer()) this.sendCompletedRun()
+    },
+
+    async sendCompletedRun() {
+      const run = this.lastRun
+      const player = readLeaderboardPlayer()
+      if (!run || !player || !canRankRun(run) || this.scoreSubmission.status === 'sending') return
+      this.scoreSubmission = { status: 'sending', error: '' }
+      try {
+        await publishLeaderboardRun(run, player)
+        this.onScorePublished(run.runId)
+      } catch (error) {
+        if (this.lastRun?.runId === run.runId) {
+          this.scoreSubmission = { status: 'error', error: error.message }
+        }
       }
     },
 
@@ -530,6 +614,7 @@ export default {
       on('score', value => this.setScore(value))
       on('bonus', value => this.setBonus(value))
       on('level', value => this.setLevel(value))
+      on('done', () => this.onRunComplete())
 
       window.addEventListener('keydown', this.onKeyDown)
       window.addEventListener('keyup', this.onKeyUp)
@@ -558,6 +643,9 @@ export default {
 
     createStakan() {
       if (!this.modernDispose) return
+      this.runId = crypto.randomUUID()
+      this.lastRun = null
+      this.scoreSubmission = { status: 'idle', error: '' }
       const rules = resolveRunOptions({
         ...this.$store.state.options,
         tetcolor: this.mode === 'tetcolor',
@@ -596,6 +684,7 @@ export default {
     },
 
     onKeyDown(e) {
+      if (this.leaderboardOpen) return
       if (this.settingsOpen) {
         if (e.code === 'Escape') {
           e.preventDefault()
@@ -655,6 +744,7 @@ export default {
 @import './styles/tetcolor-clear-fx.styl'
 @import './styles/tetcolor-bonus-fx.styl'
 @import './styles/arcade-touch-surface.styl'
+@import './styles/leaderboard.styl'
 
 // Discreet build marker: which commit is deployed, without stealing attention.
 .build-badge
