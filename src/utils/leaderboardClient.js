@@ -29,7 +29,7 @@ const storePlayer = player => {
   try {
     target.setItem(STORAGE_KEY, JSON.stringify(player))
   } catch (_) {
-    // Private browsing can deny storage; the game still works.
+    throw new Error('Allow browser storage to keep your leaderboard profile.')
   }
 }
 
@@ -66,4 +66,25 @@ export const registerLeaderboardPlayer = async nickname => {
 export const publishLeaderboardRun = (run, player = readLeaderboardPlayer()) => {
   if (!player) throw new Error('Choose a nickname before publishing a score.')
   return apiRequest('/api/v1/scores', { method: 'POST', token: player.token, body: run })
+}
+
+export const isLeaderboardAutoPublishEnabled = (player = readLeaderboardPlayer()) => Boolean(player && player.autoPublish !== false)
+
+export const setLeaderboardAutoPublish = enabled => {
+  const player = readLeaderboardPlayer()
+  if (!player) throw new Error('Leaderboard profile is unavailable.')
+  const updated = { ...player, autoPublish: enabled === true }
+  storePlayer(updated)
+  return updated
+}
+
+export const forgetLeaderboardPlayer = () => {
+  const target = storage()
+  if (!target) return false
+  try {
+    target.removeItem(STORAGE_KEY)
+    return true
+  } catch (_) {
+    return false
+  }
 }
