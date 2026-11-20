@@ -8,7 +8,7 @@ const component = readFileSync(new URL('../../src/components/Leaderboard.vue', i
 test('leaderboard stays outside the engine and listens for real game completion', () => {
   assert.match(app, /on\('done', \(\) => this\.onRunComplete\(\)\)/)
   assert.match(app, /this\.lastRun = run/)
-  assert.match(app, /canRankRun\(run\) && readLeaderboardPlayer\(\)/)
+  assert.match(app, /canRankRun\(run\) && isLeaderboardAutoPublishEnabled\(\)/)
   assert.match(app, /<Leaderboard v-if="leaderboardOpen"/)
   assert.match(app, /<button ref="leaderboardTrigger"/)
 })
