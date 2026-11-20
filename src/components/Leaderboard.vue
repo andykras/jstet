@@ -40,6 +40,12 @@
                 @click="period = 'all'">All time</button>
       </div>
 
+      <div class="leaderboard-local"
+           aria-label="Personal record on this device">
+        <span>BEST ON THIS DEVICE · STANDARD RULES</span>
+        <strong>{{ personalBest ? formatLeaderboardScore(personalBest) : '—' }}</strong>
+      </div>
+
       <p v-if="!configured"
          class="leaderboard-notice">
         Online rankings are not connected yet. You can keep playing normally.
@@ -81,13 +87,28 @@
         <div v-if="profile"
              class="leaderboard-personal">
           <div>
-            <span>Your best · {{ profile.nickname }}</span>
-            <strong>{{ mine ? formatLeaderboardScore(mine.score) : '—' }}</strong>
+            <span>Online best · {{ profile.nickname }}</span>
+            <strong>{{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</strong>
           </div>
           <div>
             <span>Your rank</span>
-            <strong>{{ mine ? '#' + mine.rank : '—' }}</strong>
+            <strong>{{ !loading && !loadError && mine ? '#' + mine.rank : '—' }}</strong>
           </div>
+        </div>
+        <div v-if="profile"
+             class="leaderboard-preferences">
+          <label>
+            <input type="checkbox"
+                   :checked="autoPublish"
+                   @change="onAutoPublishChange($event.target.checked)">
+            Automatically publish future eligible scores
+          </label>
+          <button type="button"
+                  class="leaderboard-text-action"
+                  @click="forgetProfile">Forget this profile on this device</button>
+          <p v-if="profileError"
+             class="leaderboard-error"
+             role="alert">{{ profileError }}</p>
         </div>
 
         <section v-if="pendingRun && pendingRun.mode === mode"
@@ -95,7 +116,9 @@
                  aria-label="Publish completed game">
           <h3>LAST RUN · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
           <p v-if="!canRankRun(pendingRun)">
-            This run cannot enter the global ranking. Use one-at-a-time clearing to compete.
+            {{ pendingRun.singleBlock
+              ? 'This run has no eligible score. Finish a standard game to compete.'
+              : 'This run used all-at-once clearing. Select one-at-a-time clearing to compete.' }}
           </p>
           <p v-else-if="submission.status === 'sent'"
              role="status">Score published. Your position is shown above.</p>
@@ -112,8 +135,7 @@
                      minlength="3"
                      maxlength="16"
                      autocomplete="nickname"
-                     pattern="[^<>]{3,16}"
-                     placeholder="Enter your nickname">
+                     placeholder="3–16 letters, digits, _ or -">
               <p>Publishing creates an anonymous profile and opts you in to automatically
                 publishing later eligible runs on this browser. No account is required.</p>
               <button type="submit"
@@ -138,10 +160,12 @@
 </template>
 
 <script>
-import { canRankRun, formatLeaderboardScore } from '@/utils/leaderboardRules.js'
+import { canRankRun, formatLeaderboardScore, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
+import { readPersonalBest } from '@/utils/personalBest.js'
 import {
   leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard,
-  registerLeaderboardPlayer, publishLeaderboardRun
+  registerLeaderboardPlayer, publishLeaderboardRun, isLeaderboardAutoPublishEnabled,
+  setLeaderboardAutoPublish, forgetLeaderboardPlayer
 } from '@/utils/leaderboardClient.js'
 
 export default {
@@ -166,8 +190,13 @@ export default {
       loadError: '',
       publishing: false,
       publishError: '',
+      profileError: '',
       sequence: 0
     }
+  },
+  computed: {
+    personalBest() { return readPersonalBest(this.mode, true) },
+    autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) }
   },
   watch: {
     mode() { this.refresh() },
@@ -189,6 +218,8 @@ export default {
       const requestId = ++this.sequence
       this.loading = true
       this.loadError = ''
+      this.entries = []
+      this.mine = null
       try {
         const result = await fetchLeaderboard(this.mode, this.period, this.profile)
         if (requestId !== this.sequence) return
@@ -203,11 +234,16 @@ export default {
     },
     async registerAndPublish() {
       if (this.publishing || !canRankRun(this.pendingRun)) return
+      const validNickname = normalizeLeaderboardNickname(this.nickname)
+      if (!validNickname) {
+        this.publishError = 'Use 3–16 letters, digits, underscores or hyphens.'
+        return
+      }
       this.publishing = true
       this.publishError = ''
       try {
         // The button explicitly consents to saving a profile and publishing future runs.
-        this.profile = await registerLeaderboardPlayer(this.nickname)
+        this.profile = await registerLeaderboardPlayer(validNickname)
         await this.publishScore()
       } catch (error) {
         this.publishError = error.message
@@ -230,7 +266,25 @@ export default {
     async publishScore() {
       await publishLeaderboardRun(this.pendingRun, this.profile)
       this.$emit('published', this.pendingRun.runId)
-      await this.refresh()
+    },
+    onAutoPublishChange(enabled) {
+      this.profileError = ''
+      try {
+        this.profile = setLeaderboardAutoPublish(enabled)
+      } catch (error) {
+        this.profileError = error.message
+      }
+    },
+    forgetProfile() {
+      if (!window.confirm('Forget this profile on this device? Published scores will remain public.')) return
+      if (!forgetLeaderboardPlayer()) {
+        this.profileError = 'Unable to clear browser storage.'
+        return
+      }
+      this.profile = null
+      this.profileError = ''
+      this.publishError = ''
+      this.refresh()
     },
     trapFocus(event) {
       const focusable = Array.from(this.$refs.dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)'))
