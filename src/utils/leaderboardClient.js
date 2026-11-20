@@ -25,7 +25,7 @@ export const readLeaderboardPlayer = (target = storage()) => {
 
 const storePlayer = player => {
   const target = storage()
-  if (!target) return
+  if (!target) throw new Error('Allow browser storage to keep your leaderboard profile.')
   try {
     target.setItem(STORAGE_KEY, JSON.stringify(player))
   } catch (_) {
