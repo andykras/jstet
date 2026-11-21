@@ -27,6 +27,27 @@ The Worker exposes `GET /api/v1/health` (checks the database and schema), `POST 
 - This is **not cheat-proof**. Because the browser determines scores and rules, modified clients can still post fabricated values. Competitive verification requires server replay with a controlled seed and action trace, implemented separately. The public leaderboard must not be described as verified or anti-cheat secured.
 - Plan retention and manual moderation/deletion for abusive names and scores before public launch. Rotate the signup-rate salt with care: old per-IP fingerprints cannot be correlated with new ones.
 
+## kraspeed deployment (current production choice)
+
+The owner chose a small same-origin PHP API on kraspeed instead of Cloudflare.
+It serves `/api/v1/...` from `https://tetcolor.andykras.org` and needs no extra
+port, service, account or CORS:
+
+- `/srv/tetcolor/api/index.php` — API code from `php/index.php`, outside releases.
+- `/srv/tetcolor/api-data/config.php` — `RATE_LIMIT_SALT` (root:http, 0640).
+- `/srv/tetcolor/api-data/state.json` — players, best scores, run ids, hashed IP limits (http:http, 0640).
+- `php/lighttpd-api.conf` — the host-scoped lighttpd additions. Replace the
+  existing `url.rewrite = ()` reset; lighttpd rejects two assignments.
+
+Apply server config with `sudo lighttpd -tt -f /etc/lighttpd/lighttpd.conf`
+followed by `sudo systemctl restart lighttpd` (never reload on this host).
+Build the frontend with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org`.
+
+The PHP endpoint mirrors the Worker contract, validation, 10-second score
+spacing, five registrations per hashed IP per hour, duplicate-run protection and
+`arcade-v1`/`singleBlock: true` rules. Storage is a locked JSON file replaced
+atomically; back up `state.json` before maintenance.
+
 ## Visual-review deployment
 
 The main application's Mac deployment script supports an explicit **feature-branch-only**
