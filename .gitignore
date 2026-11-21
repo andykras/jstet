@@ -6,6 +6,8 @@ package-lock.json
 # local env files
 .env.local
 .env.*.local
+leaderboard-api/.dev.vars*
+leaderboard-api/.wrangler/
 
 # Log files
 npm-debug.log*
