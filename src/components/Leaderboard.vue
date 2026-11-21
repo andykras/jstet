@@ -179,7 +179,7 @@ import {
 } from '@/utils/leaderboardClient.js'
 
 export default {
-  name: 'Leaderboard',
+  name: 'LeaderboardPanel',
   props: {
     defaultMode: { type: String, default: 'tetcolor' },
     pendingRun: { type: Object, default: null },

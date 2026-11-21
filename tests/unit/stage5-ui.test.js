@@ -11,7 +11,7 @@ test('an inactive window pauses the run and returning focus resumes it', () => {
   assert.ok(app.includes("window.addEventListener('focus', this.onFocusGain)"))
   assert.ok(app.includes("document.addEventListener('visibilitychange', this.onVisibilityChange)"))
   assert.match(app, /autoPauseForFocus\(\) \{\n      if \(this\.naiveImplementation \|\| this\.status !== 'running'\) return\n      this\.autoPaused = true\n      gameBus\.emit\('pause'\)/)
-  assert.match(app, /if \(!this\.autoPaused \|\| this\.settingsOpen \|\| this\.status !== 'paused'\) return\n      this\.autoPaused = false\n      gameBus\.emit\('pause'\)/)
+  assert.match(app, /if \(!this\.autoPaused \|\| this\.settingsOpen \|\| this\.leaderboardOpen \|\| this\.status !== 'paused'\) return\n      this\.autoPaused = false\n      gameBus\.emit\('pause'\)/)
   // Manual pause/resume and a fresh run clear the automatic origin, so focus
   // never resumes a session the player stopped on purpose.
   assert.match(app, /togglePause\(\) \{\n      this\.autoPaused = false\n      gameBus\.emit\('pause'\)/)
@@ -34,7 +34,7 @@ test('touch controls use only the existing game command bus', () => {
   }
   assert.ok(app.includes('<TouchControls :status="status"'))
   assert.ok(app.includes(':hard="hard"'))
-  assert.ok(app.includes("components: { GameHud, NextPiece, CityscapeArt, TouchControls, MobileTouchSurface }"))
+  assert.ok(app.includes("components: { GameHud, NextPiece, CityscapeArt, TouchControls, MobileTouchSurface, Leaderboard }"))
 })
 
 test('touch ownership is released on pause, hidden page, blur and unmount', () => {

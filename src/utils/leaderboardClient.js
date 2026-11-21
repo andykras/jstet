@@ -33,7 +33,7 @@ const storePlayer = player => {
   }
 }
 
-const apiRequest = async (path, { method = 'GET', token, body } = {}) => {
+const apiRequest = async(path, { method = 'GET', token, body } = {}) => {
   if (!leaderboardConfigured) throw new Error('Online leaderboard is not configured yet.')
   const response = await fetch(API_URL + path, {
     method,
