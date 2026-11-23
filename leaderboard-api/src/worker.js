@@ -21,7 +21,7 @@ export const normalizedNickname = value => {
 export const validateRun = run => {
   if (!run || typeof run !== 'object' || Array.isArray(run)) return 'Invalid game result.'
   if (!UUID.test(run.runId || '')) return 'Invalid run identifier.'
-  if (!MODES.has(run.mode) || run.ruleset !== RULESET || run.singleBlock !== true) return 'This game uses non-ranked rules.'
+  if (!MODES.has(run.mode) || run.ruleset !== RULESET) return 'Invalid game mode or ruleset.'
   if (!Number.isSafeInteger(run.score) || run.score < 1 || run.score > 25000000) return 'Invalid score.'
   if (!Number.isSafeInteger(run.cleared) || run.cleared < 0 || run.cleared > 100000) return 'Invalid cleared count.'
   if (!Number.isSafeInteger(run.level) || run.level < 0 || run.level > 8) return 'Invalid level.'
