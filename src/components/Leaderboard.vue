@@ -22,7 +22,7 @@
                 @click="$emit('close')">×</button>
       </header>
 
-        <section v-if="!preview && pendingRun && pendingRun.mode === mode"
+        <section v-if="configured && !preview && pendingRun && pendingRun.mode === mode"
                  class="leaderboard-publish"
                  aria-label="Publish completed game">
           <h3>{{ profile ? 'LAST RUN' : 'ADD YOUR SCORE' }} · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
