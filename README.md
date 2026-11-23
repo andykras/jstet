@@ -58,6 +58,9 @@ The optional **Leaderboard** panel compares TetColor and Classic scores separate
 weekly (Monday 00:00 UTC) and all-time rankings. Only standard one-at-a-time clearing
 qualifies. Players can publish a completed game under a nickname without registering;
 joining explicitly opts in to publishing later eligible runs from the same browser.
+After the first eligible Game Over, the nickname/publication panel opens automatically
+and places the form above the rankings; no registration is needed on subsequent runs.
+Only positive-score games with the default `One at a time` clearing rule qualify.
 The player credential lives in localStorage, so clearing browser data loses the profile.
 Users can disable automatic submissions or forget the local profile from the leaderboard.
 Already published scores remain public when a device forgets its profile.
