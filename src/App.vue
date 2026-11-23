@@ -376,7 +376,7 @@ export default {
       leaderboardOpen: false,
       runId: null,
       lastRun: null,
-      localBest: readPersonalBest('tetcolor', preferences.singleBlock),
+      localBest: readPersonalBest('tetcolor'),
       newPersonalBest: false,
       scoreSubmission: { status: 'idle', error: '' },
       autoPaused: false,
@@ -670,7 +670,7 @@ export default {
       if (!this.modernDispose) return
       this.runId = crypto.randomUUID()
       this.lastRun = null
-      this.localBest = readPersonalBest(this.mode, this.preferences.singleBlock)
+      this.localBest = readPersonalBest(this.mode)
       this.newPersonalBest = false
       this.scoreSubmission = { status: 'idle', error: '' }
       const rules = resolveRunOptions({
