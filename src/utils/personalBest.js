@@ -8,7 +8,8 @@ const store = () => {
   }
 }
 
-const recordKey = (mode, singleBlock) => mode + ':' + (singleBlock ? 'single' : 'batch')
+// Old releases stored one personal best per clearing rule. Retain both when merging.
+const legacyRecordKeys = mode => [mode + ':single', mode + ':batch']
 
 const loadRecords = target => {
   if (!target) return {}
@@ -20,18 +21,21 @@ const loadRecords = target => {
   }
 }
 
-export const readPersonalBest = (mode, singleBlock = true, target = store()) => {
-  const score = loadRecords(target)[recordKey(mode, singleBlock)]
-  return Number.isSafeInteger(score) && score >= 0 ? score : 0
+export const readPersonalBest = (mode, target = store()) => {
+  const records = loadRecords(target)
+  return [mode, ...legacyRecordKeys(mode)]
+    .map(key => records[key])
+    .filter(value => Number.isSafeInteger(value) && value >= 0)
+    .reduce((best, value) => Math.max(best, value), 0)
 }
 
 export const recordPersonalBest = (run, target = store()) => {
-  const previous = readPersonalBest(run.mode, run.singleBlock, target)
+  const previous = readPersonalBest(run.mode, target)
   const improved = Number.isSafeInteger(run.score) && run.score > previous
   if (improved && target) {
     try {
       const records = loadRecords(target)
-      records[recordKey(run.mode, run.singleBlock)] = run.score
+      records[run.mode] = run.score
       target.setItem(KEY, JSON.stringify(records))
     } catch (_) {
       // The game and the current session do not depend on localStorage.
