@@ -10,10 +10,9 @@ export const canRankRun = run => Boolean(
   Number.isInteger(run.durationMs) && run.durationMs >= 1000
 )
 
-export const completedRun = ({ runId, mode, singleBlock, score, lines, level, durationMs }) => ({
+export const completedRun = ({ runId, mode, score, lines, level, durationMs }) => ({
   runId,
   mode,
-  singleBlock,
   score,
   cleared: lines,
   level,
