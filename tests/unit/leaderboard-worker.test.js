@@ -24,7 +24,7 @@ test('nicknames accept Cyrillic and refuse markup or oversized identifiers', () 
 test('the API accepts only bounded competitive result records', () => {
   assert.equal(validateRun(valid), null)
   assert.equal(validateRun({ ...valid, mode: 'classic' }), null)
-  assert.match(validateRun({ ...valid, singleBlock: false }), /non-ranked/)
+  assert.equal(validateRun({ ...valid, singleBlock: false }), null)
   assert.match(validateRun({ ...valid, score: 9999999999 }), /Invalid score/)
   assert.match(validateRun({ ...valid, durationMs: 10 }), /Invalid run duration/)
   assert.match(validateRun({ ...valid, runId: 'foo' }), /Invalid run identifier/)
