@@ -22,47 +22,47 @@
                 @click="$emit('close')">×</button>
       </header>
 
-        <section v-if="configured && !preview && pendingRun && pendingRun.mode === mode"
-                 class="leaderboard-publish"
-                 aria-label="Publish completed game">
-          <h3>{{ profile ? 'LAST RUN' : 'ADD YOUR SCORE' }} · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
-          <p v-if="!canRankRun(pendingRun)">
-            {{ pendingRun.singleBlock
-              ? 'This run has no eligible score. Finish a standard game to compete.'
-              : 'This run used all-at-once clearing. Select one-at-a-time clearing to compete.' }}
-          </p>
-          <p v-else-if="submission.status === 'sent'"
-             role="status">Score published. Your position is shown above.</p>
-          <p v-else-if="submission.status === 'sending' || publishing"
-             role="status">Publishing score…</p>
-          <template v-else>
-            <form v-if="!profile"
-                  @submit.prevent="registerAndPublish">
-              <label for="leaderboard-nickname">Nickname</label>
-              <input id="leaderboard-nickname"
-                     v-model.trim="nickname"
-                     ref="nicknameInput"
-                     type="text"
-                     required
-                     minlength="3"
-                     maxlength="16"
-                     autocomplete="nickname"
-                     placeholder="3–16 letters, digits, _ or -">
-              <p>Publishing creates an anonymous profile and opts you in to automatically
-                publishing later eligible runs on this browser. No account is required.</p>
-              <button type="submit"
-                      class="arcade-button arcade-button--primary"
-                      :disabled="publishing">Join & publish score</button>
-            </form>
-            <button v-else
-                    type="button"
+      <section v-if="configured && !preview && pendingRun && pendingRun.mode === mode"
+               class="leaderboard-publish"
+               aria-label="Publish completed game">
+        <h3>{{ profile ? 'LAST RUN' : 'ADD YOUR SCORE' }} · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
+        <p v-if="!canRankRun(pendingRun)">
+          {{ pendingRun.singleBlock
+            ? 'This run has no eligible score. Finish a standard game to compete.'
+            : 'This run used all-at-once clearing. Select one-at-a-time clearing to compete.' }}
+        </p>
+        <p v-else-if="submission.status === 'sent'"
+           role="status">Score published. Your position is shown above.</p>
+        <p v-else-if="submission.status === 'sending' || publishing"
+           role="status">Publishing score…</p>
+        <template v-else>
+          <form v-if="!profile"
+                @submit.prevent="registerAndPublish">
+            <label for="leaderboard-nickname">Nickname</label>
+            <input id="leaderboard-nickname"
+                   v-model.trim="nickname"
+                   ref="nicknameInput"
+                   type="text"
+                   required
+                   minlength="3"
+                   maxlength="16"
+                   autocomplete="nickname"
+                   placeholder="3–16 letters, digits, _ or -">
+            <p>Publishing creates an anonymous profile and opts you in to automatically
+              publishing later eligible runs on this browser. No account is required.</p>
+            <button type="submit"
                     class="arcade-button arcade-button--primary"
-                    @click="publish">Publish this score</button>
-            <p v-if="publishError || submission.error"
-               class="leaderboard-error"
-               role="alert">{{ publishError || submission.error }}</p>
-          </template>
-        </section>
+                    :disabled="publishing">Join & publish score</button>
+          </form>
+          <button v-else
+                  type="button"
+                  class="arcade-button arcade-button--primary"
+                  @click="publish">Publish this score</button>
+          <p v-if="publishError || submission.error"
+             class="leaderboard-error"
+             role="alert">{{ publishError || submission.error }}</p>
+        </template>
+      </section>
 
       <div class="leaderboard-tabs"
            role="group"
@@ -220,7 +220,7 @@ export default {
   mounted() {
     this.$nextTick(() => {
       if (this.$refs.nicknameInput) this.$refs.nicknameInput.focus()
-      else this.$refs.dialog.focus()
+      else this.$refs.dialog?.focus()
     })
     this.refresh()
   },
