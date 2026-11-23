@@ -55,18 +55,21 @@ The historical `npm run serve` alias also starts Vite.
 ## Leaderboard
 
 The optional **Leaderboard** panel compares TetColor and Classic scores separately, with
-weekly (Monday 00:00 UTC) and all-time rankings. Only standard one-at-a-time clearing
-qualifies. Players can publish a completed game under a nickname without registering;
+weekly (Monday 00:00 UTC) and all-time views. **Only the game mode separates
+leaderboards**: TetColor and Classic. Clearing, theme, controls and other
+settings never split or exclude scores. Players can publish a completed game
+under a nickname without registering;
 joining explicitly opts in to publishing later eligible runs from the same browser.
 After the first eligible Game Over, the nickname/publication panel opens automatically
 and places the form above the rankings; no registration is needed on subsequent runs.
-Only positive-score games with the default `One at a time` clearing rule qualify.
+Games with a positive score qualify regardless of the clearing setting.
 The player credential lives in localStorage, so clearing browser data loses the profile.
 Users can disable automatic submissions or forget the local profile from the leaderboard.
 Already published scores remain public when a device forgets its profile.
 
 Personal best scores are also saved locally, independently of API availability and
-separately by game mode and clearing rule. The game remains fully playable if the
+separately by game mode, while retaining existing historical local bests from
+both clearing settings. The game remains fully playable if the
 API is offline or not configured. Configure
 `VITE_LEADERBOARD_API_URL` at **build time** to connect the static PWA to the
 separately deployed [Worker/D1 leaderboard API](leaderboard-api/README.md).
