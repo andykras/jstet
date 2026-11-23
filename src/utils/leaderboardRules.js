@@ -1,4 +1,4 @@
-// Competitive scores are comparable only under the original one-at-a-time clear rule.
+// Leaderboards are separated by game mode only; visual and clearing settings never affect eligibility.
 export const LEADERBOARD_RULESET = 'arcade-v1'
 export const LEADERBOARD_MODES = Object.freeze(['tetcolor', 'classic'])
 export const LEADERBOARD_PERIODS = Object.freeze(['week', 'all'])
@@ -6,7 +6,6 @@ export const LEADERBOARD_PERIODS = Object.freeze(['week', 'all'])
 export const canRankRun = run => Boolean(
   run &&
   LEADERBOARD_MODES.includes(run.mode) &&
-  run.singleBlock === true &&
   Number.isInteger(run.score) && run.score > 0 &&
   Number.isInteger(run.durationMs) && run.durationMs >= 1000
 )
