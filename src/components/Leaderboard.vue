@@ -27,9 +27,7 @@
                aria-label="Publish completed game">
         <h3>{{ profile ? 'LAST RUN' : 'ADD YOUR SCORE' }} · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
         <p v-if="!canRankRun(pendingRun)">
-          {{ pendingRun.singleBlock
-            ? 'This run has no eligible score. Finish a standard game to compete.'
-            : 'This run used all-at-once clearing. Select one-at-a-time clearing to compete.' }}
+          Only completed games with a positive score can be published.
         </p>
         <p v-else-if="submission.status === 'sent'"
            role="status">Score published. Your position is shown above.</p>
@@ -86,7 +84,7 @@
 
       <div class="leaderboard-local"
            aria-label="Personal record on this device">
-        <span>BEST ON THIS DEVICE · STANDARD RULES</span>
+        <span>BEST ON THIS DEVICE</span>
         <strong>{{ personalBest ? formatLeaderboardScore(personalBest) : '—' }}</strong>
       </div>
 
@@ -102,7 +100,7 @@
         </p>
         <p class="leaderboard-period-note">
           {{ period === 'week' ? 'Weekly scores reset Monday at 00:00 UTC.' : 'Best scores since launch.' }}
-          Only standard clearing rules qualify.
+          TetColor and Classic have separate rankings.
         </p>
 
         <p v-if="loading"
@@ -209,7 +207,7 @@ export default {
     }
   },
   computed: {
-    personalBest() { return readPersonalBest(this.mode, true) },
+    personalBest() { return readPersonalBest(this.mode) },
     autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) }
   },
   watch: {
