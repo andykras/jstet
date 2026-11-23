@@ -23,7 +23,7 @@ The Worker exposes `GET /api/v1/health` (checks the database and schema), `POST 
 
 - The player explicitly chooses a nickname and agrees to publish this and later eligible completed games. Until then no scores are sent to the service. Automatic publication can be disabled locally; the player can still publish individual completed runs manually.
 - Identifiers and opaque 256-bit bearer tokens are stored in the browser's localStorage; only their SHA-256 hashes are kept in D1. Clearing browser data or using 'Forget this profile' removes access to the pseudonymous profile on that device but **does not delete published scores**. Only nickname, run metadata and results are public, not emails or raw IP addresses.
-- Only normal one-at-a-time clearing (`singleBlock: true`) qualifies. Results carry a ruleset version. The API checks fields and bounds, one submission per run, 10-second score spacing and up to 5 registrations per hashed IP per hour.
+- TetColor and Classic each have one leaderboard regardless of clearing setting, theme, controls or other preferences. Results carry a ruleset version. The API checks fields and bounds, one submission per run, 10-second score spacing and up to 5 registrations per hashed IP per hour.
 - This is **not cheat-proof**. Because the browser determines scores and rules, modified clients can still post fabricated values. Competitive verification requires server replay with a controlled seed and action trace, implemented separately. The public leaderboard must not be described as verified or anti-cheat secured.
 - Plan retention and manual moderation/deletion for abusive names and scores before public launch. Rotate the signup-rate salt with care: old per-IP fingerprints cannot be correlated with new ones.
 
@@ -45,7 +45,7 @@ Build the frontend with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org`
 
 The PHP endpoint mirrors the Worker contract, validation, 10-second score
 spacing, five registrations per hashed IP per hour, duplicate-run protection and
-`arcade-v1`/`singleBlock: true` rules. Storage is a locked JSON file replaced
+`arcade-v1` scoring-contract checks, independent of clearing preferences. Storage is a locked JSON file replaced
 atomically; back up `state.json` before maintenance.
 
 ## Visual-review deployment
