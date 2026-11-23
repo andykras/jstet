@@ -80,9 +80,10 @@ function validate_run(mixed $run): ?string
 {
     if (!is_array($run) || array_is_list($run)) return 'Invalid game result.';
     if (!valid_uuid((string)($run['runId'] ?? ''))) return 'Invalid run identifier.';
+    // Gameplay settings are not ranking categories: only TetColor and Classic differ.
     if (!in_array($run['mode'] ?? null, ['tetcolor', 'classic'], true) ||
-        ($run['ruleset'] ?? null) !== RULESET || ($run['singleBlock'] ?? null) !== true) {
-        return 'This game uses non-ranked rules.';
+        ($run['ruleset'] ?? null) !== RULESET) {
+        return 'Invalid game mode or ruleset.';
     }
     foreach ([['score', 1, 25000000], ['cleared', 0, 100000], ['level', 0, 8]] as [$key, $min, $max]) {
         $value = $run[$key] ?? null;
