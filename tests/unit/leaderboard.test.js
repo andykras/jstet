@@ -20,15 +20,15 @@ const run = {
 
 test('the competitive run preserves the engine score and declares the scoring contract', () => {
   assert.deepEqual(completedRun(run), {
-    runId: run.runId, mode: 'tetcolor', singleBlock: true, score: 12000,
+    runId: run.runId, mode: 'tetcolor', score: 12000,
     cleared: 45, level: 3, durationMs: 123000, ruleset: LEADERBOARD_RULESET
   })
   assert.equal(canRankRun(run), true)
   assert.equal(canRankRun({ ...run, mode: 'classic' }), true)
 })
 
-test('nonstandard clears, empty games and too-short games are not ranked', () => {
-  assert.equal(canRankRun({ ...run, singleBlock: false }), false)
+test('both clearing settings are ranked; empty or invalid games are not', () => {
+  assert.equal(canRankRun({ ...run, singleBlock: false }), true)
   assert.equal(canRankRun({ ...run, score: 0 }), false)
   assert.equal(canRankRun({ ...run, mode: 'legacy' }), false)
   assert.equal(canRankRun({ ...run, durationMs: 0 }), false)
