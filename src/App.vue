@@ -575,7 +575,6 @@ export default {
       const run = completedRun({
         runId: this.runId,
         mode: this.mode,
-        singleBlock: this.preferences.singleBlock,
         score: this.$store.state.score,
         lines: this.$store.state.lines,
         level: this.$store.state.level,
