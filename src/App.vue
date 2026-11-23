@@ -195,7 +195,7 @@
                   <button v-if="status === 'gameOver'"
                           type="button"
                           class="arcade-button"
-                          @click="openLeaderboard">Leaderboard</button>
+                          @click="openLeaderboard">{{ rankableLastRun && scoreSubmission.status !== 'sent' ? 'Publish score' : 'Leaderboard' }}</button>
                 </div>
               </div>
             </div>
@@ -405,6 +405,9 @@ export default {
     modeTitle() {
       return this.mode === 'classic' ? 'Classic' : 'TetColor'
     },
+    rankableLastRun() {
+      return leaderboardConfigured && canRankRun(this.lastRun)
+    },
     buildId() {
       return import.meta.env.VITE_BUILD_ID || 'dev'
     }
@@ -583,8 +586,11 @@ export default {
       this.localBest = personal.score
       this.newPersonalBest = personal.improved
       this.scoreSubmission = { status: 'idle', error: '' }
-      // No network submission until the player opts in and keeps auto-publishing enabled.
-      if (leaderboardConfigured && canRankRun(run) && isLeaderboardAutoPublishEnabled()) this.sendCompletedRun()
+      // Offer first-time publishing on Game Over; repeat players retain their choice.
+      if (leaderboardConfigured && canRankRun(run)) {
+        if (isLeaderboardAutoPublishEnabled()) this.sendCompletedRun()
+        else if (!readLeaderboardPlayer()) this.openLeaderboard()
+      }
     },
 
     async sendCompletedRun() {
