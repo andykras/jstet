@@ -112,42 +112,32 @@ leaderboard is cached for optional, **clearly labeled stale viewing** while the
 API is unavailable. Weekly snapshots are never shown for a different week.
 
 The game remains fully playable without the API. The **current backend** is a
-[same-origin PHP leaderboard on kraspeed](leaderboard-api/README.md#kraspeed-deployment-current-production-choice),
-configured with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org` at build time.
+same-origin PHP leaderboard API served from `https://tetcolor.andykras.org`
+(see `leaderboard-api/`), configured with
+`VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org` at build time.
 The Worker/D1 implementation in the repository is unused reference code. A feature
-release must update both the static site and the PHP API script while preserving
-`/srv/tetcolor/api-data/state.json` and the existing rollback path.
+release must update both the static site and the API script together while preserving
+existing player data and the rollback path.
 
 ### Visual-only preview (no backend)
 
 For a specifically authorized non-master preview build, set
 `VITE_LEADERBOARD_PREVIEW=1` at build time. The sample score list is visible **only**
 when the page URL includes `?leaderboardPreview=1`; it is visibly labeled
-"SAMPLE DATA", cannot publish scores and never writes to D1. All other visitors
-see the normal disconnected state until the API is deployed.
-
-The Mac deploy script accepts `ALLOW_DEPLOY_NON_MASTER=1 VISUAL_PREVIEW_SKIP_QA=1`
-for this preview. Unit tests and lint are skipped, but a production build,
-artifact checks, HTTPS checks and atomic rollback safeguards remain in place.
-Default deployments still run the full QA commands.
+"SAMPLE DATA", cannot publish scores and never writes to the leaderboard.
+All other visitors see the normal disconnected state until the API is deployed.
+Preview builds still run a production build, artifact checks, HTTPS checks and
+atomic rollback safeguards. Default deployments run the full QA commands.
 
 ## Deployment and offline use
 
 The site is a static build in `dist/`. Vite uses the relative base `./`, allowing deployment at a subdirectory path. `public/manifest.json` and icons are copied to the build, and `vite-plugin-pwa` generates `service-worker.js`; registration remains in `src/registerServiceWorker.js`. Service workers require HTTPS or localhost. Verify offline reload using the **production preview**, not only the development server.
 
-### Hosting on kraspeed
+### Production hosting
 
-The production deployment target is `https://tetcolor.andykras.org` through kraspeed's **existing lighttpd** and a dedicated hostname certificate. See the [deployment plan](docs/plans/tetcolor-kraspeed-deployment.md) and [local-agent handoff](docs/plans/tetcolor-kraspeed-agent-handoff.md) before touching DNS/TLS.
-
-From a clean approved `master` on the **Mac** (after the vhost and TLS are provisioned):
-
-```sh
-bash scripts/preflight-kraspeed.sh  # read-only inventory; safe before provisioning
-bash scripts/deploy-kraspeed.sh     # build/test/lint on Mac, rsync dist/, atomic release
-bash scripts/rollback-kraspeed.sh   # swap back to a previously validated release
-```
-
-The scripts require working `ssh kraspeed` access and existing `sudo -n` on the server. No Node.js service is needed on kraspeed. **Do not run deploy/rollback until the live-host preflight and infrastructure configuration are approved.**
+The production site is the static build served at `https://tetcolor.andykras.org`,
+with the leaderboard API on the same origin. Releases are versioned and reversible;
+server provisioning and credentials are deliberately not documented here.
 
 ## Implementation notes
 
