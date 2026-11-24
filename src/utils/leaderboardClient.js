@@ -33,19 +33,39 @@ const storePlayer = player => {
   }
 }
 
+export const leaderboardOnline = () => typeof navigator === 'undefined' || navigator.onLine !== false
+
 const apiRequest = async(path, { method = 'GET', token, body } = {}) => {
   if (!leaderboardConfigured) throw new Error('Online leaderboard is not configured yet.')
-  const response = await fetch(API_URL + path, {
-    method,
-    headers: {
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: 'Bearer ' + token } : {})
-    },
-    ...(body ? { body: JSON.stringify(body) } : {})
-  })
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(data.error || 'Leaderboard service is unavailable.')
-  return data
+  if (!leaderboardOnline()) throw new Error('Offline. Your score is safe on this device.')
+
+  // Even an unresponsive connection must never hold the game or modal indefinitely.
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), method === 'GET' ? 5000 : 8000)
+  try {
+    const response = await fetch(API_URL + path, {
+      method,
+      signal: controller.signal,
+      headers: {
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: 'Bearer ' + token } : {})
+      },
+      ...(body ? { body: JSON.stringify(body) } : {})
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const error = new Error(data.error || 'Leaderboard service is unavailable.')
+      error.status = response.status
+      throw error
+    }
+    return data
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error('Leaderboard request timed out. You can continue playing.')
+    if (error instanceof TypeError) throw new Error('Cannot reach the leaderboard. You can continue playing.')
+    throw error
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 export const fetchLeaderboard = (mode, period, player = readLeaderboardPlayer()) => apiRequest(
