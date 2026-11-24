@@ -60,7 +60,7 @@ test('Legacy Lab retains all four skins and live animation/drop options', () => 
   const legacy = read('src/components/stakan.vue')
   for (const token of ['v-model.number="theme"', '1 · Symbols', '2 · ASCII',
     '3 · Text', '4 · Colors', 'v-model="linesAnimated"', 'v-model="dropSoft"',
-    'Animate line clears (A)', 'Soft drop (S)', '@click="newGame"',
+    'Animate line clears (A)', 'Soft drop (S)', '@click="restartFromControls"',
     'this.isLabControl(e.target)', 'this.cells = emptyCells()']) {
     assert.ok(legacy.includes(token), token)
   }
@@ -90,7 +90,7 @@ test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', 
 
 test('Legacy playfield retains arrow keys after entering the mode or changing options', () => {
   const legacy = read('src/components/stakan.vue')
-  assert.match(legacy, /ref="gameField"[\\s\\S]*?tabindex="0"/)
+  assert.match(legacy, /ref="gameField"[^>]*tabindex="0"/)
   assert.ok(legacy.includes('this.focusGameField()'))
   assert.ok(legacy.includes("this.$refs.gameField?.focus({ preventScroll: true })"))
   assert.equal((legacy.match(/@change="focusGameField"/g) || []).length, 3)
