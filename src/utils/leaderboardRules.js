@@ -17,7 +17,7 @@ export const completedRun = ({ runId, mode, score, lines, level, durationMs, har
   cleared: lines,
   level,
   durationMs,
-  completedAtMs,
+  ...(completedAtMs == null ? {} : { completedAtMs }),
   ruleset: LEADERBOARD_RULESET,
   // Display options only: every finished game ranks in its mode regardless.
   hardDrop: hardDrop === true,
