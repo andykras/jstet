@@ -29,19 +29,22 @@
     <div class="main">
     <div class="info">
       <div>Lines: {{totalLines}}</div>
-      <div class="stakan next">
-        <div v-for="y in getSize(nextTet)"
+      <div class="stakan next"
+           role="img"
+           aria-label="Next piece">
+        <div v-for="(row, y) in nextPreview"
              :key="y"
              class="row">
-          <div v-for="x in getSize(nextTet)"
+          <div v-for="(cell, x) in row"
                :key="x"
-               :class="'N' + getPiece(nextTet, x-1, y-1, 0)">
-            <span v-html="getSymbol(x-1, y-1, nextTet, 0)"></span>
+               :class="'N' + cell.value">
+            <span v-if="cell.value"
+                  v-html="getSymbol(cell.sourceX, cell.sourceY, nextTet, 0)"></span>
           </div>
         </div>
       </div>
     </div>
-    <div class="stakan">
+    <div class="stakan stakan--board">
       <div class="dupa"
            :class="{end:!gameActive}">ДУПА</div>
       <div v-for="y in cells.height"
@@ -231,6 +234,33 @@ export default {
       clearFrame: null,
       clearDelay: null,
       disposed: false
+    }
+  },
+  computed: {
+    nextPreview() {
+      // Some legacy pieces have ragged source rows. Crop to occupied cells,
+      // then center the actual 0-degree shape in a transparent 4x4 preview.
+      const blocks = []
+      for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+          const value = this.getPiece(this.nextTet, x, y, 0)
+          if (value > 0) blocks.push({ x, y })
+        }
+      }
+      const left = blocks.length ? Math.min(...blocks.map(block => block.x)) : 0
+      const right = blocks.length ? Math.max(...blocks.map(block => block.x)) : 0
+      const bottom = blocks.length ? Math.min(...blocks.map(block => block.y)) : 0
+      const top = blocks.length ? Math.max(...blocks.map(block => block.y)) : 0
+      const shiftX = Math.floor((4 - (right - left + 1)) / 2) - left
+      const shiftY = Math.floor((4 - (top - bottom + 1)) / 2) - bottom
+
+      return Array.from({ length: 4 }, (_, y) =>
+        Array.from({ length: 4 }, (_, x) => {
+          const sourceX = x - shiftX
+          const sourceY = y - shiftY
+          return { value: this.getPiece(this.nextTet, sourceX, sourceY, 0) || 0, sourceX, sourceY }
+        })
+      )
     }
   },
   created() {
