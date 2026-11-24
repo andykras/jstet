@@ -1,5 +1,5 @@
 <template>
-  <div class="legacy-screen">
+  <div class="legacy-screen" :class="{ 'legacy-screen--colors': theme === 4 }">
     <section class="legacy-options"
              aria-label="Legacy engine options">
       <label class="legacy-options__field">
@@ -408,7 +408,7 @@ export default {
       // ticks = performance.now()
       iskeydown = false
       let p = parseInt(e.key)
-      if (p >= 0 && p <= 9) {
+      if (p >= 1 && p <= 4) {
         this.theme = p
       }
       if (e.key == 'a') this.linesAnimated = !this.linesAnimated
@@ -685,4 +685,33 @@ export default {
     }
   }
 }
+// The historical Symbol, ASCII, and Text renderers are monochrome.
+// Keep the seven TetColor hues exclusively for the Colors (4) renderer.
+// These styles apply equally to the well and to the next-piece preview.
+.legacy-screen:not(.legacy-screen--colors)
+  .main .stakan .row > div
+    background-color #f7f7f7
+    color #191919
+
+    &.N1,
+    &.N2,
+    &.N3,
+    &.N4,
+    &.N5,
+    &.N6,
+    &.N7
+      background-color #222
+      color #fff
+
+    &.N8
+      background-color #bfbfbf
+      color #161616
+
+    &.N9
+      background-color #e2e2e2
+      color #444
+
+  // An empty cell in the miniature next-piece preview stays transparent.
+  .main .next .row > div.N0
+    background-color transparent
 </style>
