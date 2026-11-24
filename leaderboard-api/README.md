@@ -46,6 +46,11 @@ Build the frontend with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org`
 The PHP endpoint mirrors the Worker contract, validation, 10-second score
 spacing, five registrations per hashed IP per hour, duplicate-run protection and
 `arcade-v1` scoring-contract checks, independent of clearing preferences.
+The optional `platform` field is either `mobile` (phone/tablet) or
+`desktop` (computer), reported by the browser at completion. It is saved
+alongside the winning run and included in the public top 20 and personal rank
+responses, but never used for ranking. Existing scores with no platform retain
+`null`; there is no server-side guess or state-file migration.
 `completedAtMs` is optional for older clients. New offline clients attach it;
 the server validates this timestamp and uses it for the score's **weekly bucket**.
 Publication rate limits and duplicate-run checks always use receipt time.
@@ -60,7 +65,8 @@ with an interval exceeding the server's 10-second spacing requirement.
 Player profile deletion clears its local unsent scores (not server results).
 
 The unused Worker/D1 reference mirrors offline completion time using
-`migrations/0003_offline_completion.sql` (nullable `completed_ms`); no
+`migrations/0003_offline_completion.sql` (nullable `completed_ms`)
+and `migrations/0004_run_platform.sql` (nullable `platform`); no
 Cloudflare provisioning is required for kraspeed deployment.
 
 ## Visual-review deployment
