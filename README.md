@@ -71,11 +71,15 @@ Personal best scores are also saved locally, independently of API availability a
 separately by game mode, while retaining historical records from both clearing settings.
 
 The Hall of Fame presents the top three players as a podium, followed by the remaining
-Top 20. Select any player to inspect the winning run's level, duration, blocks/lines,
-Hard Drop setting and clearing mode. Run options are display-only and **never**
-create another leaderboard or disqualify a result. Unknown options on older
-records appear as a dash, not invented settings. Your standing remains visible
-outside the Top 20.
+Top 20. Each result uses compact SVG icon badges: golden Hard Drop,
+turquoise phone/tablet, or blue desktop computer. Clearing mode is shown only
+in the expanded run details, with blocks/lines, level and duration. Platform
+is captured locally at Game Over based on browser device signals, so it is
+informative but not proof of a player's physical hardware. Device and run
+options **never** create ranking categories or disqualify results. Older
+records without a stored device show a muted unknown-device icon (and a dash
+in details), not an invented PC/phone badge. Your standing remains visible
+outside the Top 20 with the same icon badges.
 
 ### Offline-first gameplay
 
