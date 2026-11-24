@@ -77,6 +77,31 @@ create another leaderboard or disqualify a result. Unknown options on older
 records appear as a dash, not invented settings. Your standing remains visible
 outside the Top 20.
 
+### Offline-first gameplay
+
+The engine, controls, score calculation and personal-best tracking never wait for
+the leaderboard API. The installed PWA uses its existing service-worker precache
+for the game shell and assets, so after an initial online installation/load it
+can be opened and played in airplane mode (subject to the browser keeping its
+offline cache). API fetches are optional, fail immediately when the browser
+reports offline and have bounded timeouts. No background connection is needed
+to start or finish a game.
+
+After a player joins the leaderboard, eligible completed scores are first saved
+to an **opt-in local outbox** (up to 200 runs), then synchronized one at a time
+on reconnect, page reopening or a manual sync request. Failed requests keep the
+same run ID and retry without disturbing gameplay; the server already
+deduplicates each run. The 10-second server spacing rule is respected during
+batch synchronization. Offline scores include their original completion time,
+so weekly standings use the week played, not the week uploaded. The outbox is
+local to the browser and is cleared when the player explicitly forgets the
+profile; uninstalling the PWA or clearing site storage may also remove it.
+
+New players can always play offline and accumulate local personal bests; initial
+nickname registration requires connectivity. The last successfully loaded
+leaderboard is cached for optional, **clearly labeled stale viewing** while the
+API is unavailable. Weekly snapshots are never shown for a different week.
+
 The game remains fully playable without the API. The **current backend** is a
 [same-origin PHP leaderboard on kraspeed](leaderboard-api/README.md#kraspeed-deployment-current-production-choice),
 configured with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org` at build time.
