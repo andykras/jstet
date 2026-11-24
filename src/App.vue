@@ -229,7 +229,9 @@
                  :default-mode="mode"
                  :pending-run="lastRun"
                  :submission="scoreSubmission"
-                 @published="onScorePublished"
+                 :pending-count="queuedScores"
+                 :online="online"
+                 @queued="onScoreQueued"
                  @close="closeLeaderboard" />
 
     <div v-if="settingsOpen"
@@ -353,8 +355,11 @@ import Leaderboard from '@/components/Leaderboard.vue'
 import { readPersonalBest, recordPersonalBest } from '@/utils/personalBest.js'
 import { canRankRun, completedRun } from '@/utils/leaderboardRules.js'
 import {
-  leaderboardConfigured, readLeaderboardPlayer, isLeaderboardAutoPublishEnabled, publishLeaderboardRun
+  leaderboardConfigured, leaderboardOnline, readLeaderboardPlayer, isLeaderboardAutoPublishEnabled, publishLeaderboardRun
 } from '@/utils/leaderboardClient.js'
+import {
+  queuedLeaderboardRuns, pendingLeaderboardCount, queueLeaderboardRun, removeQueuedLeaderboardRun
+} from '@/utils/leaderboardOutbox.js'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
 import { setup, game } from '@/utils/game.js'
@@ -380,6 +385,9 @@ export default {
       localBest: readPersonalBest('tetcolor'),
       newPersonalBest: false,
       scoreSubmission: { status: 'idle', error: '' },
+      queuedScores: pendingLeaderboardCount(),
+      online: leaderboardOnline(),
+      leaderboardSyncBusy: false,
       autoPaused: false,
       modernDispose: null,
       modernHandlers: [],
@@ -443,9 +451,16 @@ export default {
     }
     this.$nextTick(() => this.observeWell())
     window.addEventListener('resize', this.syncPreviewCellSize)
+    window.addEventListener('online', this.onLeaderboardOnline)
+    window.addEventListener('offline', this.onLeaderboardOffline)
+    // Network maintenance is scheduled after the game is already running.
+    this.$nextTick(() => this.syncQueuedScores())
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.syncPreviewCellSize)
+    window.removeEventListener('online', this.onLeaderboardOnline)
+    window.removeEventListener('offline', this.onLeaderboardOffline)
+    clearTimeout(this.leaderboardSyncTimer)
     if (this.wellResizeObserver) this.wellResizeObserver.disconnect()
   },
   unmounted() {
@@ -567,8 +582,62 @@ export default {
       })
     },
 
-    onScorePublished(runId) {
-      if (this.lastRun?.runId === runId) this.scoreSubmission = { status: 'sent', error: '' }
+    onScoreQueued(runId) {
+      this.queuedScores = pendingLeaderboardCount()
+      if (this.lastRun?.runId === runId) this.scoreSubmission = { status: 'queued', error: '' }
+      this.syncQueuedScores()
+    },
+
+    onLeaderboardOnline() {
+      this.online = true
+      this.syncQueuedScores()
+    },
+
+    onLeaderboardOffline() {
+      this.online = false
+      clearTimeout(this.leaderboardSyncTimer)
+    },
+
+    queueCompletedRun(run) {
+      try {
+        queueLeaderboardRun(run)
+        this.onScoreQueued(run.runId)
+      } catch (error) {
+        if (this.lastRun?.runId === run.runId) this.scoreSubmission = { status: 'error', error: error.message }
+      }
+    },
+
+    scheduleLeaderboardSync(delayMs) {
+      clearTimeout(this.leaderboardSyncTimer)
+      if (this.online && this.queuedScores) {
+        this.leaderboardSyncTimer = setTimeout(() => this.syncQueuedScores(), delayMs)
+      }
+    },
+
+    async syncQueuedScores() {
+      if (!leaderboardConfigured || !this.online || this.leaderboardSyncBusy) return
+      const player = readLeaderboardPlayer()
+      const run = queuedLeaderboardRuns(player)[0]
+      this.queuedScores = pendingLeaderboardCount(player)
+      if (!player || !run) return
+
+      this.leaderboardSyncBusy = true
+      try {
+        await publishLeaderboardRun(run, player)
+        removeQueuedLeaderboardRun(run.runId, player)
+        this.queuedScores = pendingLeaderboardCount(player)
+        if (this.lastRun?.runId === run.runId) this.scoreSubmission = { status: 'sent', error: '' }
+        // The PHP endpoint has a 10-second per-player publish interval.
+        if (this.queuedScores) this.scheduleLeaderboardSync(11000)
+      } catch (error) {
+        // Preserve the run and its identifier on every failure for a safe retry.
+        if (this.lastRun?.runId === run.runId) {
+          this.scoreSubmission = { status: 'queued', error: error.message }
+        }
+        if (error.status === 429) this.scheduleLeaderboardSync(11000)
+      } finally {
+        this.leaderboardSyncBusy = false
+      }
     },
 
     onRunComplete() {
@@ -588,25 +657,10 @@ export default {
       this.localBest = personal.score
       this.newPersonalBest = personal.improved
       this.scoreSubmission = { status: 'idle', error: '' }
-      // Offer first-time publishing on Game Over; repeat players retain their choice.
+      // Completing a run saves the local record before any optional network work.
       if (leaderboardConfigured && canRankRun(run)) {
-        if (isLeaderboardAutoPublishEnabled()) this.sendCompletedRun()
-        else if (!readLeaderboardPlayer()) this.openLeaderboard()
-      }
-    },
-
-    async sendCompletedRun() {
-      const run = this.lastRun
-      const player = readLeaderboardPlayer()
-      if (!run || !player || !canRankRun(run) || this.scoreSubmission.status === 'sending') return
-      this.scoreSubmission = { status: 'sending', error: '' }
-      try {
-        await publishLeaderboardRun(run, player)
-        this.onScorePublished(run.runId)
-      } catch (error) {
-        if (this.lastRun?.runId === run.runId) {
-          this.scoreSubmission = { status: 'error', error: error.message }
-        }
+        if (isLeaderboardAutoPublishEnabled()) this.queueCompletedRun(run)
+        else if (!readLeaderboardPlayer() && this.online) this.openLeaderboard()
       }
     },
 
