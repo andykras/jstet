@@ -45,8 +45,23 @@ Build the frontend with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org`
 
 The PHP endpoint mirrors the Worker contract, validation, 10-second score
 spacing, five registrations per hashed IP per hour, duplicate-run protection and
-`arcade-v1` scoring-contract checks, independent of clearing preferences. Storage is a locked JSON file replaced
-atomically; back up `state.json` before maintenance.
+`arcade-v1` scoring-contract checks, independent of clearing preferences.
+`completedAtMs` is optional for older clients. New offline clients attach it;
+the server validates this timestamp and uses it for the score's **weekly bucket**.
+Publication rate limits and duplicate-run checks always use receipt time.
+Storage is a locked JSON file replaced atomically; back up `state.json`
+before maintenance. The JSON schema is backward compatible and does not
+require a migration.
+
+The frontend also keeps a local outbox for previously authorized players and
+a cached public leaderboard snapshot. Neither depends on the API to start the
+game. On reconnect or a new page load, queued scores are uploaded serially
+with an interval exceeding the server's 10-second spacing requirement.
+Player profile deletion clears its local unsent scores (not server results).
+
+The unused Worker/D1 reference mirrors offline completion time using
+`migrations/0003_offline_completion.sql` (nullable `completed_ms`); no
+Cloudflare provisioning is required for kraspeed deployment.
 
 ## Visual-review deployment
 
