@@ -195,7 +195,8 @@
                   <button v-if="status === 'gameOver'"
                           type="button"
                           class="arcade-button"
-                          @click="openLeaderboard">{{ rankableLastRun && scoreSubmission.status !== 'sent' ? 'Publish score' : 'Leaderboard' }}</button>
+                          @click="openLeaderboard">
+                    {{ rankableLastRun && scoreSubmission.status !== 'sent' ? 'Publish score' : 'Leaderboard' }}</button>
                 </div>
               </div>
             </div>
