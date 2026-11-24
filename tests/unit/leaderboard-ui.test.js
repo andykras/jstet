@@ -26,7 +26,7 @@ test('new players opt in explicitly, not while playing offline', () => {
   assert.match(component, /@submit\.prevent="registerAndPublish"/)
   assert.match(component, /Save score/)
   assert.match(component, /!online/)
-  assert.match(component, /automatically publishing/)
+  assert.match(component, /automatic publishing/)
 })
 
 test('podium, regular rows and standing share accessible vector device badges', () => {

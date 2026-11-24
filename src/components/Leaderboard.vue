@@ -81,7 +81,8 @@
       <div v-if="configured && pendingCount"
            class="leaderboard-sync-notice"
            role="status">
-        <span>{{ pendingCount }} {{ pendingCount === 1 ? 'score' : 'scores' }} saved on this device · {{ online ? 'awaiting sync' : 'offline' }}</span>
+        <span>{{ pendingCount }} {{ pendingCount === 1 ? 'score' : 'scores' }} saved
+          on this device · {{ online ? 'awaiting sync' : 'offline' }}</span>
         <button v-if="online"
                 type="button"
                 class="leaderboard-text-action"
@@ -155,7 +156,7 @@
               <button type="button"
                       class="leaderboard-podium__button"
                       :aria-expanded="expandedId === entry.playerId"
-                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + runBadgeDescription(entry) + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
+                      :aria-label="podiumLabel(entry)"
                       @click="toggleEntry(entry.playerId)">
                 <span class="leaderboard-podium__medal"
                       aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
@@ -186,7 +187,8 @@
             <div class="leaderboard-personal__identity">
               <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
               <strong>{{ profile.nickname }}</strong>
-              <span class="leaderboard-personal__best">Best · {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
+              <span class="leaderboard-personal__best">Best ·
+                {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
               <LeaderboardRunBadges v-if="!loading && !loadError && mine"
                                    :entry="mine" />
             </div>
@@ -213,7 +215,7 @@
               <button type="button"
                       class="leaderboard-entry__main"
                       :aria-expanded="expandedId === entry.playerId"
-                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + runBadgeDescription(entry) + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
+                      :aria-label="rowLabel(entry)"
                       @click="toggleEntry(entry.playerId)">
                 <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
                 <span class="leaderboard-entry__player">
@@ -376,6 +378,14 @@ export default {
       else if (entry.platform === 'desktop') labels.push('Computer')
       else labels.push('Device unknown')
       return labels.join('. ') + '. '
+    },
+    rowLabel(entry) {
+      return entry.nickname + ', rank ' + entry.rank + ', ' +
+        formatLeaderboardScore(entry.score) + '. ' + this.runBadgeDescription(entry) +
+        (this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
+    },
+    podiumLabel(entry) {
+      return this.rowLabel(entry)
     },
     toggleEntry(playerId) {
       this.expandedId = this.expandedId === playerId ? null : playerId
