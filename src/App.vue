@@ -671,6 +671,7 @@ export default {
         lines: this.$store.state.lines,
         level: this.$store.state.level,
         durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime)),
+        completedAtMs: Date.now(),
         hardDrop: this.hard,
         singleBlock: this.preferences.singleBlock
       })
