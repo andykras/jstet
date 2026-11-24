@@ -67,8 +67,13 @@ function new_uuid(): string
 function normalized_nickname(mixed $value): ?string
 {
     if (!is_string($value)) return null;
-    $nickname = trim(Normalizer::normalize($value, Normalizer::FORM_C) ?: $value);
-    return preg_match('/^[\p{L}\p{N}_-]{3,16}$/u', $nickname) ? $nickname : null;
+    $nickname = trim($value);
+    // intl is optional on the existing host; accepting nicknames must not depend on it.
+    if (class_exists(Normalizer::class)) {
+        $normalized = Normalizer::normalize($nickname, Normalizer::FORM_C);
+        if (is_string($normalized)) $nickname = $normalized;
+    }
+    return preg_match('/^[\\p{L}\\p{N}_-]{3,16}$/u', $nickname) ? $nickname : null;
 }
 
 function valid_uuid(string $value): bool
@@ -85,12 +90,30 @@ function validate_run(mixed $run): ?string
         ($run['ruleset'] ?? null) !== RULESET) {
         return 'Invalid game mode or ruleset.';
     }
+    // Display options ride along with the result; every finished game ranks.
+    foreach (['hardDrop', 'singleBlock'] as $flag) {
+        if (array_key_exists($flag, $run) && !is_bool($run[$flag])) return 'Invalid run options.';
+    }
+    // Device type is presentation metadata, not a competitive category.
+    if (array_key_exists('platform', $run) &&
+        !in_array($run['platform'], ['mobile', 'desktop'], true)) {
+        return 'Invalid device platform.';
+    }
     foreach ([['score', 1, 25000000], ['cleared', 0, 100000], ['level', 0, 8]] as [$key, $min, $max]) {
         $value = $run[$key] ?? null;
         if (!is_int($value) || $value < $min || $value > $max) return 'Invalid ' . $key . '.';
     }
     $duration = $run['durationMs'] ?? null;
     if (!is_int($duration) || $duration < 1000 || $duration > 8 * 60 * 60 * 1000) return 'Invalid run duration.';
+    // Offline runs use their actual completion week, not the day connectivity returns.
+    // Older clients without this optional field continue using submission time.
+    if (array_key_exists('completedAtMs', $run)) {
+        $completed = $run['completedAtMs'];
+        $now = (int)round(microtime(true) * 1000);
+        if (!is_int($completed) || $completed < 1577836800000 || $completed > $now + 300000) {
+            return 'Invalid completion time.';
+        }
+    }
     return null;
 }
 
@@ -211,7 +234,12 @@ function publish_score(): never
             return ['error' => 'Please wait before publishing another result.', 'status' => 429];
         }
 
-        $week = (string)week_start_utc($now);
+        $completedAtMs = $run['completedAtMs'] ?? $now;
+        $week = (string)week_start_utc($completedAtMs);
+        // Older clients may omit these display-only settings; do not guess them.
+        $hardDrop = $run['hardDrop'] ?? null;
+        $singleBlock = $run['singleBlock'] ?? null;
+        $platform = $run['platform'] ?? null;
         foreach (['all', $week] as $bucket) {
             $key = $id . '|' . $run['mode'] . '|' . $bucket;
             $best = $state['bests'][$key] ?? null;
@@ -224,7 +252,10 @@ function publish_score(): never
                     'cleared' => $run['cleared'],
                     'level' => $run['level'],
                     'durationMs' => $run['durationMs'],
-                    'createdMs' => $now
+                    'hardDrop' => $hardDrop,
+                    'singleBlock' => $singleBlock,
+                    'platform' => $platform,
+                    'createdMs' => $completedAtMs
                 ];
             }
         }
@@ -265,7 +296,13 @@ function leaderboard(): never
             $ranked[] = [
                 'playerId' => $id,
                 'nickname' => $state['players'][$id]['nickname'] ?? '—',
-                'score' => $best['score']
+                'score' => $best['score'],
+                'cleared' => $best['cleared'] ?? null,
+                'level' => $best['level'] ?? null,
+                'durationMs' => $best['durationMs'] ?? null,
+                'hardDrop' => $best['hardDrop'] ?? null,
+                'singleBlock' => $best['singleBlock'] ?? null,
+                'platform' => $best['platform'] ?? null
             ];
         }
         usort($ranked, fn(array $a, array $b): int => $b['score'] <=> $a['score'] ?: strcmp($a['playerId'], $b['playerId']));
@@ -273,7 +310,16 @@ function leaderboard(): never
         $player = find_player($state);
         foreach ($ranked as $index => $row) {
             if ($player !== null && $row['playerId'] === $player['id']) {
-                $mine = ['score' => $row['score'], 'rank' => $index + 1];
+                $mine = [
+                    'score' => $row['score'],
+                    'rank' => $index + 1,
+                    'cleared' => $row['cleared'],
+                    'level' => $row['level'],
+                    'durationMs' => $row['durationMs'],
+                    'hardDrop' => $row['hardDrop'],
+                    'singleBlock' => $row['singleBlock'],
+                    'platform' => $row['platform']
+                ];
                 break;
             }
         }
@@ -287,7 +333,13 @@ function leaderboard(): never
             'playerId' => $row['playerId'],
             'nickname' => $row['nickname'],
             'score' => $row['score'],
-            'rank' => $index + 1
+            'rank' => $index + 1,
+            'cleared' => $row['cleared'] ?? null,
+            'level' => $row['level'] ?? null,
+            'durationMs' => $row['durationMs'] ?? null,
+            'hardDrop' => $row['hardDrop'] ?? null,
+            'singleBlock' => $row['singleBlock'] ?? null,
+            'platform' => $row['platform'] ?? null
         ];
     }
     respond([

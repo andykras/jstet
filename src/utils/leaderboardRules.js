@@ -10,17 +10,28 @@ export const canRankRun = run => Boolean(
   Number.isInteger(run.durationMs) && run.durationMs >= 1000
 )
 
-export const completedRun = ({ runId, mode, score, lines, level, durationMs }) => ({
+export const completedRun = ({ runId, mode, score, lines, level, durationMs, hardDrop, singleBlock, platform, completedAtMs }) => ({
   runId,
   mode,
   score,
   cleared: lines,
   level,
   durationMs,
-  ruleset: LEADERBOARD_RULESET
+  ...(completedAtMs == null ? {} : { completedAtMs }),
+  ruleset: LEADERBOARD_RULESET,
+  // Display metadata only: neither the device nor settings affect rank.
+  hardDrop: hardDrop === true,
+  singleBlock: singleBlock !== false,
+  ...(platform === 'mobile' || platform === 'desktop' ? { platform } : {})
 })
 
 export const formatLeaderboardScore = value => Number(value || 0).toLocaleString('en-US')
+
+export const formatRunDuration = ms => {
+  const totalSeconds = Math.max(0, Math.floor((Number(ms) || 0) / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  return minutes + ':' + String(totalSeconds % 60).padStart(2, '0')
+}
 
 export const normalizeLeaderboardNickname = value => {
   if (typeof value !== 'string') return null

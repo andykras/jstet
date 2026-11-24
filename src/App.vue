@@ -12,6 +12,14 @@
            'is-lab': naiveImplementation
          }
        ]">
+    <div v-if="updateReady && status === 'gameOver' && !leaderboardOpen"
+         class="app-update-notice"
+         role="status">
+      <span>New game version ready. Reload to update the leaderboard.</span>
+      <button type="button"
+              class="app-update-notice__button"
+              @click="reloadUpdatedApp">Reload</button>
+    </div>
     <div class="arcade-console">
       <header class="arcade-header">
         <div class="arcade-brand"
@@ -173,6 +181,9 @@
                    class="game-state-overlay__summary">Final score <strong>{{ $store.state.score.toLocaleString('en-US') }}</strong></p>
                 <p v-if="status === 'gameOver' && newPersonalBest"
                    class="game-state-overlay__record">NEW PERSONAL BEST</p>
+                <p v-if="status === 'gameOver' && scoreSubmission.status === 'queued'"
+                   class="game-state-overlay__summary"
+                   role="status">Score saved on this device · waiting to sync.</p>
                 <p v-if="status === 'gameOver' && scoreSubmission.status === 'sent'"
                    class="game-state-overlay__summary"
                    role="status">Score published to the leaderboard.</p>
@@ -196,7 +207,8 @@
                           type="button"
                           class="arcade-button"
                           @click="openLeaderboard">
-                    {{ rankableLastRun && scoreSubmission.status !== 'sent' ? 'Publish score' : 'Leaderboard' }}</button>
+                    {{ rankableLastRun && (scoreSubmission.status === 'idle' || scoreSubmission.status === 'error')
+                      ? 'Publish score' : 'Leaderboard' }}</button>
                 </div>
               </div>
             </div>
@@ -209,8 +221,6 @@
                aria-label="Score, blocks and bonus">
           <GameHud class="stats-column stats-column--right"
                    :mode="mode"
-                   :hard="hard"
-                   :single-block="preferences.singleBlock"
                    section="right" />
         </aside>
 
@@ -231,7 +241,11 @@
                  :default-mode="mode"
                  :pending-run="lastRun"
                  :submission="scoreSubmission"
-                 @published="onScorePublished"
+                 :pending-count="queuedScores"
+                 :online="online"
+                 @queued="onScoreQueued"
+                 @sync="syncQueuedScores"
+                 @profile-forgotten="onLeaderboardProfileForgotten"
                  @close="closeLeaderboard" />
 
     <div v-if="settingsOpen"
@@ -354,9 +368,13 @@ import MobileTouchSurface from '@/components/MobileTouchSurface.vue'
 import Leaderboard from '@/components/Leaderboard.vue'
 import { readPersonalBest, recordPersonalBest } from '@/utils/personalBest.js'
 import { canRankRun, completedRun } from '@/utils/leaderboardRules.js'
+import { detectRunPlatform } from '@/utils/runPlatform.js'
 import {
-  leaderboardConfigured, readLeaderboardPlayer, isLeaderboardAutoPublishEnabled, publishLeaderboardRun
+  leaderboardConfigured, leaderboardOnline, readLeaderboardPlayer, isLeaderboardAutoPublishEnabled, publishLeaderboardRun
 } from '@/utils/leaderboardClient.js'
+import {
+  queuedLeaderboardRuns, pendingLeaderboardCount, queueLeaderboardRun, removeQueuedLeaderboardRun
+} from '@/utils/leaderboardOutbox.js'
 import { createGameBoard, createGamePieces } from '@/game/modes.js'
 import { loadPreferences, normalizePreferences, savePreferences } from '@/utils/preferences.js'
 import { setup, game } from '@/utils/game.js'
@@ -382,6 +400,12 @@ export default {
       localBest: readPersonalBest('tetcolor'),
       newPersonalBest: false,
       scoreSubmission: { status: 'idle', error: '' },
+      updateReady: false,
+      queuedScores: pendingLeaderboardCount(),
+      online: leaderboardOnline(),
+      leaderboardSyncBusy: false,
+      leaderboardSyncClosed: false,
+      leaderboardRetryDelay: 15000,
       autoPaused: false,
       modernDispose: null,
       modernHandlers: [],
@@ -445,9 +469,19 @@ export default {
     }
     this.$nextTick(() => this.observeWell())
     window.addEventListener('resize', this.syncPreviewCellSize)
+    window.addEventListener('online', this.onLeaderboardOnline)
+    window.addEventListener('offline', this.onLeaderboardOffline)
+    window.addEventListener('jstet:update-available', this.onAppUpdateAvailable)
+    // Network maintenance is scheduled after the game is already running.
+    this.$nextTick(() => this.syncQueuedScores())
   },
   beforeUnmount() {
+    this.leaderboardSyncClosed = true
     window.removeEventListener('resize', this.syncPreviewCellSize)
+    window.removeEventListener('online', this.onLeaderboardOnline)
+    window.removeEventListener('offline', this.onLeaderboardOffline)
+    window.removeEventListener('jstet:update-available', this.onAppUpdateAvailable)
+    clearTimeout(this.leaderboardSyncTimer)
     if (this.wellResizeObserver) this.wellResizeObserver.disconnect()
   },
   unmounted() {
@@ -569,8 +603,84 @@ export default {
       })
     },
 
-    onScorePublished(runId) {
-      if (this.lastRun?.runId === runId) this.scoreSubmission = { status: 'sent', error: '' }
+    onScoreQueued(runId) {
+      this.queuedScores = pendingLeaderboardCount()
+      if (this.lastRun?.runId === runId) this.scoreSubmission = { status: 'queued', error: '' }
+      this.syncQueuedScores()
+    },
+
+    onLeaderboardProfileForgotten() {
+      this.queuedScores = pendingLeaderboardCount()
+      this.scoreSubmission = { status: 'idle', error: '' }
+    },
+
+    onAppUpdateAvailable() {
+      this.updateReady = true
+    },
+
+    reloadUpdatedApp() {
+      // A reload is opt-in and is never triggered in the middle of a game.
+      window.location.reload()
+    },
+
+    onLeaderboardOnline() {
+      this.online = true
+      this.syncQueuedScores()
+    },
+
+    onLeaderboardOffline() {
+      this.online = false
+      clearTimeout(this.leaderboardSyncTimer)
+    },
+
+    queueCompletedRun(run) {
+      try {
+        queueLeaderboardRun(run)
+        this.onScoreQueued(run.runId)
+      } catch (error) {
+        if (this.lastRun?.runId === run.runId) this.scoreSubmission = { status: 'error', error: error.message }
+      }
+    },
+
+    scheduleLeaderboardSync(delayMs) {
+      clearTimeout(this.leaderboardSyncTimer)
+      if (this.online && this.queuedScores && !this.leaderboardSyncClosed) {
+        this.leaderboardSyncTimer = setTimeout(() => this.syncQueuedScores(), delayMs)
+      }
+    },
+
+    async syncQueuedScores() {
+      if (!leaderboardConfigured || !this.online || this.leaderboardSyncBusy || this.leaderboardSyncClosed) return
+      const player = readLeaderboardPlayer()
+      const run = queuedLeaderboardRuns(player)[0]
+      this.queuedScores = pendingLeaderboardCount(player)
+      if (!player || !run) return
+
+      this.leaderboardSyncBusy = true
+      try {
+        await publishLeaderboardRun(run, player)
+        removeQueuedLeaderboardRun(run.runId, player)
+        this.queuedScores = pendingLeaderboardCount()
+        this.leaderboardRetryDelay = 15000
+        if (this.lastRun?.runId === run.runId && readLeaderboardPlayer()?.id === player.id) {
+          this.scoreSubmission = { status: 'sent', error: '' }
+        }
+        // The PHP endpoint has a 10-second per-player publish interval.
+        if (this.queuedScores) this.scheduleLeaderboardSync(11000)
+      } catch (error) {
+        // Preserve the run and its identifier on every failure for a safe retry.
+        if (this.lastRun?.runId === run.runId) {
+          this.scoreSubmission = { status: 'queued', error: error.message }
+        }
+        if (error.status === 429) this.scheduleLeaderboardSync(11000)
+        else if (!error.status || error.status >= 500) {
+          // Transient failures retry with bounded backoff while the page remains open.
+          this.scheduleLeaderboardSync(this.leaderboardRetryDelay)
+          this.leaderboardRetryDelay = Math.min(this.leaderboardRetryDelay * 2, 300000)
+        }
+      } finally {
+        this.leaderboardSyncBusy = false
+      }
     },
 
     onRunComplete() {
@@ -581,32 +691,21 @@ export default {
         score: this.$store.state.score,
         lines: this.$store.state.lines,
         level: this.$store.state.level,
-        durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime))
+        durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime)),
+        completedAtMs: Date.now(),
+        hardDrop: this.hard,
+        singleBlock: this.preferences.singleBlock,
+        platform: detectRunPlatform()
       })
       this.lastRun = run
       const personal = recordPersonalBest(run)
       this.localBest = personal.score
       this.newPersonalBest = personal.improved
       this.scoreSubmission = { status: 'idle', error: '' }
-      // Offer first-time publishing on Game Over; repeat players retain their choice.
+      // Completing a run saves the local record before any optional network work.
       if (leaderboardConfigured && canRankRun(run)) {
-        if (isLeaderboardAutoPublishEnabled()) this.sendCompletedRun()
-        else if (!readLeaderboardPlayer()) this.openLeaderboard()
-      }
-    },
-
-    async sendCompletedRun() {
-      const run = this.lastRun
-      const player = readLeaderboardPlayer()
-      if (!run || !player || !canRankRun(run) || this.scoreSubmission.status === 'sending') return
-      this.scoreSubmission = { status: 'sending', error: '' }
-      try {
-        await publishLeaderboardRun(run, player)
-        this.onScorePublished(run.runId)
-      } catch (error) {
-        if (this.lastRun?.runId === run.runId) {
-          this.scoreSubmission = { status: 'error', error: error.message }
-        }
+        if (isLeaderboardAutoPublishEnabled()) this.queueCompletedRun(run)
+        else if (!readLeaderboardPlayer() && this.online) this.openLeaderboard()
       }
     },
 
@@ -775,6 +874,44 @@ export default {
 @import './styles/tetcolor-bonus-fx.styl'
 @import './styles/arcade-touch-surface.styl'
 @import './styles/leaderboard.styl'
+
+// Service-worker updates are opt-in and never interrupt a live game.
+.app-update-notice
+  position fixed
+  z-index 130
+  top unquote('max(12px, env(safe-area-inset-top, 0px))')
+  left 50%
+  transform translateX(-50%)
+  display flex
+  align-items center
+  justify-content center
+  flex-wrap wrap
+  gap 10px
+  width unquote('min(92vw, 520px)')
+  padding 11px 14px
+  border 1px solid rgba(247, 196, 118, .58)
+  border-radius 12px
+  background rgba(18, 18, 39, .96)
+  box-shadow 0 12px 32px rgba(0, 0, 0, .42)
+  color #f1e8dc
+  font-size 12px
+  line-height 1.45
+  text-align center
+
+.app-update-notice__button
+  min-height 33px
+  padding 6px 12px
+  border 1px solid rgba(255, 211, 135, .72)
+  border-radius 8px
+  background rgba(253, 194, 98, .18)
+  color #ffe4b3
+  font inherit
+  font-weight 800
+  cursor pointer
+
+  &:focus-visible
+    outline 2px solid var(--arcade-orange)
+    outline-offset 2px
 
 // Discreet build marker: which commit is deployed, without stealing attention.
 .build-badge

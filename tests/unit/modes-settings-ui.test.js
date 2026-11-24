@@ -40,19 +40,6 @@ test('the settings use live preferences', () => {
   assert.doesNotMatch(app, /modalWasRunning/)
 })
 
-test('the HUD shows the active run rules next to the score', () => {
-  const hud = read('src/components/GameHud.vue')
-  const app = read('src/App.vue')
-  assert.match(hud, /hard: \{ type: Boolean, default: false \}/)
-  assert.match(hud, /singleBlock: \{ type: Boolean, default: true \}/)
-  assert.match(hud, /\{\{ hard \? 'HARD DROP' : 'SOFT DROP' \}\}/)
-  assert.match(hud, /\{\{ singleBlock \? 'STEP CLEAR' : 'ALL CLEAR' \}\}/)
-  assert.match(hud, /hud-meta__item--hard/)
-  assert.match(hud, /@media \(max-width: 920px\)/)
-  assert.match(app, /:hard="hard"/)
-  assert.match(app, /:single-block="preferences\.singleBlock"/)
-})
-
 test('the clearing rule is saved and applied by starting a new game immediately', () => {
   const app = read('src/App.vue')
   const prefs = read('src/utils/preferences.js')

@@ -1,5 +1,7 @@
 # JSTET — Arcade 2077
 
+![TetColor gameplay](docs/tetcolor.jpg)
+
 A browser puzzle game with two playable modes, built with **Vue 3 (Options API)**, **Vuex 4**, **Vite 7**, **Stylus**, and **mitt**.
 
 The original **TetColor** game mechanics are preserved inside a modern arcade interface. **Classic** provides a separate seven-tetromino ruleset. A historical, independently implemented version remains accessible in **Developer Lab**.
@@ -68,13 +70,53 @@ Users can disable automatic submissions or forget the local profile from the lea
 Already published scores remain public when a device forgets its profile.
 
 Personal best scores are also saved locally, independently of API availability and
-separately by game mode, while retaining existing historical local bests from
-both clearing settings. The game remains fully playable if the
-API is offline or not configured. Configure
-`VITE_LEADERBOARD_API_URL` at **build time** to connect the static PWA to the
-separately deployed [Worker/D1 leaderboard API](leaderboard-api/README.md).
-Do not deploy the API or switch the public PWA to it without verifying CORS, migrations,
-manual moderation, mobile interaction and the non-cheat-proof score model first.
+separately by game mode, while retaining historical records from both clearing settings.
+
+The Hall of Fame presents the top three players as a podium, followed by the remaining
+Top 20. Each result uses compact SVG icon badges: golden Hard Drop,
+turquoise phone/tablet, or blue desktop computer. Clearing mode is shown only
+in the expanded run details, with blocks/lines, level and duration. Platform
+is captured locally at Game Over based on browser device signals, so it is
+informative but not proof of a player's physical hardware. Device and run
+options **never** create ranking categories or disqualify results. Older
+records without a stored device show a muted unknown-device icon (and a dash
+in details), not an invented PC/phone badge. Your standing remains visible
+outside the Top 20 with the same icon badges.
+
+### Offline-first gameplay
+
+The engine, controls, score calculation and personal-best tracking never wait for
+the leaderboard API. The installed PWA uses its existing service-worker precache
+for the game shell and assets, so after an initial online installation/load it
+can be opened and played in airplane mode (subject to the browser keeping its
+offline cache). New service workers do not silently replace an already-running
+game: when a new version is detected, a **Reload** prompt appears after Game Over.
+A current session is never forcibly refreshed. The small build ID at the bottom
+of the game can be compared between devices to identify stale installed PWAs. API fetches are optional, fail immediately when the browser
+reports offline and have bounded timeouts. No background connection is needed
+to start or finish a game.
+
+After a player joins the leaderboard, eligible completed scores are first saved
+to an **opt-in local outbox** (up to 200 runs), then synchronized one at a time
+on reconnect, page reopening or a manual sync request. Failed requests keep the
+same run ID and retry without disturbing gameplay; the server already
+deduplicates each run. The 10-second server spacing rule is respected during
+batch synchronization. Offline scores include their original completion time,
+so weekly standings use the week played, not the week uploaded. The outbox is
+local to the browser and is cleared when the player explicitly forgets the
+profile; uninstalling the PWA or clearing site storage may also remove it.
+
+New players can always play offline and accumulate local personal bests; initial
+nickname registration requires connectivity. The last successfully loaded
+leaderboard is cached for optional, **clearly labeled stale viewing** while the
+API is unavailable. Weekly snapshots are never shown for a different week.
+
+The game remains fully playable without the API. The **current backend** is a
+[same-origin PHP leaderboard on kraspeed](leaderboard-api/README.md#kraspeed-deployment-current-production-choice),
+configured with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org` at build time.
+The Worker/D1 implementation in the repository is unused reference code. A feature
+release must update both the static site and the PHP API script while preserving
+`/srv/tetcolor/api-data/state.json` and the existing rollback path.
 
 ### Visual-only preview (no backend)
 

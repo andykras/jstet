@@ -1,6 +1,7 @@
 // A minimal, separate Cloudflare Worker: the game never needs a backend to play.
 const RULESET = 'arcade-v1'
 const MODES = new Set(['tetcolor', 'classic'])
+const PLATFORMS = new Set(['mobile', 'desktop'])
 const PERIODS = new Set(['week', 'all'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_BODY_SIZE = 2048
@@ -22,12 +23,21 @@ export const validateRun = run => {
   if (!run || typeof run !== 'object' || Array.isArray(run)) return 'Invalid game result.'
   if (!UUID.test(run.runId || '')) return 'Invalid run identifier.'
   if (!MODES.has(run.mode) || run.ruleset !== RULESET) return 'Invalid game mode or ruleset.'
+  // Display options ride along with the result; every finished game ranks.
+  for (const flag of ['hardDrop', 'singleBlock']) {
+    if (flag in run && typeof run[flag] !== 'boolean') return 'Invalid run options.'
+  }
+  if ('platform' in run && !PLATFORMS.has(run.platform)) return 'Invalid device platform.'
   if (!Number.isSafeInteger(run.score) || run.score < 1 || run.score > 25000000) return 'Invalid score.'
   if (!Number.isSafeInteger(run.cleared) || run.cleared < 0 || run.cleared > 100000) return 'Invalid cleared count.'
   if (!Number.isSafeInteger(run.level) || run.level < 0 || run.level > 8) return 'Invalid level.'
   if (!Number.isSafeInteger(run.durationMs) || run.durationMs < 1000 || run.durationMs > 8 * 60 * 60 * 1000) {
     return 'Invalid run duration.'
   }
+  if (run.completedAtMs != null && (
+    !Number.isSafeInteger(run.completedAtMs) || run.completedAtMs < 1577836800000 ||
+    run.completedAtMs > Date.now() + 300000
+  )) return 'Invalid completion time.'
   return null
 }
 
@@ -99,17 +109,31 @@ const createPlayer = async (request, env) => {
 }
 
 const rankQuery = `
-  WITH best AS (
-    SELECT player_id, MAX(score) AS best_score
+  WITH per_player AS (
+    SELECT player_id, score, cleared, level, duration_ms, hard_drop, single_block, platform,
+      ROW_NUMBER() OVER (
+        PARTITION BY player_id ORDER BY score DESC, created_ms ASC, id ASC
+      ) AS best_index
     FROM scores
-    WHERE mode = ? AND ruleset = ? AND created_ms >= ?
-    GROUP BY player_id
+    WHERE mode = ? AND ruleset = ? AND COALESCE(completed_ms, created_ms) >= ?
   ), ranked AS (
-    SELECT players.id AS player_id, players.nickname, best.best_score AS score,
-      ROW_NUMBER() OVER (ORDER BY best.best_score DESC, players.id ASC) AS position
-    FROM best JOIN players ON players.id = best.player_id
+    SELECT players.id AS player_id, players.nickname,
+      per_player.score, per_player.cleared, per_player.level, per_player.duration_ms,
+      per_player.hard_drop, per_player.single_block, per_player.platform,
+      ROW_NUMBER() OVER (ORDER BY per_player.score DESC, players.id ASC) AS position
+    FROM per_player
+    JOIN players ON players.id = per_player.player_id
+    WHERE per_player.best_index = 1
   )
 `
+
+const toEntry = row => ({
+  playerId: row.player_id, nickname: row.nickname, score: row.score, rank: row.position,
+  cleared: row.cleared ?? null, level: row.level ?? null, durationMs: row.duration_ms ?? null,
+  hardDrop: row.hard_drop == null ? null : row.hard_drop === 1,
+  singleBlock: row.single_block == null ? null : row.single_block === 1,
+  platform: row.platform ?? null
+})
 
 const leaderboard = async (request, env, url) => {
   const mode = url.searchParams.get('mode') || 'tetcolor'
@@ -117,20 +141,26 @@ const leaderboard = async (request, env, url) => {
   if (!MODES.has(mode) || !PERIODS.has(period)) return json({ error: 'Invalid ranking selection.' }, 400)
   const since = period === 'week' ? weekStartUtc() : 0
 
-  const rows = await env.DB.prepare(rankQuery + ' SELECT player_id, nickname, score, position FROM ranked ORDER BY position LIMIT ?')
+  const rows = await env.DB.prepare(rankQuery + ' SELECT * FROM ranked ORDER BY position LIMIT ?')
     .bind(mode, RULESET, since, TOP_SIZE).all()
   const player = await authenticatedPlayer(request, env)
   const myRow = player
-    ? await env.DB.prepare(rankQuery + ' SELECT score, position FROM ranked WHERE player_id = ?')
+    ? await env.DB.prepare(rankQuery + ' SELECT * FROM ranked WHERE player_id = ?')
       .bind(mode, RULESET, since, player.id).first()
     : null
   return json({
     mode, period, ruleset: RULESET,
     weekStartsAt: period === 'week' ? new Date(since).toISOString() : null,
-    entries: (rows.results || []).map(row => ({
-      playerId: row.player_id, nickname: row.nickname, score: row.score, rank: row.position
-    })),
-    mine: myRow ? { score: myRow.score, rank: myRow.position } : null
+    entries: (rows.results || []).map(toEntry),
+    mine: myRow
+      ? {
+        score: myRow.score, rank: myRow.position,
+        cleared: myRow.cleared ?? null, level: myRow.level ?? null, durationMs: myRow.duration_ms ?? null,
+        hardDrop: myRow.hard_drop == null ? null : myRow.hard_drop === 1,
+        singleBlock: myRow.single_block == null ? null : myRow.single_block === 1,
+        platform: myRow.platform ?? null
+      }
+      : null
   })
 }
 
@@ -155,11 +185,15 @@ const postScore = async (request, env) => {
   // One row per player/run also protects against retries racing across requests.
   const saved = await env.DB.prepare(`
     INSERT OR IGNORE INTO scores
-      (id, player_id, run_id, mode, ruleset, score, cleared, level, duration_ms, created_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, player_id, run_id, mode, ruleset, score, cleared, level, duration_ms,
+       hard_drop, single_block, platform, completed_ms, created_ms)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(), player.id, run.runId, run.mode, run.ruleset, run.score, run.cleared,
-    run.level, run.durationMs, now
+    run.level, run.durationMs,
+    run.hardDrop == null ? null : (run.hardDrop ? 1 : 0),
+    run.singleBlock == null ? null : (run.singleBlock ? 1 : 0),
+    run.platform ?? null, run.completedAtMs ?? now, now
   ).run()
   return json({ accepted: true, duplicate: saved.meta?.changes === 0 }, 201)
 }

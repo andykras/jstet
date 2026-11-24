@@ -10,11 +10,10 @@
              @keydown.esc.stop.prevent="$emit('close')"
              @keydown.tab="trapFocus">
       <header class="leaderboard-header">
-        <div>
-          <span class="leaderboard-kicker">ARCADE 2077</span>
+        <div class="leaderboard-header__copy">
+          <p class="leaderboard-kicker"><span aria-hidden="true">✦</span> ARCADE 2077 · HIGH SCORES</p>
           <h2 id="leaderboard-heading">LEADERBOARD</h2>
-          <span v-if="preview"
-                class="leaderboard-demo-label">SAMPLE DATA / VISUAL PREVIEW</span>
+          <p class="leaderboard-subtitle">One game. One shot. One glory.</p>
         </div>
         <button type="button"
                 class="dialog-close"
@@ -25,32 +24,49 @@
       <section v-if="configured && !preview && pendingRun && pendingRun.mode === mode"
                class="leaderboard-publish"
                aria-label="Publish completed game">
-        <h3>{{ profile ? 'LAST RUN' : 'ADD YOUR SCORE' }} · {{ formatLeaderboardScore(pendingRun.score) }}</h3>
+        <div class="leaderboard-publish__heading">
+          <span>{{ profile ? 'YOUR LAST RUN' : 'PUT YOUR NAME ON THE BOARD' }}</span>
+          <strong>{{ formatLeaderboardScore(pendingRun.score) }}</strong>
+        </div>
         <p v-if="!canRankRun(pendingRun)">
           Only completed games with a positive score can be published.
         </p>
         <p v-else-if="submission.status === 'sent'"
-           role="status">Score published. Your position is shown above.</p>
+           class="leaderboard-publish__success"
+           role="status">Score published. You're on the board!</p>
+        <p v-else-if="submission.status === 'queued'"
+           class="leaderboard-publish__success"
+           role="status">
+          Saved on this device. It will be published when the server is reachable.
+          <button v-if="online"
+                  type="button"
+                  class="leaderboard-text-action"
+                  @click="$emit('sync')">Try now</button>
+          <span v-if="submission.error"
+                class="leaderboard-sync-detail">{{ submission.error }}</span>
+        </p>
         <p v-else-if="submission.status === 'sending' || publishing"
-           role="status">Publishing score…</p>
+           role="status">Saving score…</p>
         <template v-else>
           <form v-if="!profile"
                 @submit.prevent="registerAndPublish">
-            <label for="leaderboard-nickname">Nickname</label>
-            <input id="leaderboard-nickname"
-                   v-model.trim="nickname"
-                   ref="nicknameInput"
-                   type="text"
-                   required
-                   minlength="3"
-                   maxlength="16"
-                   autocomplete="nickname"
-                   placeholder="3–16 letters, digits, _ or -">
-            <p>Publishing creates an anonymous profile and opts you in to automatically
-              publishing later eligible runs on this browser. No account is required.</p>
-            <button type="submit"
-                    class="arcade-button arcade-button--primary"
-                    :disabled="publishing">Join & publish score</button>
+            <label for="leaderboard-nickname">Choose a nickname</label>
+            <div class="leaderboard-publish__form-row">
+              <input id="leaderboard-nickname"
+                     ref="nicknameInput"
+                     v-model.trim="nickname"
+                     type="text"
+                     required
+                     minlength="3"
+                     maxlength="16"
+                     autocomplete="nickname"
+                     placeholder="Your arcade name">
+              <button type="submit"
+                      class="arcade-button arcade-button--primary"
+                      :disabled="publishing || !online">Save score</button>
+            </div>
+            <p v-if="!online">Offline: your personal best is saved. Join when you're connected to publish scores.</p>
+            <p v-else>No account needed. Joining also enables automatic publishing of future scores on this device.</p>
           </form>
           <button v-else
                   type="button"
@@ -62,46 +78,57 @@
         </template>
       </section>
 
-      <div class="leaderboard-tabs"
-           role="group"
-           aria-label="Leaderboard game mode">
-        <button v-for="choice in modes"
-                :key="choice.value"
+      <div v-if="configured && pendingCount"
+           class="leaderboard-sync-notice"
+           role="status">
+        <span>{{ pendingCount }} {{ pendingCount === 1 ? 'score' : 'scores' }} saved
+          on this device · {{ online ? 'awaiting sync' : 'offline' }}</span>
+        <button v-if="online"
                 type="button"
-                :aria-pressed="mode === choice.value"
-                @click="mode = choice.value">{{ choice.label }}</button>
-      </div>
-      <div class="leaderboard-tabs leaderboard-tabs--period"
-           role="group"
-           aria-label="Leaderboard period">
-        <button type="button"
-                :aria-pressed="period === 'week'"
-                @click="period = 'week'">This week</button>
-        <button type="button"
-                :aria-pressed="period === 'all'"
-                @click="period = 'all'">All time</button>
+                class="leaderboard-text-action"
+                @click="$emit('sync')">Sync now</button>
       </div>
 
-      <div class="leaderboard-local"
-           aria-label="Personal record on this device">
-        <span>BEST ON THIS DEVICE</span>
-        <strong>{{ personalBest ? formatLeaderboardScore(personalBest) : '—' }}</strong>
+      <div class="leaderboard-controls">
+        <div class="leaderboard-tabs"
+             role="group"
+             aria-label="Leaderboard game mode">
+          <button v-for="choice in modes"
+                  :key="choice.value"
+                  type="button"
+                  :aria-pressed="mode === choice.value"
+                  @click="mode = choice.value">{{ choice.label }}</button>
+        </div>
+        <div class="leaderboard-tabs leaderboard-tabs--period"
+             role="group"
+             aria-label="Leaderboard period">
+          <button type="button"
+                  :aria-pressed="period === 'week'"
+                  @click="period = 'week'">This week</button>
+          <button type="button"
+                  :aria-pressed="period === 'all'"
+                  @click="period = 'all'">All time</button>
+        </div>
       </div>
 
       <p v-if="!configured && !preview"
-         class="leaderboard-notice">
-        Online rankings are not connected yet. You can keep playing normally.
-      </p>
+         class="leaderboard-notice"
+         role="status">Online rankings aren't connected yet. Your local best is still saved.</p>
+
       <template v-else>
         <p v-if="preview"
            class="leaderboard-demo-notice"
+           role="status">SAMPLE SCORES · VISUAL PREVIEW · NOT LIVE</p>
+        <p v-if="cachedAtMs"
+           class="leaderboard-cache-notice"
            role="status">
-          SAMPLE SCORES — not real players or live rankings. Score publication is disabled in this preview.
+          <span aria-hidden="true">◌</span>
+          Offline snapshot · last updated {{ new Date(cachedAtMs).toLocaleString() }}
         </p>
-        <p class="leaderboard-period-note">
-          {{ period === 'week' ? 'Weekly scores reset Monday at 00:00 UTC.' : 'Best scores since launch.' }}
-          TetColor and Classic have separate rankings.
-        </p>
+        <div class="leaderboard-section-heading leaderboard-section-heading--top">
+          <span>{{ period === 'week' ? 'THIS WEEK’S CHAMPIONS' : 'ALL-TIME LEGENDS' }}</span>
+          <small>{{ period === 'week' ? 'Resets Monday · 00:00 UTC' : 'Best scores ever' }}</small>
+        </div>
 
         <p v-if="loading"
            class="leaderboard-notice"
@@ -114,79 +141,187 @@
                   class="arcade-button"
                   @click="refresh">Retry</button>
         </div>
-        <ol v-else-if="entries.length"
-            class="leaderboard-list"
-            aria-label="Top 20 players">
-          <li v-for="entry in entries"
-              :key="entry.playerId"
-              class="leaderboard-entry"
-              :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id }">
-            <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
-            <span class="leaderboard-entry__name">
-              {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
-            </span>
-            <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
-          </li>
-        </ol>
-        <p v-else
-           class="leaderboard-notice">No published records yet. Be the first!</p>
-
-        <div v-if="profile && !preview"
-             class="leaderboard-personal">
-          <div>
-            <span>Online best · {{ profile.nickname }}</span>
-            <strong>{{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</strong>
+        <div v-else-if="entries.length"
+             class="leaderboard-results">
+          <div class="leaderboard-podium"
+               role="group"
+               aria-label="Top three players">
+            <div v-for="entry in podiumEntries"
+                 :key="entry.playerId"
+                 class="leaderboard-podium__slot"
+                 :class="['leaderboard-podium__slot--' + entry.rank, {
+                   'leaderboard-podium__slot--mine': profile && entry.playerId === profile.id,
+                   'leaderboard-podium__slot--open': expandedId === entry.playerId
+                 }]">
+              <button type="button"
+                      class="leaderboard-podium__button"
+                      :aria-expanded="expandedId === entry.playerId"
+                      :aria-label="podiumLabel(entry)"
+                      @click="toggleEntry(entry.playerId)">
+                <span class="leaderboard-podium__medal"
+                      aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
+                <span class="leaderboard-podium__place">#{{ entry.rank }}</span>
+                <span class="leaderboard-podium__name">
+                  {{ entry.nickname }}
+                  <small v-if="profile && entry.playerId === profile.id"
+                         class="leaderboard-podium__you">YOU</small>
+                </span>
+                <strong class="leaderboard-podium__score">{{ formatLeaderboardScore(entry.score) }}</strong>
+                <LeaderboardRunBadges :entry="entry" />
+                <span class="leaderboard-podium__hint"
+                      aria-hidden="true">{{ expandedId === entry.playerId ? '−' : '+' }} details</span>
+              </button>
+            </div>
           </div>
-          <div>
-            <span>Your rank</span>
-            <strong>{{ !loading && !loadError && mine ? '#' + mine.rank : '—' }}</strong>
+
+          <div v-if="activePodiumEntry"
+               class="leaderboard-podium-details">
+            <p>RUN DETAILS · {{ activePodiumEntry.nickname }}</p>
+            <LeaderboardRunDetails :entry="activePodiumEntry"
+                                   :mode="mode" />
+          </div>
+
+          <div v-if="profile && !preview"
+               class="leaderboard-personal"
+               aria-label="Your position">
+            <div class="leaderboard-personal__identity">
+              <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
+              <strong>{{ profile.nickname }}</strong>
+              <span class="leaderboard-personal__best">Best ·
+                {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
+              <LeaderboardRunBadges v-if="!loading && !loadError && mine"
+                                   :entry="mine" />
+            </div>
+            <div class="leaderboard-personal__position">
+              <span>RANK</span>
+              <strong>{{ !loading && !loadError && mine ? '#' + mine.rank : '—' }}</strong>
+            </div>
+          </div>
+
+          <div v-if="remainingEntries.length"
+               class="leaderboard-section-heading leaderboard-section-heading--list">
+            <span>THE CHALLENGERS</span>
+            <small>RANK 04—20</small>
+          </div>
+          <ol v-if="remainingEntries.length"
+              class="leaderboard-list"
+              start="4"
+              aria-label="Other ranked players">
+            <li v-for="entry in remainingEntries"
+                :key="entry.playerId"
+                class="leaderboard-entry"
+                :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id,
+                          'leaderboard-entry--open': expandedId === entry.playerId }">
+              <button type="button"
+                      class="leaderboard-entry__main"
+                      :aria-expanded="expandedId === entry.playerId"
+                      :aria-label="rowLabel(entry)"
+                      @click="toggleEntry(entry.playerId)">
+                <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
+                <span class="leaderboard-entry__player">
+                  <span class="leaderboard-entry__name">
+                    {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
+                  </span>
+                  <LeaderboardRunBadges :entry="entry" />
+                </span>
+                <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
+                <svg class="leaderboard-entry__chevron"
+                     width="14"
+                     height="14"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+              <div v-if="expandedId === entry.playerId"
+                   class="leaderboard-entry__details">
+                <LeaderboardRunDetails :entry="entry"
+                                       :mode="mode" />
+              </div>
+            </li>
+          </ol>
+        </div>
+        <div v-else
+             class="leaderboard-empty">
+          <div class="leaderboard-empty__emblem"
+               aria-hidden="true">★</div>
+          <h3>The podium is waiting.</h3>
+          <p>Finish a game. Claim the first spot.</p>
+        </div>
+
+        <div v-if="profile && !preview && !entries.length && !loading && !loadError"
+             class="leaderboard-personal"
+             aria-label="Your position">
+          <div class="leaderboard-personal__identity">
+            <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
+            <strong>{{ profile.nickname }}</strong>
+            <span class="leaderboard-personal__best">No published scores in this period yet</span>
+          </div>
+          <div class="leaderboard-personal__position">
+            <span>RANK</span>
+            <strong>—</strong>
           </div>
         </div>
-        <div v-if="profile && !preview"
-             class="leaderboard-preferences">
-          <label>
-            <input type="checkbox"
-                   :checked="autoPublish"
-                   @change="onAutoPublishChange($event.target.checked)">
-            Automatically publish future eligible scores
-          </label>
-          <button type="button"
-                  class="leaderboard-text-action"
-                  @click="forgetProfile">Forget this profile on this device</button>
-          <p v-if="profileError"
-             class="leaderboard-error"
-             role="alert">{{ profileError }}</p>
-        </div>
-
-
-        <p class="leaderboard-disclaimer">
-          {{ preview
-            ? 'Visual preview only. These rows are simulated and never sent to the leaderboard service.'
-            : 'Scores are submitted by browsers and are not yet verified against replays.' }}
-        </p>
       </template>
+
+      <div class="leaderboard-local"
+           aria-label="Personal record on this device">
+        <span>PERSONAL BEST ON THIS DEVICE</span>
+        <strong>{{ personalBest ? formatLeaderboardScore(personalBest) : '—' }}</strong>
+      </div>
+
+      <div v-if="configured && profile && !preview"
+           class="leaderboard-preferences">
+        <label>
+          <input type="checkbox"
+                 :checked="autoPublish"
+                 @change="onAutoPublishChange($event.target.checked)">
+          Automatically publish future scores
+        </label>
+        <button type="button"
+                class="leaderboard-text-action"
+                @click="forgetProfile">Forget this profile on this device</button>
+        <p v-if="profileError"
+           class="leaderboard-error"
+           role="alert">{{ profileError }}</p>
+      </div>
+      <p v-if="configured || preview"
+         class="leaderboard-disclaimer">
+        {{ preview
+          ? 'Sample scores for layout preview only. Nothing is submitted.'
+          : 'Scores are browser-submitted and not yet independently verified.' }}
+      </p>
     </section>
   </div>
 </template>
 
 <script>
 import { canRankRun, formatLeaderboardScore, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
+import LeaderboardRunDetails from '@/components/LeaderboardRunDetails.vue'
+import LeaderboardRunBadges from '@/components/LeaderboardRunBadges.vue'
+import { queueLeaderboardRun, clearQueuedLeaderboardRuns } from '@/utils/leaderboardOutbox.js'
 import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
-  leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard,
-  registerLeaderboardPlayer, publishLeaderboardRun, isLeaderboardAutoPublishEnabled,
+  leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard, cachedLeaderboard,
+  registerLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
   setLeaderboardAutoPublish, forgetLeaderboardPlayer
 } from '@/utils/leaderboardClient.js'
 
 export default {
   name: 'LeaderboardPanel',
+  components: { LeaderboardRunDetails, LeaderboardRunBadges },
   props: {
     defaultMode: { type: String, default: 'tetcolor' },
     pendingRun: { type: Object, default: null },
-    submission: { type: Object, default: () => ({ status: 'idle' }) }
+    submission: { type: Object, default: () => ({ status: 'idle' }) },
+    pendingCount: { type: Number, default: 0 },
+    online: { type: Boolean, default: true }
   },
-  emits: ['close', 'published'],
+  emits: ['close', 'queued', 'sync', 'profile-forgotten'],
   data() {
     return {
       modes: [{ label: 'TetColor', value: 'tetcolor' }, { label: 'Classic', value: 'classic' }],
@@ -200,20 +335,28 @@ export default {
       mine: null,
       loading: false,
       loadError: '',
+      cachedAtMs: null,
       publishing: false,
       publishError: '',
       profileError: '',
+      expandedId: null,
       sequence: 0
     }
   },
   computed: {
     personalBest() { return readPersonalBest(this.mode) },
-    autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) }
+    autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) },
+    podiumEntries() { return this.entries.slice(0, 3) },
+    remainingEntries() { return this.entries.slice(3) },
+    activePodiumEntry() {
+      return this.entries.slice(0, 3).find(entry => entry.playerId === this.expandedId) || null
+    }
   },
   watch: {
     mode() { this.refresh() },
     period() { this.refresh() },
-    'submission.status'() { this.refresh() }
+    'submission.status'(status) { if (status === 'sent') this.refresh() },
+    online() { this.refresh() }
   },
   mounted() {
     this.$nextTick(() => {
@@ -228,21 +371,58 @@ export default {
   methods: {
     canRankRun,
     formatLeaderboardScore,
+    runBadgeDescription(entry) {
+      const labels = []
+      if (entry.hardDrop === true) labels.push('Hard Drop')
+      if (entry.platform === 'mobile') labels.push('Phone or tablet')
+      else if (entry.platform === 'desktop') labels.push('Computer')
+      else labels.push('Device unknown')
+      return labels.join('. ') + '. '
+    },
+    rowLabel(entry) {
+      return entry.nickname + ', rank ' + entry.rank + ', ' +
+        formatLeaderboardScore(entry.score) + '. ' + this.runBadgeDescription(entry) +
+        (this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
+    },
+    podiumLabel(entry) {
+      return this.rowLabel(entry)
+    },
+    toggleEntry(playerId) {
+      this.expandedId = this.expandedId === playerId ? null : playerId
+    },
+    useCachedRanking(fallbackMessage) {
+      const snapshot = cachedLeaderboard(this.mode, this.period, this.profile)
+      this.entries = snapshot?.entries || []
+      this.mine = snapshot?.mine || null
+      this.cachedAtMs = snapshot?.cachedAtMs || null
+      this.loadError = snapshot ? '' : fallbackMessage
+    },
     async refresh() {
       if (this.preview) {
         this.sequence++
         this.loading = false
         this.loadError = ''
+        this.cachedAtMs = null
         this.mine = null
+        this.expandedId = null
         this.entries = leaderboardPreviewEntries(this.mode, this.period)
         return
       }
       if (!this.configured) return
+      if (!this.online) {
+        this.sequence++
+        this.loading = false
+        this.expandedId = null
+        this.useCachedRanking('Offline: live rankings are unavailable. Your local best is still saved.')
+        return
+      }
       const requestId = ++this.sequence
       this.loading = true
       this.loadError = ''
+      this.cachedAtMs = null
       this.entries = []
       this.mine = null
+      this.expandedId = null
       try {
         const result = await fetchLeaderboard(this.mode, this.period, this.profile)
         if (requestId !== this.sequence) return
@@ -250,13 +430,13 @@ export default {
         this.mine = result.mine
       } catch (error) {
         if (requestId !== this.sequence) return
-        this.loadError = error.message
+        this.useCachedRanking(error.message)
       } finally {
         if (requestId === this.sequence) this.loading = false
       }
     },
     async registerAndPublish() {
-      if (this.publishing || !canRankRun(this.pendingRun)) return
+      if (this.publishing || !this.online || !canRankRun(this.pendingRun)) return
       const validNickname = normalizeLeaderboardNickname(this.nickname)
       if (!validNickname) {
         this.publishError = 'Use 3–16 letters, digits, underscores or hyphens.'
@@ -286,9 +466,9 @@ export default {
         this.publishing = false
       }
     },
-    async publishScore() {
-      await publishLeaderboardRun(this.pendingRun, this.profile)
-      this.$emit('published', this.pendingRun.runId)
+    publishScore() {
+      queueLeaderboardRun(this.pendingRun, this.profile)
+      this.$emit('queued', this.pendingRun.runId)
     },
     onAutoPublishChange(enabled) {
       this.profileError = ''
@@ -299,12 +479,19 @@ export default {
       }
     },
     forgetProfile() {
-      if (!window.confirm('Forget this profile on this device? Published scores will remain public.')) return
+      if (!window.confirm('Forget this profile and unsent scores on this device? Published scores will remain public.')) return
+      try {
+        clearQueuedLeaderboardRuns(this.profile)
+      } catch (error) {
+        this.profileError = error.message
+        return
+      }
       if (!forgetLeaderboardPlayer()) {
         this.profileError = 'Unable to clear browser storage.'
         return
       }
       this.profile = null
+      this.$emit('profile-forgotten')
       this.profileError = ''
       this.publishError = ''
       this.refresh()
