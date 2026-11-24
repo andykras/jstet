@@ -176,6 +176,9 @@
                   <span v-else-if="entry.singleBlock === false"
                         class="leaderboard-badge"
                         title="All-at-once clearing">ALL</span>
+                  <span v-if="entry.hardDrop == null && entry.singleBlock == null"
+                        class="leaderboard-badge leaderboard-badge--legacy"
+                        title="Run settings were not recorded for this older score">OLD SCORE</span>
                 </span>
                 <span class="leaderboard-podium__hint"
                       aria-hidden="true">{{ expandedId === entry.playerId ? '−' : '+' }} details</span>
@@ -197,6 +200,22 @@
               <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
               <strong>{{ profile.nickname }}</strong>
               <span class="leaderboard-personal__best">Best · {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
+              <span v-if="!loading && !loadError && mine"
+                    class="leaderboard-personal__badges"
+                    aria-label="Options for your best published run">
+                <span v-if="mine.hardDrop === true"
+                      class="leaderboard-badge leaderboard-badge--hard"
+                      title="Hard drop">HD</span>
+                <span v-if="mine.singleBlock === true"
+                      class="leaderboard-badge"
+                      title="One-at-a-time clearing">1×1</span>
+                <span v-else-if="mine.singleBlock === false"
+                      class="leaderboard-badge"
+                      title="All-at-once clearing">ALL</span>
+                <span v-if="mine.hardDrop == null && mine.singleBlock == null"
+                      class="leaderboard-badge leaderboard-badge--legacy"
+                      title="Run settings were not recorded for this older score">OLD SCORE</span>
+              </span>
             </div>
             <div class="leaderboard-personal__position">
               <span>RANK</span>
@@ -238,6 +257,9 @@
                     <span v-else-if="entry.singleBlock === false"
                           class="leaderboard-badge"
                           title="All-at-once clearing">ALL</span>
+                    <span v-if="entry.hardDrop == null && entry.singleBlock == null"
+                          class="leaderboard-badge leaderboard-badge--legacy"
+                          title="Run settings were not recorded for this older score">OLD SCORE</span>
                   </span>
                 </span>
                 <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
