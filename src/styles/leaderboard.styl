@@ -1,3 +1,4 @@
+// Hall of Fame: championship hierarchy without cluttering the playing field.
 .leaderboard-backdrop
   position fixed
   inset 0
@@ -5,20 +6,25 @@
   display flex
   align-items center
   justify-content center
-  padding 16px
-  background rgba(4, 7, 20, .83)
+  padding 12px
+  background rgba(3, 5, 18, .86)
   backdrop-filter blur(12px)
 
 .leaderboard-dialog
-  width unquote('min(100%, 480px)')
-  max-height unquote('min(92dvh, 780px)')
+  position relative
+  isolation isolate
+  width unquote('min(100%, 560px)')
+  max-height unquote('min(94dvh, 900px)')
   overflow-y auto
-  padding clamp(18px, 3vw, 28px)
-  border 1px solid var(--panel-border)
-  border-radius 20px
-  background linear-gradient(154deg, #242042, #0c152d 80%)
-  box-shadow 0 30px 100px rgba(0, 0, 0, .6)
+  overscroll-behavior contain
+  padding 24px 24px 20px
+  border 1px solid rgba(210, 162, 255, .42)
+  border-radius 23px
+  background radial-gradient(ellipse at 65% -10%, rgba(137, 77, 173, .25), transparent 55%), linear-gradient(160deg, #1e1a3c, #0c142b 83%)
+  box-shadow 0 28px 95px rgba(0, 0, 0, .65), inset 0 1px rgba(255, 255, 255, .07)
   color #f9f4ff
+  scrollbar-width thin
+  scrollbar-color rgba(180, 141, 229, .5) transparent
 
   &:focus
     outline none
@@ -28,56 +34,300 @@
   justify-content space-between
   align-items flex-start
   gap 12px
-  margin-bottom 18px
+  margin-bottom 19px
 
   h2
     margin 5px 0 0
-    font-size clamp(23px, 5vw, 32px)
-    letter-spacing .05em
+    color #fff9ff
+    font-size clamp(25px, 5vw, 34px)
+    font-weight 900
+    line-height 1.05
+    letter-spacing .035em
+    text-shadow 0 2px 20px rgba(174, 110, 223, .22)
+
+    span
+      color var(--arcade-orange)
+
+.leaderboard-header__copy
+  min-width 0
+
+.leaderboard-header .dialog-close
+  flex 0 0 auto
+  width 34px
+  height 34px
+  padding 0
+  border 1px solid rgba(205, 188, 234, .3)
+  border-radius 11px
+  background rgba(8, 13, 34, .5)
+  color #e7daef
+  font-size 24px
+  line-height 1
+  cursor pointer
+
+  &:hover
+    border-color rgba(255, 210, 146, .7)
+    color #fff
+
+  &:focus-visible
+    outline 2px solid var(--arcade-orange)
 
 .leaderboard-kicker
-  color var(--arcade-orange)
+  margin 0
+  color #f1c688
   font-size 10px
   font-weight 800
-  letter-spacing .2em
+  letter-spacing .17em
+
+  span
+    margin-right 4px
+    color #ffe4a7
+
+.leaderboard-subtitle
+  margin 7px 0 0
+  color #a9a4c4
+  font-size 12px
+
+.leaderboard-controls
+  display grid
+  grid-template-columns 1.1fr .9fr
+  gap 10px
+  margin-bottom 20px
 
 .leaderboard-tabs
   display flex
-  gap 6px
+  min-width 0
+  gap 4px
   padding 4px
-  margin-bottom 10px
-  border 1px solid rgba(180, 149, 245, .25)
-  border-radius 12px
-  background rgba(8, 13, 31, .72)
+  border 1px solid rgba(172, 147, 218, .29)
+  border-radius 13px
+  background rgba(6, 11, 30, .66)
 
   button
     flex 1 1 0
-    min-height 35px
+    min-width 0
+    min-height 40px
+    padding 7px 5px
     border 0
-    border-radius 8px
+    border-radius 9px
     background transparent
-    color #c4b9dc
+    color #b9b2d4
     font inherit
     font-size 13px
     font-weight 700
     cursor pointer
+    transition background-color .15s ease, color .15s ease
 
     &[aria-pressed='true']
-      background rgba(247, 178, 77, .19)
-      color var(--arcade-orange)
+      background linear-gradient(145deg, rgba(246, 182, 91, .28), rgba(154, 94, 117, .18))
+      color #ffdfad
+      box-shadow inset 0 1px rgba(255, 225, 172, .14)
 
     &:focus-visible
       outline 2px solid var(--arcade-orange)
       outline-offset 2px
 
-.leaderboard-tabs--period button
-  font-size 12px
+.leaderboard-tabs--period
+  border-color rgba(145, 144, 206, .19)
+  background rgba(8, 13, 35, .48)
 
-.leaderboard-period-note
-  margin 12px 0
-  color #b9b4d0
+  button
+    font-size 12px
+
+    &[aria-pressed='true']
+      background rgba(110, 103, 166, .23)
+      color #f2eaff
+
+.leaderboard-section-heading
+  display flex
+  align-items center
+  justify-content space-between
+  gap 9px
+  margin-bottom 11px
+
+  > span
+    color #f4c98f
+    font-size 11px
+    font-weight 900
+    letter-spacing .14em
+
+  small
+    color #8e8bad
+    font-size 10px
+    text-align right
+
+.leaderboard-section-heading--list
+  margin-top 22px
+  margin-bottom 9px
+
+.leaderboard-results
+  min-width 0
+
+.leaderboard-podium
+  display grid
+  grid-template-columns minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr)
+  align-items end
+  gap 8px
+  margin-top 8px
+
+.leaderboard-podium__slot
+  min-width 0
+  grid-row 1
+  border 1px solid rgba(185, 167, 207, .26)
+  border-radius 15px
+  background linear-gradient(155deg, rgba(131, 130, 163, .17), rgba(15, 20, 42, .88) 79%)
+  box-shadow inset 0 1px rgba(255, 255, 255, .06)
+  transition border-color .15s ease, transform .15s ease
+
+  &:hover
+    border-color rgba(203, 178, 247, .55)
+
+.leaderboard-podium__slot--1
+  grid-column 2
+  border-color rgba(255, 202, 107, .66)
+  background radial-gradient(ellipse at 50% 0, rgba(255, 209, 117, .24), transparent 67%), linear-gradient(155deg, #493442, #201c36 80%)
+  box-shadow 0 8px 28px rgba(248, 173, 70, .1), inset 0 1px rgba(255, 244, 204, .18)
+
+.leaderboard-podium__slot--2
+  grid-column 1
+  background linear-gradient(150deg, rgba(133, 168, 204, .24), rgba(15, 23, 47, .92))
+
+.leaderboard-podium__slot--3
+  grid-column 3
+  background linear-gradient(150deg, rgba(170, 103, 102, .21), rgba(20, 22, 46, .92))
+
+.leaderboard-podium__slot--open
+  border-color #e5c19c
+
+.leaderboard-podium__slot--mine
+  outline 1px solid rgba(114, 217, 250, .7)
+  outline-offset 2px
+
+.leaderboard-podium__button
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
+  gap 6px
+  width 100%
+  min-height 160px
+  padding 14px 9px 12px
+  border 0
+  border-radius 15px
+  background transparent
+  color inherit
+  font inherit
+  text-align center
+  cursor pointer
+
+  &:focus-visible
+    outline 2px solid var(--arcade-orange)
+    outline-offset 2px
+
+.leaderboard-podium__slot--1 .leaderboard-podium__button
+  min-height 183px
+
+.leaderboard-podium__medal
+  display flex
+  align-items center
+  justify-content center
+  width 34px
+  height 34px
+  border 1px solid rgba(196, 199, 226, .37)
+  border-radius 50%
+  background rgba(109, 126, 168, .13)
+  color #c9d5f4
+  font-size 16px
+
+.leaderboard-podium__slot--1 .leaderboard-podium__medal
+  width 43px
+  height 43px
+  border-color rgba(255, 218, 125, .76)
+  background radial-gradient(circle, rgba(255, 208, 117, .4), rgba(202, 117, 52, .12))
+  color #ffebba
+  font-size 22px
+  box-shadow 0 0 24px rgba(255, 194, 82, .24)
+
+.leaderboard-podium__slot--3 .leaderboard-podium__medal
+  border-color rgba(233, 157, 130, .5)
+  color #ecc1a6
+
+.leaderboard-podium__place
+  color #b5b2ce
+  font-size 10px
+  font-weight 800
+  letter-spacing .12em
+
+.leaderboard-podium__slot--1 .leaderboard-podium__place
+  color #ffdb9e
+
+.leaderboard-podium__name
+  display block
+  width 100%
+  overflow hidden
+  color #f1ecfa
   font-size 12px
-  line-height 1.5
+  font-weight 800
+  text-overflow ellipsis
+  white-space nowrap
+
+.leaderboard-podium__score
+  display block
+  max-width 100%
+  color #fbfaff
+  font-size clamp(14px, 3.3vw, 19px)
+  font-weight 900
+  font-variant-numeric tabular-nums
+  letter-spacing -.035em
+
+.leaderboard-podium__slot--1 .leaderboard-podium__score
+  color #ffe4b5
+
+.leaderboard-podium__tags
+  display flex
+  justify-content center
+  flex-wrap wrap
+  gap 3px
+  min-height 15px
+
+.leaderboard-podium__hint
+  color #9a94b7
+  font-size 9px
+
+.leaderboard-podium-details
+  margin-top 9px
+  padding 12px 13px
+  border 1px solid rgba(235, 192, 131, .24)
+  border-radius 12px
+  background rgba(11, 18, 40, .66)
+
+  > p
+    margin 0 0 10px
+    color #e4c49d
+    font-size 10px
+    font-weight 800
+    letter-spacing .09em
+
+.leaderboard-run-details
+  display grid
+  grid-template-columns repeat(5, minmax(0, 1fr))
+  gap 8px
+  margin 0
+
+  > div
+    min-width 0
+
+  dt
+    margin 0 0 4px
+    color #9795b5
+    font-size 10px
+
+  dd
+    margin 0
+    color #f3effc
+    font-size 12px
+    font-weight 750
+    font-variant-numeric tabular-nums
+    overflow-wrap anywhere
 
 .leaderboard-list
   display grid
@@ -87,34 +337,33 @@
   list-style none
 
 .leaderboard-entry
-  min-height 43px
-  padding 0
-  border 0
-  border-radius 10px
-  background rgba(29, 35, 66, .75)
+  min-width 0
+  border 1px solid rgba(136, 134, 177, .14)
+  border-radius 11px
+  background rgba(19, 26, 53, .67)
 
-  &:first-child
-    background rgba(152, 112, 37, .23)
-
-  &:nth-child(2)
-    background rgba(126, 129, 163, .16)
-
-  &:nth-child(3)
-    background rgba(150, 90, 59, .16)
+  &:hover
+    border-color rgba(193, 178, 231, .28)
+    background rgba(28, 35, 67, .79)
 
 .leaderboard-entry--open
-  background rgba(38, 48, 92, .9)
+  border-color rgba(221, 169, 114, .42)
+  background rgba(25, 33, 68, .93)
+
+.leaderboard-entry--mine
+  border-color rgba(118, 221, 247, .58)
+  background rgba(23, 64, 90, .37)
 
 .leaderboard-entry__main
   display grid
-  grid-template-columns 30px minmax(0, 1fr) auto
+  grid-template-columns 26px minmax(0, 1fr) auto 15px
   align-items center
-  gap 12px
+  gap 10px
   width 100%
-  min-height 43px
-  padding 9px 13px
+  min-height 54px
+  padding 9px 12px
   border 0
-  border-radius 10px
+  border-radius 11px
   background transparent
   color inherit
   font inherit
@@ -125,191 +374,276 @@
     outline 2px solid var(--arcade-orange)
     outline-offset 2px
 
-.leaderboard-entry__details
-  display flex
-  flex-wrap wrap
-  gap 4px 14px
-  padding 2px 13px 11px 55px
-  color #b9b4d0
-  font-size 11px
-  line-height 1.5
+.leaderboard-entry__rank
+  color #8f8fae
+  font-size 12px
+  font-weight 800
   font-variant-numeric tabular-nums
 
+.leaderboard-entry__player
+  display flex
+  flex-wrap wrap
+  align-items center
+  gap 3px 7px
+  min-width 0
+
+.leaderboard-entry__name
+  overflow hidden
+  max-width 100%
+  color #eeeafb
+  font-size 13px
+  font-weight 800
+  text-overflow ellipsis
+  white-space nowrap
+
+  small
+    margin-left 5px
+    color #8fe5ff
+    font-size 9px
+
+.leaderboard-entry__tags
+  display flex
+  align-items center
+  gap 3px
+
+.leaderboard-entry__score
+  color #f9f4ff
+  font-size 14px
+  font-weight 850
+  font-variant-numeric tabular-nums
+  white-space nowrap
+
+.leaderboard-entry__chevron
+  color #958fae
+  transition transform .16s ease
+
+.leaderboard-entry--open .leaderboard-entry__chevron
+  transform rotate(180deg)
+
+.leaderboard-entry__details
+  padding 0 12px 13px 48px
+
+.leaderboard-entry__details .leaderboard-run-details
+  padding-top 11px
+  border-top 1px solid rgba(172, 152, 210, .16)
+
 .leaderboard-badge
-  display inline-block
-  margin-left 7px
-  padding 1px 6px
-  border 1px solid rgba(181, 155, 236, .5)
-  border-radius 20px
-  color #cdbcf0
+  display inline-flex
+  align-items center
+  justify-content center
+  min-height 15px
+  padding 1px 5px
+  border 1px solid rgba(162, 149, 201, .38)
+  border-radius 5px
+  background rgba(126, 112, 170, .1)
+  color #a9a1c6
   font-size 9px
   font-weight 800
-  letter-spacing .06em
-  vertical-align 1px
+  line-height 1.15
+  letter-spacing .025em
   white-space nowrap
 
 .leaderboard-badge--hard
-  border-color rgba(255, 205, 119, .65)
-  color #ffd479
-
-.leaderboard-personal__badges
-  display flex
-  gap 0
-
-  .leaderboard-badge
-    margin-left 0
-    margin-right 7px
-
-.leaderboard-entry--mine
-  outline 1px solid rgba(131, 223, 250, .75)
-  background rgba(26, 79, 106, .52)
-
-.leaderboard-entry__rank
-  color var(--arcade-orange)
-  font-weight 800
-  font-variant-numeric tabular-nums
-
-.leaderboard-entry__name
-  min-width 0
-  overflow-wrap anywhere
-  font-size 14px
-  font-weight 700
-
-  small
-    margin-left 8px
-    color #83dcfb
-    font-size 9px
-
-.leaderboard-entry__score
-  color #fff3dd
-  font-size 14px
-  font-variant-numeric tabular-nums
+  border-color rgba(252, 196, 100, .35)
+  background rgba(234, 168, 88, .09)
+  color #e4c18c
 
 .leaderboard-personal
   display grid
-  grid-template-columns 1fr 1fr
+  grid-template-columns minmax(0, 1fr) auto
+  align-items center
   gap 14px
-  margin-top 15px
-  padding 16px
-  border 1px solid rgba(102, 188, 246, .28)
-  border-radius 12px
-  background rgba(22, 61, 87, .36)
+  margin-top 19px
+  padding 14px 16px
+  border 1px solid rgba(106, 216, 248, .43)
+  border-radius 13px
+  background linear-gradient(115deg, rgba(31, 99, 129, .31), rgba(18, 37, 67, .69))
+  box-shadow inset 3px 0 rgba(108, 218, 250, .58)
 
-  > div
-    display flex
-    flex-direction column
-    gap 5px
+.leaderboard-personal__identity
+  display flex
+  flex-direction column
+  gap 3px
+  min-width 0
 
-  span
-    color #9ad8ed
-    font-size 11px
+  > strong
+    overflow hidden
+    color #f0fcff
+    font-size 17px
+    font-weight 850
+    text-overflow ellipsis
+    white-space nowrap
 
-  strong
-    color #f0faff
-    font-size 22px
+.leaderboard-personal__eyebrow
+  color #92daee
+  font-size 10px
+  font-weight 900
+  letter-spacing .14em
+
+.leaderboard-personal__best
+  color #a9cfda
+  font-size 11px
+  font-variant-numeric tabular-nums
+
+.leaderboard-personal__position
+  display flex
+  flex-direction column
+  align-items flex-end
+  gap 2px
+
+  > span
+    color #88d1ee
+    font-size 10px
+    font-weight 900
+    letter-spacing .11em
+
+  > strong
+    color #fff
+    font-size 27px
+    font-weight 900
     font-variant-numeric tabular-nums
+
+.leaderboard-local
+  display flex
+  align-items center
+  justify-content space-between
+  gap 10px
+  margin-top 20px
+  padding: 10px 3px 0
+  border-top 1px solid rgba(158, 148, 188, .16)
+
+  > span
+    color #8988a9
+    font-size 10px
+    font-weight 750
+    letter-spacing .07em
+
+  > strong
+    color #f1d5ad
+    font-size 16px
+    font-weight 850
+    font-variant-numeric tabular-nums
+
+.leaderboard-empty
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
+  min-height 210px
+  padding 24px 17px
+  border 1px dashed rgba(172, 143, 198, .37)
+  border-radius 15px
+  background radial-gradient(ellipse at center, rgba(97, 79, 143, .15), transparent 76%)
+  text-align center
+
+  h3
+    margin 10px 0 5px
+    color #f5e5cf
+    font-size 20px
+    font-weight 850
+
+  p
+    margin 0
+    color #9694b8
+    font-size 12px
+
+.leaderboard-empty__emblem
+  display flex
+  align-items center
+  justify-content center
+  width 66px
+  height 66px
+  border 1px solid rgba(255, 200, 116, .52)
+  border-radius 50%
+  background radial-gradient(circle, rgba(237, 174, 82, .22), rgba(151, 79, 88, .06) 78%)
+  box-shadow 0 0 28px rgba(227, 156, 72, .13)
+  color #ffe0ac
+  font-size 30px
 
 .leaderboard-notice
   display flex
   flex-direction column
   align-items flex-start
   gap 10px
-  margin 16px 0
-  padding 15px
-  border 1px solid rgba(176, 143, 235, .24)
-  border-radius 10px
-  color #ddd1ef
+  margin 12px 0
+  padding 16px
+  border 1px solid rgba(172, 143, 214, .23)
+  border-radius 12px
+  background rgba(18, 24, 52, .62)
+  color #d3c9e2
   font-size 13px
-  line-height 1.5
+  line-height 1.55
 
 .leaderboard-publish
-  margin 0 0 16px
-  padding 11px 14px 14px
-  border 1px solid rgba(255, 205, 119, .29)
-  border-radius 12px
-  background rgba(255, 188, 83, .055)
-
-  h3
-    margin 0 0 10px
-    color var(--arcade-orange)
-    font-size 12px
-    letter-spacing .06em
+  margin 0 0 18px
+  padding 14px 15px
+  border 1px solid rgba(250, 191, 97, .5)
+  border-radius 13px
+  background linear-gradient(115deg, rgba(187, 117, 59, .19), rgba(57, 38, 61, .24))
+  box-shadow inset 3px 0 rgba(254, 197, 99, .63)
 
   p
-    margin 7px 0 13px
+    margin 7px 0 0
     color #c6b8df
-    font-size 12px
-    line-height 1.5
+    font-size 11px
+    line-height 1.55
 
-  form
-    display grid
-    gap 10px
-
-    label
-      font-size 13px
-      font-weight 700
-
-    input
-      width 100%
-      min-height 40px
-      padding 9px 12px
-      border 1px solid rgba(181, 155, 236, .56)
-      border-radius 9px
-      background #11182e
-      color #fff
-      font inherit
-
-    button
-      justify-self start
-
-.leaderboard-publish .leaderboard-error
-  color #ffb3bf
-
-.leaderboard-disclaimer
-  margin 17px 0 0
-  color #9c96b9
-  font-size 11px
-  line-height 1.5
-
-@media (max-width: 480px)
-  .leaderboard-backdrop
-    padding 7px
-
-  .leaderboard-dialog
-    max-height 96dvh
-    padding 16px
-    border-radius 14px
-
-  .leaderboard-entry
-    gap 7px
-    padding 9px 8px
-
-  .leaderboard-entry__name,
-  .leaderboard-entry__score
-    font-size 12px
-
-.leaderboard-local
+.leaderboard-publish__heading
   display flex
-  align-items center
   justify-content space-between
-  gap 12px
-  padding 11px 14px
-  margin 12px 0
-  border 1px solid rgba(255, 209, 122, .25)
-  border-radius 11px
-  background rgba(231, 174, 91, .08)
+  align-items center
+  gap 10px
+  margin-bottom 10px
 
-  span
-    color #c7c0d6
-    font-size 10px
-    font-weight 800
-    line-height 1.4
-    letter-spacing .07em
+  > span
+    color #ffdaac
+    font-size 11px
+    font-weight 850
+    letter-spacing .06em
 
-  strong
-    color var(--arcade-orange)
-    font-size 22px
+  > strong
+    color #fff6d9
+    font-size 20px
+    font-weight 900
     font-variant-numeric tabular-nums
+
+.leaderboard-publish__success
+  color #bcf1d8 !important
+
+.leaderboard-publish form
+  display grid
+  gap 9px
+
+  label
+    color #f3e7f0
+    font-size 12px
+    font-weight 750
+
+.leaderboard-publish__form-row
+  display flex
+  flex-wrap wrap
+  gap 7px
+
+  input
+    flex 1 1 180px
+    min-width 0
+    min-height 40px
+    padding 9px 11px
+    border 1px solid rgba(185, 155, 236, .57)
+    border-radius 9px
+    background #11182e
+    color #fff
+    font inherit
+    font-size 13px
+
+    &:focus-visible
+      outline 2px solid var(--arcade-orange)
+
+  button
+    min-height 39px
+
+.leaderboard-error
+  color #ffabb9 !important
 
 .leaderboard-preferences
   display flex
@@ -317,20 +651,20 @@
   flex-wrap wrap
   justify-content space-between
   gap 9px
-  margin-top 10px
-  padding 10px 2px
+  margin-top 14px
+  padding 10px 2px 0
 
   label
     display flex
     align-items center
     gap 8px
-    font-size 12px
-    color #ddd2ed
+    color #b1abc8
+    font-size 11px
     cursor pointer
 
   input
-    width 17px
-    height 17px
+    width 16px
+    height 16px
     accent-color var(--arcade-orange)
 
   .leaderboard-error
@@ -341,7 +675,7 @@
   padding 3px 0
   border 0
   background transparent
-  color #b2d8ed
+  color #a1b6d3
   font inherit
   font-size 11px
   text-decoration underline
@@ -355,6 +689,23 @@
     outline 2px solid var(--arcade-orange)
     outline-offset 3px
 
+.leaderboard-disclaimer
+  margin 10px 0 0
+  color #797a9c
+  font-size 10px
+  line-height 1.5
+
+.leaderboard-demo-notice
+  margin 9px 0 15px
+  padding 9px 12px
+  border 1px solid rgba(255, 205, 119, .42)
+  border-radius 9px
+  background rgba(255, 205, 119, .07)
+  color #ffdda4
+  font-size 11px
+  font-weight 800
+  line-height 1.5
+
 .game-state-overlay__record
   margin 8px 0
   color var(--arcade-orange)
@@ -362,6 +713,112 @@
   font-weight 900
   letter-spacing .13em
   text-shadow 0 0 15px rgba(255, 191, 104, .26)
+
+@media (max-width: 540px)
+  .leaderboard-backdrop
+    align-items flex-end
+    padding 0
+
+  .leaderboard-dialog
+    width 100%
+    max-height 96dvh
+    padding 21px 16px unquote('calc(19px + env(safe-area-inset-bottom, 0px))')
+    border-radius 22px 22px 0 0
+    border-bottom 0
+
+  .leaderboard-header
+    margin-bottom 16px
+
+  .leaderboard-header h2
+    font-size clamp(23px, 6.4vw, 32px)
+
+  .leaderboard-controls
+    gap 6px
+    margin-bottom 17px
+
+  .leaderboard-tabs
+    gap 2px
+    padding 3px
+
+    button
+      min-height 38px
+      padding 6px 2px
+      font-size 11px
+
+  .leaderboard-tabs--period button
+    font-size 10px
+
+  .leaderboard-podium
+    gap 5px
+
+  .leaderboard-podium__button
+    min-height 142px
+    padding 10px 4px
+
+  .leaderboard-podium__slot--1 .leaderboard-podium__button
+    min-height 165px
+
+  .leaderboard-podium__name
+    font-size 11px
+
+  .leaderboard-podium__score
+    font-size clamp(13px, 3.8vw, 19px)
+
+  .leaderboard-podium__medal
+    width 30px
+    height 30px
+
+  .leaderboard-podium__slot--1 .leaderboard-podium__medal
+    width 37px
+    height 37px
+
+  .leaderboard-run-details
+    grid-template-columns repeat(3, minmax(0, 1fr))
+    gap 11px 8px
+
+  .leaderboard-entry__main
+    grid-template-columns 24px minmax(0, 1fr) auto 13px
+    gap 6px
+    padding 10px 9px
+
+  .leaderboard-entry__details
+    padding 0 10px 12px 38px
+
+  .leaderboard-section-heading--top
+    margin-bottom 10px
+
+  .leaderboard-publish
+    padding 12px
+
+  .leaderboard-personal
+    padding 12px
+
+@media (max-width: 370px)
+  .leaderboard-header h2
+    font-size 22px
+
+  .leaderboard-kicker
+    font-size 9px
+
+  .leaderboard-tabs button
+    font-size 10px
+
+  .leaderboard-tabs--period button
+    font-size 9px
+
+  .leaderboard-podium__score
+    font-size 12px
+
+  .leaderboard-badge
+    font-size 8px
+    padding 1px 3px
+
+  .leaderboard-entry__score
+    font-size 12px
+
+@media (min-width: 541px) and (max-width: 920px)
+  .leaderboard-dialog
+    max-height 90dvh
 
 @media (max-width: 420px)
   // Four header actions must fit without stealing height from the game well.
@@ -386,15 +843,7 @@
     width 16px
     height 16px
 
-  .leaderboard-personal
-    gap 8px
-    padding 12px
-
-  .leaderboard-personal strong
-    font-size 19px
-
 @media (min-width: 921px) and (max-width: 1180px)
-  // Preserve horizontal space for the mode selector on small desktops.
   .header-actions .arcade-button
     flex 0 0 auto
     width 41px
@@ -410,21 +859,8 @@
     width 19px
     height 19px
 
-.leaderboard-demo-label
-  display inline-block
-  margin-top 6px
-  color #bce8fa
-  font-size 10px
-  font-weight 800
-  letter-spacing .09em
-
-.leaderboard-demo-notice
-  margin 10px 0
-  padding 9px 12px
-  border 1px solid rgba(255, 205, 119, .4)
-  border-radius 8px
-  background rgba(255, 205, 119, .07)
-  color #ffdda4
-  font-size 12px
-  font-weight 700
-  line-height 1.5
+@media (prefers-reduced-motion: reduce)
+  .leaderboard-podium__slot,
+  .leaderboard-tabs button,
+  .leaderboard-entry__chevron
+    transition none
