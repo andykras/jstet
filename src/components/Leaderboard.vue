@@ -166,20 +166,7 @@
                          class="leaderboard-podium__you">YOU</small>
                 </span>
                 <strong class="leaderboard-podium__score">{{ formatLeaderboardScore(entry.score) }}</strong>
-                <span class="leaderboard-podium__tags">
-                  <span v-if="entry.hardDrop === true"
-                        class="leaderboard-badge leaderboard-badge--hard"
-                        title="Hard drop">HD</span>
-                  <span v-if="entry.singleBlock === true"
-                        class="leaderboard-badge"
-                        title="One-at-a-time clearing">1×1</span>
-                  <span v-else-if="entry.singleBlock === false"
-                        class="leaderboard-badge"
-                        title="All-at-once clearing">ALL</span>
-                  <span v-if="entry.hardDrop == null && entry.singleBlock == null"
-                        class="leaderboard-badge leaderboard-badge--legacy"
-                        title="Run settings were not recorded for this older score">OLD SCORE</span>
-                </span>
+                <LeaderboardRunBadges :entry="entry" />
                 <span class="leaderboard-podium__hint"
                       aria-hidden="true">{{ expandedId === entry.playerId ? '−' : '+' }} details</span>
               </button>
@@ -200,22 +187,8 @@
               <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
               <strong>{{ profile.nickname }}</strong>
               <span class="leaderboard-personal__best">Best · {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
-              <span v-if="!loading && !loadError && mine"
-                    class="leaderboard-personal__badges"
-                    aria-label="Options for your best published run">
-                <span v-if="mine.hardDrop === true"
-                      class="leaderboard-badge leaderboard-badge--hard"
-                      title="Hard drop">HD</span>
-                <span v-if="mine.singleBlock === true"
-                      class="leaderboard-badge"
-                      title="One-at-a-time clearing">1×1</span>
-                <span v-else-if="mine.singleBlock === false"
-                      class="leaderboard-badge"
-                      title="All-at-once clearing">ALL</span>
-                <span v-if="mine.hardDrop == null && mine.singleBlock == null"
-                      class="leaderboard-badge leaderboard-badge--legacy"
-                      title="Run settings were not recorded for this older score">OLD SCORE</span>
-              </span>
+              <LeaderboardRunBadges v-if="!loading && !loadError && mine"
+                                   :entry="mine" />
             </div>
             <div class="leaderboard-personal__position">
               <span>RANK</span>
@@ -247,20 +220,7 @@
                   <span class="leaderboard-entry__name">
                     {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
                   </span>
-                  <span class="leaderboard-entry__tags">
-                    <span v-if="entry.hardDrop === true"
-                          class="leaderboard-badge leaderboard-badge--hard"
-                          title="Hard drop">HD</span>
-                    <span v-if="entry.singleBlock === true"
-                          class="leaderboard-badge"
-                          title="One-at-a-time clearing">1×1</span>
-                    <span v-else-if="entry.singleBlock === false"
-                          class="leaderboard-badge"
-                          title="All-at-once clearing">ALL</span>
-                    <span v-if="entry.hardDrop == null && entry.singleBlock == null"
-                          class="leaderboard-badge leaderboard-badge--legacy"
-                          title="Run settings were not recorded for this older score">OLD SCORE</span>
-                  </span>
+                  <LeaderboardRunBadges :entry="entry" />
                 </span>
                 <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
                 <svg class="leaderboard-entry__chevron"
@@ -339,6 +299,7 @@
 <script>
 import { canRankRun, formatLeaderboardScore, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
 import LeaderboardRunDetails from '@/components/LeaderboardRunDetails.vue'
+import LeaderboardRunBadges from '@/components/LeaderboardRunBadges.vue'
 import { queueLeaderboardRun, clearQueuedLeaderboardRuns } from '@/utils/leaderboardOutbox.js'
 import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
@@ -350,7 +311,7 @@ import {
 
 export default {
   name: 'LeaderboardPanel',
-  components: { LeaderboardRunDetails },
+  components: { LeaderboardRunDetails, LeaderboardRunBadges },
   props: {
     defaultMode: { type: String, default: 'tetcolor' },
     pendingRun: { type: Object, default: null },
