@@ -98,8 +98,11 @@ export const fetchLeaderboard = async(mode, period, player = readLeaderboardPlay
     '/api/v1/leaderboard?mode=' + encodeURIComponent(mode) + '&period=' + encodeURIComponent(period),
     { token: player?.token }
   )
+  if (!Array.isArray(data.entries)) {
+    throw new Error('Unexpected leaderboard response. The game remains available offline.')
+  }
   const target = storage()
-  if (target && Array.isArray(data.entries)) {
+  if (target) {
     try {
       const cache = JSON.parse(target.getItem(CACHE_KEY) || '{}')
       cache[mode + ':' + period] = { data, playerId: player?.id || null, cachedAtMs: Date.now() }
