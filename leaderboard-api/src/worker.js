@@ -103,20 +103,21 @@ const createPlayer = async (request, env) => {
 }
 
 const rankQuery = `
-  WITH best AS (
-    SELECT player_id, MAX(score) AS best_score
+  WITH per_player AS (
+    SELECT player_id, score, cleared, level, duration_ms, hard_drop, single_block,
+      ROW_NUMBER() OVER (
+        PARTITION BY player_id ORDER BY score DESC, created_ms ASC, id ASC
+      ) AS best_index
     FROM scores
     WHERE mode = ? AND ruleset = ? AND created_ms >= ?
-    GROUP BY player_id
   ), ranked AS (
-    SELECT players.id AS player_id, players.nickname, best.best_score AS score,
-      scores.cleared, scores.level, scores.duration_ms,
-      scores.hard_drop, scores.single_block,
-      ROW_NUMBER() OVER (ORDER BY best.best_score DESC, players.id ASC) AS position
-    FROM best
-    JOIN players ON players.id = best.player_id
-    JOIN scores ON scores.player_id = best.player_id AND scores.score = best.best_score
-    GROUP BY players.id
+    SELECT players.id AS player_id, players.nickname,
+      per_player.score, per_player.cleared, per_player.level, per_player.duration_ms,
+      per_player.hard_drop, per_player.single_block,
+      ROW_NUMBER() OVER (ORDER BY per_player.score DESC, players.id ASC) AS position
+    FROM per_player
+    JOIN players ON players.id = per_player.player_id
+    WHERE per_player.best_index = 1
   )
 `
 
