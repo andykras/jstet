@@ -5,7 +5,8 @@
       <label class="legacy-options__field">
         <span>Skin</span>
         <select v-model.number="theme"
-                aria-label="Legacy visual skin">
+                aria-label="Legacy visual skin"
+                @change="focusGameField">
           <option :value="1">1 · Symbols</option>
           <option :value="2">2 · ASCII</option>
           <option :value="3">3 · Text</option>
@@ -14,17 +15,19 @@
       </label>
       <label class="legacy-options__field">
         <input type="checkbox"
-               v-model="linesAnimated">
+               v-model="linesAnimated"
+               @change="focusGameField">
         Animate line clears (A)
       </label>
       <label class="legacy-options__field">
         <input type="checkbox"
-               v-model="dropSoft">
+               v-model="dropSoft"
+               @change="focusGameField">
         Soft drop (S)
       </label>
       <button type="button"
               class="arcade-button"
-              @click="newGame">New Game</button>
+              @click="restartFromControls">New Game</button>
     </section>
     <div class="main">
     <div class="info">
@@ -44,7 +47,11 @@
         </div>
       </div>
     </div>
-    <div class="stakan stakan--board">
+    <div ref="gameField"
+         class="stakan stakan--board"
+         role="group"
+         aria-label="Legacy game field: use arrow keys to move, Space to drop"
+         tabindex="0">
       <div class="dupa"
            :class="{end:!gameActive}">ДУПА</div>
       <div v-for="y in cells.height"
@@ -281,8 +288,22 @@ export default {
   mounted() {
     this.curTet = Math.floor(Math.random() * this.tets.length)
     this.nextTet = Math.floor(Math.random() * this.tets.length)
+    // Entering Legacy via the mode button leaves that button focused.
+    // Restore game keyboard controls without requiring a click on the well.
+    this.focusGameField()
   },
   methods: {
+    focusGameField() {
+      // Wait until the setting's native change/click event has completed.
+      // Keep keyboard focus out of Legacy's select and checkboxes while playing.
+      this.$nextTick(() => {
+        if (!this.disposed) this.$refs.gameField?.focus({ preventScroll: true })
+      })
+    },
+    restartFromControls() {
+      this.newGame()
+      this.focusGameField()
+    },
     isLabControl(target) {
       return Boolean(target && target.closest && target.closest('.legacy-options, button'))
     },
@@ -703,8 +724,8 @@ export default {
     &.N5,
     &.N6,
     &.N7
-      background-color #222
-      color #fff
+      background-color #b9b9b9
+      color #202020
 
     &.N8
       background-color #bfbfbf
