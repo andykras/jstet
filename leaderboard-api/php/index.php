@@ -216,8 +216,9 @@ function publish_score(): never
         }
 
         $week = (string)week_start_utc($now);
-        $hardDrop = ($run['hardDrop'] ?? null) === true;
-        $singleBlock = ($run['singleBlock'] ?? true) !== false;
+        // Older clients may omit these display-only settings; do not guess them.
+        $hardDrop = $run['hardDrop'] ?? null;
+        $singleBlock = $run['singleBlock'] ?? null;
         foreach (['all', $week] as $bucket) {
             $key = $id . '|' . $run['mode'] . '|' . $bucket;
             $best = $state['bests'][$key] ?? null;
