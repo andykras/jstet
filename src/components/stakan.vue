@@ -671,6 +671,14 @@ export default {
         &.N9
           background-color #eee
 
+  .stakan--board
+    &:focus
+      outline none
+
+    &:focus-visible
+      outline 2px solid rgba(255, 205, 126, .82)
+      outline-offset 4px
+
   .next
     padding 7px
     border 1px solid rgba(211, 190, 250, .28)
