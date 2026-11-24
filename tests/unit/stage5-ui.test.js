@@ -73,7 +73,7 @@ test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', 
   assert.ok(legacy.includes("'legacy-screen--colors': theme === 4"))
   assert.ok(legacy.includes('.legacy-screen:not(.legacy-screen--colors)'))
   for (const token of ['&.N1,', '&.N2,', '&.N3,', '&.N4,', '&.N5,', '&.N6,', '&.N7',
-    'background-color #222', 'color #fff', 'background-color #f7f7f7']) {
+    'background-color #b9b9b9', 'color #202020', 'background-color #f7f7f7']) {
     assert.ok(legacy.includes(token), token)
   }
   assert.ok(legacy.includes('if (p >= 1 && p <= 4)'))
@@ -86,6 +86,20 @@ test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', 
   }
   assert.ok(legacy.includes('Animate line clears (A)'))
   assert.ok(legacy.includes('Soft drop (S)'))
+})
+
+test('Legacy playfield retains arrow keys after entering the mode or changing options', () => {
+  const legacy = read('src/components/stakan.vue')
+  assert.match(legacy, /ref="gameField"[\\s\\S]*?tabindex="0"/)
+  assert.ok(legacy.includes('this.focusGameField()'))
+  assert.ok(legacy.includes("this.$refs.gameField?.focus({ preventScroll: true })"))
+  assert.equal((legacy.match(/@change="focusGameField"/g) || []).length, 3)
+  assert.ok(legacy.includes('@click="restartFromControls"'))
+  assert.ok(legacy.includes('restartFromControls()'))
+  // Keep native Select and checkbox keyboard controls when they own focus.
+  assert.ok(legacy.includes('shouldIgnoreGameInput(e.target) || this.isLabControl(e.target)'))
+  assert.ok(legacy.includes('&:focus-visible'))
+  assert.ok(legacy.includes('outline-offset 4px'))
 })
 
 test('Legacy next piece is centered within a transparent fixed 4x4 preview', () => {
