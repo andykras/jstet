@@ -35,6 +35,16 @@ test('build ID stays inside the cabinet rather than the viewport border', () => 
   assert.match(shell, /\.arcade-console\n  position relative/)
 })
 
+test('portrait bonus is lifted into the visible stage instead of hiding below the viewport', () => {
+  const mobile = read('src/styles/arcade-mobile-maxfit.styl')
+  const portrait = mobile.slice(mobile.indexOf('@media (max-width: 920px) and (orientation: portrait)'))
+  assert.match(portrait, /\.right-column \.game-hud \.hud-stat--bonus\n\s+top auto\n\s+bottom unquote\('clamp\(90px, 14dvh, 170px\)'\)/)
+  // Unlike desktop, the phone bonus is independently positioned over the stage.
+  const hud = read('src/components/GameHud.vue')
+  assert.match(hud, /<div v-if="section !== 'left'"\n\s+class="hud-footer">/)
+  assert.match(hud, /@media \(min-width: 921px\)/)
+})
+
 test('portrait mobile well gets breathing room above without shifting or clipping the board', () => {
   const mobile = read('src/styles/arcade-mobile-maxfit.styl')
   assert.match(mobile, /@media \(max-width: 920px\) and \(orientation: portrait\)/)
