@@ -10,17 +10,26 @@ export const canRankRun = run => Boolean(
   Number.isInteger(run.durationMs) && run.durationMs >= 1000
 )
 
-export const completedRun = ({ runId, mode, score, lines, level, durationMs }) => ({
+export const completedRun = ({ runId, mode, score, lines, level, durationMs, hardDrop, singleBlock }) => ({
   runId,
   mode,
   score,
   cleared: lines,
   level,
   durationMs,
-  ruleset: LEADERBOARD_RULESET
+  ruleset: LEADERBOARD_RULESET,
+  // Display options only: every finished game ranks in its mode regardless.
+  hardDrop: hardDrop === true,
+  singleBlock: singleBlock !== false
 })
 
 export const formatLeaderboardScore = value => Number(value || 0).toLocaleString('en-US')
+
+export const formatRunDuration = ms => {
+  const totalSeconds = Math.max(0, Math.floor((Number(ms) || 0) / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  return minutes + ':' + String(totalSeconds % 60).padStart(2, '0')
+}
 
 export const normalizeLeaderboardNickname = value => {
   if (typeof value !== 'string') return null

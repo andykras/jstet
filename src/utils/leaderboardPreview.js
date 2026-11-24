@@ -24,6 +24,11 @@ export const leaderboardPreviewEntries = (mode, period) => {
     playerId: 'demo-' + index,
     nickname: nicknames[index],
     rank: index + 1,
-    score
+    score,
+    cleared: 20 + ((index * 37) % 180),
+    level: index % 9,
+    durationMs: (4 + index) * 60000 + index * 7000,
+    hardDrop: index % 3 === 0,
+    singleBlock: index % 4 !== 3
   }))
 }

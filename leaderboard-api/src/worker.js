@@ -22,6 +22,10 @@ export const validateRun = run => {
   if (!run || typeof run !== 'object' || Array.isArray(run)) return 'Invalid game result.'
   if (!UUID.test(run.runId || '')) return 'Invalid run identifier.'
   if (!MODES.has(run.mode) || run.ruleset !== RULESET) return 'Invalid game mode or ruleset.'
+  // Display options ride along with the result; every finished game ranks.
+  for (const flag of ['hardDrop', 'singleBlock']) {
+    if (flag in run && typeof run[flag] !== 'boolean') return 'Invalid run options.'
+  }
   if (!Number.isSafeInteger(run.score) || run.score < 1 || run.score > 25000000) return 'Invalid score.'
   if (!Number.isSafeInteger(run.cleared) || run.cleared < 0 || run.cleared > 100000) return 'Invalid cleared count.'
   if (!Number.isSafeInteger(run.level) || run.level < 0 || run.level > 8) return 'Invalid level.'
@@ -106,10 +110,22 @@ const rankQuery = `
     GROUP BY player_id
   ), ranked AS (
     SELECT players.id AS player_id, players.nickname, best.best_score AS score,
+      scores.cleared, scores.level, scores.duration_ms,
+      scores.hard_drop, scores.single_block,
       ROW_NUMBER() OVER (ORDER BY best.best_score DESC, players.id ASC) AS position
-    FROM best JOIN players ON players.id = best.player_id
+    FROM best
+    JOIN players ON players.id = best.player_id
+    JOIN scores ON scores.player_id = best.player_id AND scores.score = best.best_score
+    GROUP BY players.id
   )
 `
+
+const toEntry = row => ({
+  playerId: row.player_id, nickname: row.nickname, score: row.score, rank: row.position,
+  cleared: row.cleared ?? null, level: row.level ?? null, durationMs: row.duration_ms ?? null,
+  hardDrop: row.hard_drop == null ? null : row.hard_drop === 1,
+  singleBlock: row.single_block == null ? null : row.single_block === 1
+})
 
 const leaderboard = async (request, env, url) => {
   const mode = url.searchParams.get('mode') || 'tetcolor'
@@ -117,20 +133,25 @@ const leaderboard = async (request, env, url) => {
   if (!MODES.has(mode) || !PERIODS.has(period)) return json({ error: 'Invalid ranking selection.' }, 400)
   const since = period === 'week' ? weekStartUtc() : 0
 
-  const rows = await env.DB.prepare(rankQuery + ' SELECT player_id, nickname, score, position FROM ranked ORDER BY position LIMIT ?')
+  const rows = await env.DB.prepare(rankQuery + ' SELECT * FROM ranked ORDER BY position LIMIT ?')
     .bind(mode, RULESET, since, TOP_SIZE).all()
   const player = await authenticatedPlayer(request, env)
   const myRow = player
-    ? await env.DB.prepare(rankQuery + ' SELECT score, position FROM ranked WHERE player_id = ?')
+    ? await env.DB.prepare(rankQuery + ' SELECT * FROM ranked WHERE player_id = ?')
       .bind(mode, RULESET, since, player.id).first()
     : null
   return json({
     mode, period, ruleset: RULESET,
     weekStartsAt: period === 'week' ? new Date(since).toISOString() : null,
-    entries: (rows.results || []).map(row => ({
-      playerId: row.player_id, nickname: row.nickname, score: row.score, rank: row.position
-    })),
-    mine: myRow ? { score: myRow.score, rank: myRow.position } : null
+    entries: (rows.results || []).map(toEntry),
+    mine: myRow
+      ? {
+        score: myRow.score, rank: myRow.position,
+        cleared: myRow.cleared ?? null, level: myRow.level ?? null, durationMs: myRow.duration_ms ?? null,
+        hardDrop: myRow.hard_drop == null ? null : myRow.hard_drop === 1,
+        singleBlock: myRow.single_block == null ? null : myRow.single_block === 1
+      }
+      : null
   })
 }
 
@@ -155,11 +176,12 @@ const postScore = async (request, env) => {
   // One row per player/run also protects against retries racing across requests.
   const saved = await env.DB.prepare(`
     INSERT OR IGNORE INTO scores
-      (id, player_id, run_id, mode, ruleset, score, cleared, level, duration_ms, created_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, player_id, run_id, mode, ruleset, score, cleared, level, duration_ms,
+       hard_drop, single_block, created_ms)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(), player.id, run.runId, run.mode, run.ruleset, run.score, run.cleared,
-    run.level, run.durationMs, now
+    run.level, run.durationMs, run.hardDrop === true ? 1 : 0, run.singleBlock !== false ? 1 : 0, now
   ).run()
   return json({ accepted: true, duplicate: saved.meta?.changes === 0 }, 201)
 }

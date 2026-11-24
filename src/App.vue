@@ -209,8 +209,6 @@
                aria-label="Score, blocks and bonus">
           <GameHud class="stats-column stats-column--right"
                    :mode="mode"
-                   :hard="hard"
-                   :single-block="preferences.singleBlock"
                    section="right" />
         </aside>
 
@@ -581,7 +579,9 @@ export default {
         score: this.$store.state.score,
         lines: this.$store.state.lines,
         level: this.$store.state.level,
-        durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime))
+        durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime)),
+        hardDrop: this.hard,
+        singleBlock: this.preferences.singleBlock
       })
       this.lastRun = run
       const personal = recordPersonalBest(run)

@@ -87,12 +87,9 @@
   list-style none
 
 .leaderboard-entry
-  display grid
-  grid-template-columns 30px minmax(0, 1fr) auto
-  align-items center
-  gap 12px
   min-height 43px
-  padding 9px 13px
+  padding 0
+  border 0
   border-radius 10px
   background rgba(29, 35, 66, .75)
 
@@ -104,6 +101,64 @@
 
   &:nth-child(3)
     background rgba(150, 90, 59, .16)
+
+.leaderboard-entry--open
+  background rgba(38, 48, 92, .9)
+
+.leaderboard-entry__main
+  display grid
+  grid-template-columns 30px minmax(0, 1fr) auto
+  align-items center
+  gap 12px
+  width 100%
+  min-height 43px
+  padding 9px 13px
+  border 0
+  border-radius 10px
+  background transparent
+  color inherit
+  font inherit
+  text-align left
+  cursor pointer
+
+  &:focus-visible
+    outline 2px solid var(--arcade-orange)
+    outline-offset 2px
+
+.leaderboard-entry__details
+  display flex
+  flex-wrap wrap
+  gap 4px 14px
+  padding 2px 13px 11px 55px
+  color #b9b4d0
+  font-size 11px
+  line-height 1.5
+  font-variant-numeric tabular-nums
+
+.leaderboard-badge
+  display inline-block
+  margin-left 7px
+  padding 1px 6px
+  border 1px solid rgba(181, 155, 236, .5)
+  border-radius 20px
+  color #cdbcf0
+  font-size 9px
+  font-weight 800
+  letter-spacing .06em
+  vertical-align 1px
+  white-space nowrap
+
+.leaderboard-badge--hard
+  border-color rgba(255, 205, 119, .65)
+  color #ffd479
+
+.leaderboard-personal__badges
+  display flex
+  gap 0
+
+  .leaderboard-badge
+    margin-left 0
+    margin-right 7px
 
 .leaderboard-entry--mine
   outline 1px solid rgba(131, 223, 250, .75)

@@ -120,12 +120,36 @@
           <li v-for="entry in entries"
               :key="entry.playerId"
               class="leaderboard-entry"
-              :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id }">
-            <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
-            <span class="leaderboard-entry__name">
-              {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
-            </span>
-            <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
+              :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id,
+                        'leaderboard-entry--open': expandedId === entry.playerId }">
+            <button type="button"
+                    class="leaderboard-entry__main"
+                    :aria-expanded="expandedId === entry.playerId"
+                    :aria-label="entry.nickname + ', ' + formatLeaderboardScore(entry.score) + '. Show run details.'"
+                    @click="toggleEntry(entry.playerId)">
+              <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
+              <span class="leaderboard-entry__name">
+                {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
+                <span v-if="entry.hardDrop === true"
+                      class="leaderboard-badge leaderboard-badge--hard"
+                      title="Finished with hard drop">HD</span>
+                <span v-if="entry.singleBlock === true"
+                      class="leaderboard-badge"
+                      title="Cleared one at a time">1×1</span>
+                <span v-else-if="entry.singleBlock === false"
+                      class="leaderboard-badge"
+                      title="Cleared all at once">ALL</span>
+              </span>
+              <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
+            </button>
+            <div v-if="expandedId === entry.playerId"
+                 class="leaderboard-entry__details">
+              <span>{{ mode === 'classic' ? 'Lines' : 'Blocks' }} {{ entry.cleared ?? '—' }}</span>
+              <span>Level {{ entry.level == null ? '—' : entry.level + 1 }}</span>
+              <span>{{ entry.durationMs == null ? '—' : formatRunDuration(entry.durationMs) }}</span>
+              <span>{{ entry.hardDrop === true ? 'Hard drop' : 'Soft drop' }}</span>
+              <span>{{ entry.singleBlock === false ? 'All at once' : 'One at a time' }}</span>
+            </div>
           </li>
         </ol>
         <p v-else
@@ -136,6 +160,15 @@
           <div>
             <span>Online best · {{ profile.nickname }}</span>
             <strong>{{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</strong>
+            <span v-if="!loading && !loadError && mine && (mine.hardDrop === true || mine.singleBlock != null)"
+                  class="leaderboard-personal__badges">
+              <span v-if="mine.hardDrop === true"
+                    class="leaderboard-badge leaderboard-badge--hard">HD</span>
+              <span v-if="mine.singleBlock === true"
+                    class="leaderboard-badge">1×1</span>
+              <span v-else-if="mine.singleBlock === false"
+                    class="leaderboard-badge">ALL</span>
+            </span>
           </div>
           <div>
             <span>Your rank</span>
@@ -170,7 +203,7 @@
 </template>
 
 <script>
-import { canRankRun, formatLeaderboardScore, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
+import { canRankRun, formatLeaderboardScore, formatRunDuration, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
 import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
@@ -203,6 +236,7 @@ export default {
       publishing: false,
       publishError: '',
       profileError: '',
+      expandedId: null,
       sequence: 0
     }
   },
@@ -228,12 +262,17 @@ export default {
   methods: {
     canRankRun,
     formatLeaderboardScore,
+    formatRunDuration,
+    toggleEntry(playerId) {
+      this.expandedId = this.expandedId === playerId ? null : playerId
+    },
     async refresh() {
       if (this.preview) {
         this.sequence++
         this.loading = false
         this.loadError = ''
         this.mine = null
+        this.expandedId = null
         this.entries = leaderboardPreviewEntries(this.mode, this.period)
         return
       }
@@ -243,6 +282,7 @@ export default {
       this.loadError = ''
       this.entries = []
       this.mine = null
+      this.expandedId = null
       try {
         const result = await fetchLeaderboard(this.mode, this.period, this.profile)
         if (requestId !== this.sequence) return

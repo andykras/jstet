@@ -5,7 +5,8 @@ import {
   LEADERBOARD_RULESET,
   canRankRun,
   completedRun,
-  formatLeaderboardScore
+  formatLeaderboardScore,
+  formatRunDuration
 } from '../../src/utils/leaderboardRules.js'
 import { readLeaderboardPlayer } from '../../src/utils/leaderboardClient.js'
 
@@ -32,7 +33,13 @@ test('the leaderboard dialog keeps a compact width on desktop', () => {
 test('the competitive run preserves the engine score and declares the scoring contract', () => {
   assert.deepEqual(completedRun(run), {
     runId: run.runId, mode: 'tetcolor', score: 12000,
-    cleared: 45, level: 3, durationMs: 123000, ruleset: LEADERBOARD_RULESET
+    cleared: 45, level: 3, durationMs: 123000, ruleset: LEADERBOARD_RULESET,
+    hardDrop: false, singleBlock: true
+  })
+  assert.deepEqual(completedRun({ ...run, hardDrop: true, singleBlock: false }), {
+    runId: run.runId, mode: 'tetcolor', score: 12000,
+    cleared: 45, level: 3, durationMs: 123000, ruleset: LEADERBOARD_RULESET,
+    hardDrop: true, singleBlock: false
   })
   assert.equal(canRankRun(run), true)
   assert.equal(canRankRun({ ...run, mode: 'classic' }), true)
@@ -44,6 +51,13 @@ test('both clearing settings are ranked; empty or invalid games are not', () => 
   assert.equal(canRankRun({ ...run, mode: 'legacy' }), false)
   assert.equal(canRankRun({ ...run, durationMs: 0 }), false)
   assert.equal(formatLeaderboardScore(12345), '12,345')
+})
+
+test('run durations render as compact minutes and seconds', () => {
+  assert.equal(formatRunDuration(5000), '0:05')
+  assert.equal(formatRunDuration(65000), '1:05')
+  assert.equal(formatRunDuration(3600000), '60:00')
+  assert.equal(formatRunDuration(-100), '0:00')
 })
 
 test('anonymous player credentials are only loaded from a valid stored record', () => {

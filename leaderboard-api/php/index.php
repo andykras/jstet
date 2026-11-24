@@ -85,6 +85,10 @@ function validate_run(mixed $run): ?string
         ($run['ruleset'] ?? null) !== RULESET) {
         return 'Invalid game mode or ruleset.';
     }
+    // Display options ride along with the result; every finished game ranks.
+    foreach (['hardDrop', 'singleBlock'] as $flag) {
+        if (array_key_exists($flag, $run) && !is_bool($run[$flag])) return 'Invalid run options.';
+    }
     foreach ([['score', 1, 25000000], ['cleared', 0, 100000], ['level', 0, 8]] as [$key, $min, $max]) {
         $value = $run[$key] ?? null;
         if (!is_int($value) || $value < $min || $value > $max) return 'Invalid ' . $key . '.';
@@ -212,6 +216,8 @@ function publish_score(): never
         }
 
         $week = (string)week_start_utc($now);
+        $hardDrop = ($run['hardDrop'] ?? null) === true;
+        $singleBlock = ($run['singleBlock'] ?? true) !== false;
         foreach (['all', $week] as $bucket) {
             $key = $id . '|' . $run['mode'] . '|' . $bucket;
             $best = $state['bests'][$key] ?? null;
@@ -224,6 +230,8 @@ function publish_score(): never
                     'cleared' => $run['cleared'],
                     'level' => $run['level'],
                     'durationMs' => $run['durationMs'],
+                    'hardDrop' => $hardDrop,
+                    'singleBlock' => $singleBlock,
                     'createdMs' => $now
                 ];
             }
@@ -265,7 +273,12 @@ function leaderboard(): never
             $ranked[] = [
                 'playerId' => $id,
                 'nickname' => $state['players'][$id]['nickname'] ?? '—',
-                'score' => $best['score']
+                'score' => $best['score'],
+                'cleared' => $best['cleared'] ?? null,
+                'level' => $best['level'] ?? null,
+                'durationMs' => $best['durationMs'] ?? null,
+                'hardDrop' => $best['hardDrop'] ?? null,
+                'singleBlock' => $best['singleBlock'] ?? null
             ];
         }
         usort($ranked, fn(array $a, array $b): int => $b['score'] <=> $a['score'] ?: strcmp($a['playerId'], $b['playerId']));
@@ -273,7 +286,15 @@ function leaderboard(): never
         $player = find_player($state);
         foreach ($ranked as $index => $row) {
             if ($player !== null && $row['playerId'] === $player['id']) {
-                $mine = ['score' => $row['score'], 'rank' => $index + 1];
+                $mine = [
+                    'score' => $row['score'],
+                    'rank' => $index + 1,
+                    'cleared' => $row['cleared'],
+                    'level' => $row['level'],
+                    'durationMs' => $row['durationMs'],
+                    'hardDrop' => $row['hardDrop'],
+                    'singleBlock' => $row['singleBlock']
+                ];
                 break;
             }
         }
@@ -287,7 +308,12 @@ function leaderboard(): never
             'playerId' => $row['playerId'],
             'nickname' => $row['nickname'],
             'score' => $row['score'],
-            'rank' => $index + 1
+            'rank' => $index + 1,
+            'cleared' => $row['cleared'] ?? null,
+            'level' => $row['level'] ?? null,
+            'durationMs' => $row['durationMs'] ?? null,
+            'hardDrop' => $row['hardDrop'] ?? null,
+            'singleBlock' => $row['singleBlock'] ?? null
         ];
     }
     respond([
