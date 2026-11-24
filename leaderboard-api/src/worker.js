@@ -1,6 +1,7 @@
 // A minimal, separate Cloudflare Worker: the game never needs a backend to play.
 const RULESET = 'arcade-v1'
 const MODES = new Set(['tetcolor', 'classic'])
+const PLATFORMS = new Set(['mobile', 'desktop'])
 const PERIODS = new Set(['week', 'all'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_BODY_SIZE = 2048
@@ -26,6 +27,7 @@ export const validateRun = run => {
   for (const flag of ['hardDrop', 'singleBlock']) {
     if (flag in run && typeof run[flag] !== 'boolean') return 'Invalid run options.'
   }
+  if ('platform' in run && !PLATFORMS.has(run.platform)) return 'Invalid device platform.'
   if (!Number.isSafeInteger(run.score) || run.score < 1 || run.score > 25000000) return 'Invalid score.'
   if (!Number.isSafeInteger(run.cleared) || run.cleared < 0 || run.cleared > 100000) return 'Invalid cleared count.'
   if (!Number.isSafeInteger(run.level) || run.level < 0 || run.level > 8) return 'Invalid level.'
@@ -108,7 +110,7 @@ const createPlayer = async (request, env) => {
 
 const rankQuery = `
   WITH per_player AS (
-    SELECT player_id, score, cleared, level, duration_ms, hard_drop, single_block,
+    SELECT player_id, score, cleared, level, duration_ms, hard_drop, single_block, platform,
       ROW_NUMBER() OVER (
         PARTITION BY player_id ORDER BY score DESC, created_ms ASC, id ASC
       ) AS best_index
@@ -117,7 +119,7 @@ const rankQuery = `
   ), ranked AS (
     SELECT players.id AS player_id, players.nickname,
       per_player.score, per_player.cleared, per_player.level, per_player.duration_ms,
-      per_player.hard_drop, per_player.single_block,
+      per_player.hard_drop, per_player.single_block, per_player.platform,
       ROW_NUMBER() OVER (ORDER BY per_player.score DESC, players.id ASC) AS position
     FROM per_player
     JOIN players ON players.id = per_player.player_id
@@ -129,7 +131,8 @@ const toEntry = row => ({
   playerId: row.player_id, nickname: row.nickname, score: row.score, rank: row.position,
   cleared: row.cleared ?? null, level: row.level ?? null, durationMs: row.duration_ms ?? null,
   hardDrop: row.hard_drop == null ? null : row.hard_drop === 1,
-  singleBlock: row.single_block == null ? null : row.single_block === 1
+  singleBlock: row.single_block == null ? null : row.single_block === 1,
+  platform: row.platform ?? null
 })
 
 const leaderboard = async (request, env, url) => {
@@ -154,7 +157,8 @@ const leaderboard = async (request, env, url) => {
         score: myRow.score, rank: myRow.position,
         cleared: myRow.cleared ?? null, level: myRow.level ?? null, durationMs: myRow.duration_ms ?? null,
         hardDrop: myRow.hard_drop == null ? null : myRow.hard_drop === 1,
-        singleBlock: myRow.single_block == null ? null : myRow.single_block === 1
+        singleBlock: myRow.single_block == null ? null : myRow.single_block === 1,
+        platform: myRow.platform ?? null
       }
       : null
   })
@@ -182,14 +186,14 @@ const postScore = async (request, env) => {
   const saved = await env.DB.prepare(`
     INSERT OR IGNORE INTO scores
       (id, player_id, run_id, mode, ruleset, score, cleared, level, duration_ms,
-       hard_drop, single_block, completed_ms, created_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       hard_drop, single_block, platform, completed_ms, created_ms)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(), player.id, run.runId, run.mode, run.ruleset, run.score, run.cleared,
     run.level, run.durationMs,
     run.hardDrop == null ? null : (run.hardDrop ? 1 : 0),
     run.singleBlock == null ? null : (run.singleBlock ? 1 : 0),
-    run.completedAtMs ?? now, now
+    run.platform ?? null, run.completedAtMs ?? now, now
   ).run()
   return json({ accepted: true, duplicate: saved.meta?.changes === 0 }, 201)
 }
