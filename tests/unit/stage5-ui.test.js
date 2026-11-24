@@ -68,6 +68,19 @@ test('Legacy Lab retains all four skins and live animation/drop options', () => 
   assert.ok(legacy.includes("if (e.key == 's') this.dropSoft = !this.dropSoft"))
 })
 
+test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', () => {
+  const legacy = read('src/components/stakan.vue')
+  assert.ok(legacy.includes("'legacy-screen--colors': theme === 4"))
+  assert.ok(legacy.includes('.legacy-screen:not(.legacy-screen--colors)'))
+  for (const token of ['&.N1,', '&.N2,', '&.N3,', '&.N4,', '&.N5,', '&.N6,', '&.N7',
+    'background-color #222', 'color #fff', 'background-color #f7f7f7']) {
+    assert.ok(legacy.includes(token), token)
+  }
+  assert.ok(legacy.includes('if (p >= 1 && p <= 4)'))
+  assert.ok(legacy.includes('background-color: #8cff8c'))
+  assert.ok(legacy.includes('background-color: #4ff6ff'))
+})
+
 test('touch layout remains accessible in portrait and short landscape', () => {
   const base = read('src/styles/arcade-stage5.styl')
   const responsive = read('src/styles/arcade-responsive.styl')
