@@ -18,6 +18,10 @@
       <dd>{{ entry.hardDrop === true ? 'Hard' : entry.hardDrop === false ? 'Soft' : '—' }}</dd>
     </div>
     <div>
+      <dt>Device</dt>
+      <dd>{{ entry.platform === 'mobile' ? 'Phone / tablet' : entry.platform === 'desktop' ? 'Computer' : '—' }}</dd>
+    </div>
+    <div>
       <dt>Clearing</dt>
       <dd>{{ entry.singleBlock === true ? 'One by one' : entry.singleBlock === false ? 'All at once' : '—' }}</dd>
     </div>
