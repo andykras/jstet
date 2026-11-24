@@ -390,6 +390,8 @@ export default {
       queuedScores: pendingLeaderboardCount(),
       online: leaderboardOnline(),
       leaderboardSyncBusy: false,
+      leaderboardSyncClosed: false,
+      leaderboardRetryDelay: 15000,
       autoPaused: false,
       modernDispose: null,
       modernHandlers: [],
@@ -459,6 +461,7 @@ export default {
     this.$nextTick(() => this.syncQueuedScores())
   },
   beforeUnmount() {
+    this.leaderboardSyncClosed = true
     window.removeEventListener('resize', this.syncPreviewCellSize)
     window.removeEventListener('online', this.onLeaderboardOnline)
     window.removeEventListener('offline', this.onLeaderboardOffline)
@@ -616,13 +619,13 @@ export default {
 
     scheduleLeaderboardSync(delayMs) {
       clearTimeout(this.leaderboardSyncTimer)
-      if (this.online && this.queuedScores) {
+      if (this.online && this.queuedScores && !this.leaderboardSyncClosed) {
         this.leaderboardSyncTimer = setTimeout(() => this.syncQueuedScores(), delayMs)
       }
     },
 
     async syncQueuedScores() {
-      if (!leaderboardConfigured || !this.online || this.leaderboardSyncBusy) return
+      if (!leaderboardConfigured || !this.online || this.leaderboardSyncBusy || this.leaderboardSyncClosed) return
       const player = readLeaderboardPlayer()
       const run = queuedLeaderboardRuns(player)[0]
       this.queuedScores = pendingLeaderboardCount(player)
@@ -632,8 +635,11 @@ export default {
       try {
         await publishLeaderboardRun(run, player)
         removeQueuedLeaderboardRun(run.runId, player)
-        this.queuedScores = pendingLeaderboardCount(player)
-        if (this.lastRun?.runId === run.runId) this.scoreSubmission = { status: 'sent', error: '' }
+        this.queuedScores = pendingLeaderboardCount()
+        this.leaderboardRetryDelay = 15000
+        if (this.lastRun?.runId === run.runId && readLeaderboardPlayer()?.id === player.id) {
+          this.scoreSubmission = { status: 'sent', error: '' }
+        }
         // The PHP endpoint has a 10-second per-player publish interval.
         if (this.queuedScores) this.scheduleLeaderboardSync(11000)
       } catch (error) {
@@ -642,6 +648,11 @@ export default {
           this.scoreSubmission = { status: 'queued', error: error.message }
         }
         if (error.status === 429) this.scheduleLeaderboardSync(11000)
+        else if (!error.status || error.status >= 500) {
+          // Transient failures retry with bounded backoff while the page remains open.
+          this.scheduleLeaderboardSync(this.leaderboardRetryDelay)
+          this.leaderboardRetryDelay = Math.min(this.leaderboardRetryDelay * 2, 300000)
+        }
       } finally {
         this.leaderboardSyncBusy = false
       }
