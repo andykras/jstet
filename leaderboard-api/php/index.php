@@ -67,8 +67,13 @@ function new_uuid(): string
 function normalized_nickname(mixed $value): ?string
 {
     if (!is_string($value)) return null;
-    $nickname = trim(Normalizer::normalize($value, Normalizer::FORM_C) ?: $value);
-    return preg_match('/^[\p{L}\p{N}_-]{3,16}$/u', $nickname) ? $nickname : null;
+    $nickname = trim($value);
+    // intl is optional on the existing host; accepting nicknames must not depend on it.
+    if (class_exists(Normalizer::class)) {
+        $normalized = Normalizer::normalize($nickname, Normalizer::FORM_C);
+        if (is_string($normalized)) $nickname = $normalized;
+    }
+    return preg_match('/^[\\p{L}\\p{N}_-]{3,16}$/u', $nickname) ? $nickname : null;
 }
 
 function valid_uuid(string $value): bool
