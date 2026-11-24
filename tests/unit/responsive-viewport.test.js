@@ -39,11 +39,11 @@ test('compact screens keep touch controls and the complete board in the layout',
 test('header shortcuts, compact settings and pause flow are consistent', () => {
   const app = read('src/App.vue')
   const styles = read('src/styles/arcade-responsive.styl')
-  for (const label of ['New Game (N)', 'Pause (P)', 'Settings (S)', 'Resume (P)']) {
+  for (const label of ['New Game (N)', 'Pause (P)', 'Leaderboard (L)', 'Settings (S)', 'Resume (P)']) {
     assert.ok(app.includes(label), label)
   }
   for (const action of ["KeyN: () => this.createStakan()", "KeyP: () => gameBus.emit('pause')",
-    "KeyS: () => this.openSettings()"]) {
+    "KeyL: () => this.openLeaderboard()", "KeyS: () => this.openSettings()"]) {
     assert.ok(app.includes(action), action)
   }
   assert.doesNotMatch(app, /KeyY:|pendingMode|modalWasRunning|<footer class="arcade-footer">/)

@@ -87,10 +87,10 @@
           <button ref="leaderboardTrigger"
                   type="button"
                   class="arcade-button"
-                  aria-label="Leaderboard"
-                  title="Leaderboard"
+                  aria-label="Leaderboard (L)"
+                  title="Leaderboard (L)"
                   @click="openLeaderboard">
-            <span class="header-action__label">Leaderboard</span>
+            <span class="header-action__label">Leaderboard (L)</span>
             <svg class="header-action__icon"
                  viewBox="0 0 24 24"
                  fill="none"
@@ -734,6 +734,7 @@ export default {
         ArrowRight: () => gameBus.emit('right:start'),
         KeyN: () => this.createStakan(),
         KeyP: () => gameBus.emit('pause'),
+        KeyL: () => this.openLeaderboard(),
         KeyS: () => this.openSettings(),
         Space: () => gameBus.emit('drop', this.hard)
       }

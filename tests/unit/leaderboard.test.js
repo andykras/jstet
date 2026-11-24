@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   LEADERBOARD_RULESET,
   canRankRun,
@@ -7,6 +8,8 @@ import {
   formatLeaderboardScore
 } from '../../src/utils/leaderboardRules.js'
 import { readLeaderboardPlayer } from '../../src/utils/leaderboardClient.js'
+
+const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
 
 const run = {
   runId: '8bfdd69b-98dc-4a72-ac3e-d72c2c635483',
@@ -17,6 +20,14 @@ const run = {
   level: 3,
   durationMs: 123000
 }
+
+test('the leaderboard dialog keeps a compact width on desktop', () => {
+  const styles = read('src/styles/leaderboard.styl')
+  // Stylus evaluates its own min(), so the CSS function must be quoted through.
+  assert.match(styles, /width unquote\('min\(100%, 480px\)'\)/)
+  assert.match(styles, /max-height unquote\('min\(92dvh, 780px\)'\)/)
+  assert.doesNotMatch(styles, /width min\(100%/)
+})
 
 test('the competitive run preserves the engine score and declares the scoring contract', () => {
   assert.deepEqual(completedRun(run), {
