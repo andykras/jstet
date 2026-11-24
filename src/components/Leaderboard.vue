@@ -126,7 +126,7 @@
               <button type="button"
                       class="leaderboard-podium__button"
                       :aria-expanded="expandedId === entry.playerId"
-                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. Show run details.'"
+                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
                       @click="toggleEntry(entry.playerId)">
                 <span class="leaderboard-podium__medal"
                       aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
@@ -188,7 +188,7 @@
               <button type="button"
                       class="leaderboard-entry__main"
                       :aria-expanded="expandedId === entry.playerId"
-                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. Show run details.'"
+                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
                       @click="toggleEntry(entry.playerId)">
                 <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
                 <span class="leaderboard-entry__player">
