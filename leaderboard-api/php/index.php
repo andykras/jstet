@@ -100,6 +100,15 @@ function validate_run(mixed $run): ?string
     }
     $duration = $run['durationMs'] ?? null;
     if (!is_int($duration) || $duration < 1000 || $duration > 8 * 60 * 60 * 1000) return 'Invalid run duration.';
+    // Offline runs use their actual completion week, not the day connectivity returns.
+    // Older clients without this optional field continue using submission time.
+    if (array_key_exists('completedAtMs', $run)) {
+        $completed = $run['completedAtMs'];
+        $now = (int)round(microtime(true) * 1000);
+        if (!is_int($completed) || $completed < 1577836800000 || $completed > $now + 300000) {
+            return 'Invalid completion time.';
+        }
+    }
     return null;
 }
 
@@ -220,7 +229,8 @@ function publish_score(): never
             return ['error' => 'Please wait before publishing another result.', 'status' => 429];
         }
 
-        $week = (string)week_start_utc($now);
+        $completedAtMs = $run['completedAtMs'] ?? $now;
+        $week = (string)week_start_utc($completedAtMs);
         // Older clients may omit these display-only settings; do not guess them.
         $hardDrop = $run['hardDrop'] ?? null;
         $singleBlock = $run['singleBlock'] ?? null;
@@ -238,7 +248,7 @@ function publish_score(): never
                     'durationMs' => $run['durationMs'],
                     'hardDrop' => $hardDrop,
                     'singleBlock' => $singleBlock,
-                    'createdMs' => $now
+                    'createdMs' => $completedAtMs
                 ];
             }
         }
