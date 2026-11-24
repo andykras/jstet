@@ -23,14 +23,17 @@
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
-    <Transition name="bonus-hud">
-      <div v-if="section !== 'left' && mode === 'tetcolor' && displayBonus > 0"
-           class="hud-stat hud-stat--bonus">
-        <span class="hud-stat__label">Bonus</span>
-        <output class="hud-stat__number"
-                aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
-      </div>
-    </Transition>
+    <div v-if="section !== 'left'"
+         class="hud-footer">
+      <Transition name="bonus-hud">
+        <div v-if="mode === 'tetcolor' && displayBonus > 0"
+             class="hud-stat hud-stat--bonus">
+          <span class="hud-stat__label">Bonus</span>
+          <output class="hud-stat__number"
+                  aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
+        </div>
+      </Transition>
+    </div>
   </section>
 </template>
 
@@ -111,6 +114,18 @@ export default {
 .bonus-hud-leave-to
   opacity 0
   transform translateY(10px)
+
+// Keep the bonus bottom-anchored on the desktop rail.
+@media (min-width: 921px)
+  .right-column .game-hud .hud-footer
+    display flex
+    flex 0 0 auto
+    flex-direction column
+    gap clamp(9px, 1.5vh, 16px)
+    margin-top auto
+
+  .right-column .game-hud .hud-footer .hud-stat--bonus
+    margin-top 0
 
 @media (prefers-reduced-motion: reduce)
   .bonus-hud-enter-active,

@@ -96,6 +96,21 @@
     color #ffffff
     box-shadow inset 0 1px rgba(255, 255, 255, .25)
 
+// A little more air above the well in portrait, without translating the
+// board outside its sizing container. Padding reduces the available height
+// when necessary, so even short phones keep every playable row inside.
+@media (max-width: 920px) and (orientation: portrait)
+  .board-panel__well
+    padding-top clamp(22px, 3.5dvh, 34px)
+    padding-bottom 0
+
+  // The phone stage is taller than the centered board. Anchoring BONUS at
+  // the stage's bottom puts it below the visible screen on tall devices.
+  // Keep the card beside the well's lower portion instead of the page edge.
+  .right-column .game-hud .hud-stat--bonus
+    top auto
+    bottom unquote('clamp(90px, 14dvh, 170px)')
+
 @media (max-width: 370px)
   .game-layout
     --mobile-rail: clamp(59px, 17.5vw, 67px)
