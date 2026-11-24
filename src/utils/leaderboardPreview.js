@@ -29,6 +29,7 @@ export const leaderboardPreviewEntries = (mode, period) => {
     level: index % 9,
     durationMs: (4 + index) * 60000 + index * 7000,
     hardDrop: index % 3 === 0,
-    singleBlock: index % 4 !== 3
+    singleBlock: index % 4 !== 3,
+    platform: index % 3 === 1 ? 'mobile' : 'desktop'
   }))
 }
