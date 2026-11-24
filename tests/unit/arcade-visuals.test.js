@@ -19,7 +19,7 @@ test('pause and game-over overlays expose real actions and focus behavior', () =
   for (const token of ['<Transition name="state-overlay">', "status === 'paused' || status === 'gameOver'",
     'role="dialog"', 'aria-labelledby="game-state-heading"', 'ref="statePrimary"',
     "status === 'paused' ? togglePause() : createStakan()", 'status(value)',
-    '!this.settingsOpen && !this.naive']) {
+    '!this.settingsOpen && !this.leaderboardOpen && !this.naive']) {
     assert.ok(app.includes(token), token)
   }
 })
