@@ -34,3 +34,11 @@ test('build ID stays inside the cabinet rather than the viewport border', () => 
   assert.doesNotMatch(marker, /position fixed/)
   assert.match(shell, /\.arcade-console\n  position relative/)
 })
+
+test('portrait mobile well gets breathing room above without shifting or clipping the board', () => {
+  const mobile = read('src/styles/arcade-mobile-maxfit.styl')
+  assert.match(mobile, /@media \(max-width: 920px\) and \(orientation: portrait\)/)
+  assert.match(mobile, /\.board-panel__well\n\s+padding-top clamp\(22px, 3\.5dvh, 34px\)\n\s+padding-bottom 0/)
+  assert.match(mobile, /height 100%/)
+  assert.doesNotMatch(mobile, /\.board-panel__well\n\s+transform translateY/)
+})
