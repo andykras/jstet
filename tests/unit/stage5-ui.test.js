@@ -71,9 +71,12 @@ test('Legacy Lab retains all four skins and live animation/drop options', () => 
 test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', () => {
   const legacy = read('src/components/stakan.vue')
   assert.ok(legacy.includes("'legacy-screen--colors': theme === 4"))
+  assert.ok(legacy.includes("'legacy-screen--text': theme === 3"))
   assert.ok(legacy.includes('.legacy-screen:not(.legacy-screen--colors)'))
   for (const token of ['&.N1,', '&.N2,', '&.N3,', '&.N4,', '&.N5,', '&.N6,', '&.N7',
-    'background-color #b9b9b9', 'color #202020', 'background-color #f7f7f7']) {
+    'background-color #aebece', 'color #202020', 'background-color #f7f7f7',
+    '.legacy-screen.legacy-screen--text', 'background-color transparent',
+    'color #f3f0fa']) {
     assert.ok(legacy.includes(token), token)
   }
   assert.ok(legacy.includes('if (p >= 1 && p <= 4)'))
