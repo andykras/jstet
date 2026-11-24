@@ -232,6 +232,8 @@
                  :pending-count="queuedScores"
                  :online="online"
                  @queued="onScoreQueued"
+                 @sync="syncQueuedScores"
+                 @profile-forgotten="onLeaderboardProfileForgotten"
                  @close="closeLeaderboard" />
 
     <div v-if="settingsOpen"
@@ -586,6 +588,11 @@ export default {
       this.queuedScores = pendingLeaderboardCount()
       if (this.lastRun?.runId === runId) this.scoreSubmission = { status: 'queued', error: '' }
       this.syncQueuedScores()
+    },
+
+    onLeaderboardProfileForgotten() {
+      this.queuedScores = pendingLeaderboardCount()
+      this.scoreSubmission = { status: 'idle', error: '' }
     },
 
     onLeaderboardOnline() {
