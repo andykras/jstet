@@ -565,121 +565,132 @@ export default {
 </script>
 
 <style scoped lang="stylus">
-.main {
-  text-align: center
-  display: flex
-  // margin: auto
-  // flex-direction: row
-  justify-content: center
+.legacy-screen
+  // A 20-row well must fit below the Arcade header and Legacy controls.
+  // Keep the cell size responsive without ever changing engine dimensions.
+  --legacy-cell-size unquote('clamp(12px, min(25px, calc((100dvh - 265px) / 20), calc((100vw - 195px) / 12)), 25px)')
+  --legacy-preview-cell-size unquote('min(22px, var(--legacy-cell-size))')
+  width 100%
+  max-width 100%
 
-  .info {
-    display: flex
-    // padding: 1rem
-    flex-direction: column
-    min-width: 7rem
-    align-items: center
+.main
+  display flex
+  align-items flex-start
+  justify-content center
+  gap clamp(12px, 2vw, 24px)
+  width 100%
+  max-width 100%
+  margin 0 auto
 
-    &> div {
-      padding-bottom: 0.3rem
-    }
-  }
+  .info
+    display flex
+    flex 0 0 110px
+    flex-direction column
+    align-items center
+    gap 12px
+    min-width 0
+    color #f5ecff
+    font-size 15px
+    text-align center
 
-  .dupa {
-    position: relative
-    background: rgba(252, 255, 79, 0.878)
-    width: 50%
-    align-self: center
-    border: 2px solid #333
-    padding: 0.5em
-    color: red
-    transition: all 1s
-    // transition: all 1s cubic-bezier(0, 0, 0.2, 1)
-    top: -30em
-    opacity: 0
+  .stakan
+    position relative
+    display flex
+    flex 0 0 auto
+    flex-direction column-reverse
+    width max-content
+    max-width 100%
 
-    &.end {
-      top: -18em
-      opacity: 1
-    }
-  }
+    .row
+      display flex
+      flex 0 0 auto
+      justify-content center
+      height var(--legacy-cell-size)
 
-  .stakan {
-    // flex: 1 1
-    display: flex
-    // margin: auto
-    flex-direction: column-reverse
+      > div
+        display flex
+        flex 0 0 var(--legacy-cell-size)
+        align-items center
+        justify-content center
+        width var(--legacy-cell-size)
+        height var(--legacy-cell-size)
+        overflow hidden
+        background-color #efe
+        color #fff
+        font-family 'Helvetica Neue', Helvetica, Arial, sans-serif
+        font-size unquote('clamp(9px, calc(var(--legacy-cell-size) * .52), 14px)')
+        font-weight 900
+        line-height 1
+        white-space nowrap
 
-    // justify-content: center
-    .row {
-      display: flex
+        &.N1
+          background-color #8cff8c
 
-      // flex-direction: row
-      // justify-content: center
-      // align-items: baseline
-      & > div {
-        height: 25px
-        width: 25px
-        // flex: 0 0 25px
-        background-color: #efe
-        // background-color: #eee
-        font-family: 'Helvetica Neue'
-        font-weight: 900
-        font-size: 20px
+        &.N2
+          background-color #ed8cff
 
-        &.N1 {
-          background-color: #8cff8c
-        }
+        &.N3
+          background-color lightness(#ed8cff, 81%)
 
-        &.N2 {
-          background-color: #ed8cff
-        }
+        &.N4
+          background-color #ff6c6c
 
-        &.N3 {
-          background-color: lightness(#ed8cff, 81%)
-        }
+        &.N5
+          background-color #caca0a
 
-        &.N4 {
-          background-color: #ff6c6c
-        }
+        &.N6
+          background-color #4fb6ff
 
-        &.N5 {
-          background-color: #caca0a
-        }
+        &.N7
+          background-color #4ff6ff
 
-        &.N6 {
-          background-color: #4fb6ff
-        }
+        &.N8
+          background-color #aebece
 
-        &.N7 {
-          background-color: #4ff6ff
-        }
+        &.N9
+          background-color #eee
 
-        &.N8 {
-          background-color: #aebece
-        }
+  .next
+    padding 7px
+    border 1px solid rgba(211, 190, 250, .28)
+    border-radius 12px
+    background rgba(10, 13, 34, .35)
 
-        &.N9 {
-          // background-color: #abc
-          background-color: #eee
-        }
-      }
-    }
-  }
+    .row
+      height var(--legacy-preview-cell-size)
 
-  .next {
-    // flex: 0.3
+      > div
+        flex-basis var(--legacy-preview-cell-size)
+        width var(--legacy-preview-cell-size)
+        height var(--legacy-preview-cell-size)
 
-    // align-items: flex-end
-    .row {
-      .N0 {
-        background: transparent
-      }
-    }
-  }
-}
-// The historical Symbol, ASCII, and Text renderers are monochrome.
-// Keep the seven TetColor hues exclusively for the Colors (4) renderer.
-// These styles apply equally to the well and to the next-piece preview.
+        &.N0
+          background-color transparent
+
+  .dupa
+    // This overlay must not take up a phantom extra row in the 20-row well.
+    position absolute
+    z-index 1
+    top 50%
+    left 50%
+    width max-content
+    max-width 90%
+    padding 10px 16px
+    border 2px solid #333
+    border-radius 8px
+    background rgba(252, 255, 79, .92)
+    color #a71136
+    font-size 20px
+    font-weight 900
+    opacity 0
+    pointer-events none
+    transform translate(-50%, -50%)
+    transition opacity .2s ease
+
+    &.end
+      opacity 1
+
+// Only the historical Colors skin (4) displays different piece hues.
 .legacy-screen:not(.legacy-screen--colors)
   .main .stakan .row > div
     background-color #f7f7f7
@@ -703,7 +714,29 @@ export default {
       background-color #e2e2e2
       color #444
 
-  // An empty cell in the miniature next-piece preview stays transparent.
   .main .next .row > div.N0
     background-color transparent
+
+@media (max-width: 620px)
+  .legacy-screen
+    --legacy-cell-size unquote('clamp(12px, min(24px, calc((100dvh - 360px) / 20), calc((100vw - 32px) / 12)), 24px)')
+
+  .main
+    flex-direction column
+    align-items center
+    gap 12px
+
+    .info
+      flex 0 0 auto
+      flex-direction row
+      justify-content center
+      gap 17px
+      width 100%
+
+    .next
+      padding 5px
+
+@media (prefers-reduced-motion: reduce)
+  .main .dupa
+    transition none
 </style>
