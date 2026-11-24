@@ -10,7 +10,7 @@ export const canRankRun = run => Boolean(
   Number.isInteger(run.durationMs) && run.durationMs >= 1000
 )
 
-export const completedRun = ({ runId, mode, score, lines, level, durationMs, hardDrop, singleBlock, completedAtMs }) => ({
+export const completedRun = ({ runId, mode, score, lines, level, durationMs, hardDrop, singleBlock, platform, completedAtMs }) => ({
   runId,
   mode,
   score,
@@ -19,9 +19,10 @@ export const completedRun = ({ runId, mode, score, lines, level, durationMs, har
   durationMs,
   ...(completedAtMs == null ? {} : { completedAtMs }),
   ruleset: LEADERBOARD_RULESET,
-  // Display options only: every finished game ranks in its mode regardless.
+  // Display metadata only: neither the device nor settings affect rank.
   hardDrop: hardDrop === true,
-  singleBlock: singleBlock !== false
+  singleBlock: singleBlock !== false,
+  ...(platform === 'mobile' || platform === 'desktop' ? { platform } : {})
 })
 
 export const formatLeaderboardScore = value => Number(value || 0).toLocaleString('en-US')
