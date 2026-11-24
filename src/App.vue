@@ -778,9 +778,10 @@ export default {
 
 // Discreet build marker: which commit is deployed, without stealing attention.
 .build-badge
-  position fixed
-  right 7px
-  bottom 5px
+  // Relative to the cabinet, not the viewport: stay inside its bottom border.
+  position absolute
+  right clamp(20px, 2vw, 30px)
+  bottom clamp(19px, 1.9vw, 28px)
   z-index 1
   pointer-events none
   user-select none
@@ -792,8 +793,8 @@ export default {
 
 @media (max-width: 920px)
   .build-badge
-    // Sit above the thumb pad instead of under the buttons.
-    bottom 58px
-    right 6px
+    // Stay above the thumb pad, inset from the right-hand cabinet rail.
+    bottom 64px
+    right 13px
     font-size 8px
 </style>

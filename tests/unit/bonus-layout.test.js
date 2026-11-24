@@ -52,7 +52,9 @@ test('desktop preview shares actual playable-cell size and bonus has its own pan
   assert.match(hud, /section !== 'left'/)
   assert.match(hud, /section !== 'right'/)
   // The bonus card is transient: it appears on a nonzero award and fades after a dwell.
-  assert.match(hud, /v-if="section !== 'left' && mode === 'tetcolor' && displayBonus > 0"/)
+  // It now lives in the bottom-anchored footer, so the section guard moved there.
+  assert.match(hud, /class="hud-footer"/)
+  assert.match(hud, /v-if="mode === 'tetcolor' && displayBonus > 0"/)
   assert.match(hud, /\+{{ displayBonus\.toLocaleString\('en-US'\) }}/)
   assert.match(hud, /gameBus\.on\('bonus', this\.bonusHandler\)/)
   assert.match(hud, /gameBus\.off\('bonus', this\.bonusHandler\)/)
