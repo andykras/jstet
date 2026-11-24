@@ -368,6 +368,7 @@ import MobileTouchSurface from '@/components/MobileTouchSurface.vue'
 import Leaderboard from '@/components/Leaderboard.vue'
 import { readPersonalBest, recordPersonalBest } from '@/utils/personalBest.js'
 import { canRankRun, completedRun } from '@/utils/leaderboardRules.js'
+import { detectRunPlatform } from '@/utils/runPlatform.js'
 import {
   leaderboardConfigured, leaderboardOnline, readLeaderboardPlayer, isLeaderboardAutoPublishEnabled, publishLeaderboardRun
 } from '@/utils/leaderboardClient.js'
@@ -693,7 +694,8 @@ export default {
         durationMs: Math.max(0, Math.floor(performance.now() - game.startedTime)),
         completedAtMs: Date.now(),
         hardDrop: this.hard,
-        singleBlock: this.preferences.singleBlock
+        singleBlock: this.preferences.singleBlock,
+        platform: detectRunPlatform()
       })
       this.lastRun = run
       const personal = recordPersonalBest(run)
