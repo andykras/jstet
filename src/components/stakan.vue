@@ -1,11 +1,13 @@
 <template>
-  <div class="legacy-screen">
+  <div class="legacy-screen"
+       :class="{ 'legacy-screen--text': theme === 3, 'legacy-screen--colors': theme === 4 }">
     <section class="legacy-options"
              aria-label="Legacy engine options">
       <label class="legacy-options__field">
         <span>Skin</span>
         <select v-model.number="theme"
-                aria-label="Legacy visual skin">
+                aria-label="Legacy visual skin"
+                @change="focusGameField">
           <option :value="1">1 · Symbols</option>
           <option :value="2">2 · ASCII</option>
           <option :value="3">3 · Text</option>
@@ -14,60 +16,45 @@
       </label>
       <label class="legacy-options__field">
         <input type="checkbox"
-               v-model="linesAnimated">
+               v-model="linesAnimated"
+               @change="focusGameField">
         Animate line clears (A)
       </label>
       <label class="legacy-options__field">
         <input type="checkbox"
-               v-model="dropSoft">
+               v-model="dropSoft"
+               @change="focusGameField">
         Soft drop (S)
       </label>
       <button type="button"
               class="arcade-button"
-              @click="newGame">New Game</button>
+              @click="restartFromControls">New Game</button>
     </section>
     <div class="main">
     <div class="info">
       <div>Lines: {{totalLines}}</div>
-      <div class="stakan next">
-        <div v-for="y in getSize(nextTet)"
+      <div class="stakan next"
+           role="img"
+           aria-label="Next piece">
+        <div v-for="(row, y) in nextPreview"
              :key="y"
              class="row">
-          <div v-for="x in getSize(nextTet)"
+          <div v-for="(cell, x) in row"
                :key="x"
-               :class="'N' + getPiece(nextTet, x-1, y-1, 0)">
-            <span v-html="getSymbol(x-1, y-1, nextTet, 0)"></span>
+               :class="'N' + cell.value">
+            <span v-if="cell.value"
+                  v-html="getSymbol(cell.sourceX, cell.sourceY, nextTet, 0)"></span>
           </div>
         </div>
       </div>
     </div>
-    <div class="stakan">
+    <div ref="gameField"
+         class="stakan stakan--board"
+         role="group"
+         aria-label="Legacy game field: use arrow keys to move, Space to drop"
+         tabindex="0">
       <div class="dupa"
            :class="{end:!gameActive}">ДУПА</div>
-      <div>
-        <div>animated: {{linesAnimated ? 'A': 'a'}}</div>
-        <div>drop soft: {{dropSoft ? 'S' : 's'}}</div>
-        <div>theme: {{theme}}</div>
-        <div class="github">
-          <svg height="16"
-               width="16"
-               class="octicon octicon-mark-github"
-               viewBox="0 0 16 16"
-               version="1.1"
-               aria-hidden="true">
-            <path fill-rule="evenodd"
-                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47
-                  7.59.4.07.55-.17.55-.38
-                  0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01
-                  1.08.58 1.23.82.72 1.21 1.87.87
-                  2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12
-                  0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08
-                  2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2
-                  0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
-          </svg>
-          <a href="https://github.com/andykras/jstet">github.com/andykras/jstet</a>
-        </div>
-      </div>
       <div v-for="y in cells.height"
            :key="y"
            class="row">
@@ -257,6 +244,33 @@ export default {
       disposed: false
     }
   },
+  computed: {
+    nextPreview() {
+      // Some legacy pieces have ragged source rows. Crop to occupied cells,
+      // then center the actual 0-degree shape in a transparent 4x4 preview.
+      const blocks = []
+      for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+          const value = this.getPiece(this.nextTet, x, y, 0)
+          if (value > 0) blocks.push({ x, y })
+        }
+      }
+      const left = blocks.length ? Math.min(...blocks.map(block => block.x)) : 0
+      const right = blocks.length ? Math.max(...blocks.map(block => block.x)) : 0
+      const bottom = blocks.length ? Math.min(...blocks.map(block => block.y)) : 0
+      const top = blocks.length ? Math.max(...blocks.map(block => block.y)) : 0
+      const shiftX = Math.floor((4 - (right - left + 1)) / 2) - left
+      const shiftY = Math.floor((4 - (top - bottom + 1)) / 2) - bottom
+
+      return Array.from({ length: 4 }, (_, y) =>
+        Array.from({ length: 4 }, (_, x) => {
+          const sourceX = x - shiftX
+          const sourceY = y - shiftY
+          return { value: this.getPiece(this.nextTet, sourceX, sourceY, 0) || 0, sourceX, sourceY }
+        })
+      )
+    }
+  },
   created() {
     this.newGame()
     window.addEventListener('keydown', this.keydown)
@@ -275,8 +289,22 @@ export default {
   mounted() {
     this.curTet = Math.floor(Math.random() * this.tets.length)
     this.nextTet = Math.floor(Math.random() * this.tets.length)
+    // Entering Legacy via the mode button leaves that button focused.
+    // Restore game keyboard controls without requiring a click on the well.
+    this.focusGameField()
   },
   methods: {
+    focusGameField() {
+      // Wait until the setting's native change/click event has completed.
+      // Keep keyboard focus out of Legacy's select and checkboxes while playing.
+      this.$nextTick(() => {
+        if (!this.disposed) this.$refs.gameField?.focus({ preventScroll: true })
+      })
+    },
+    restartFromControls() {
+      this.newGame()
+      this.focusGameField()
+    },
     isLabControl(target) {
       return Boolean(target && target.closest && target.closest('.legacy-options, button'))
     },
@@ -408,7 +436,7 @@ export default {
       // ticks = performance.now()
       iskeydown = false
       let p = parseInt(e.key)
-      if (p >= 0 && p <= 9) {
+      if (p >= 1 && p <= 4) {
         this.theme = p
       }
       if (e.key == 'a') this.linesAnimated = !this.linesAnimated
@@ -559,130 +587,217 @@ export default {
 </script>
 
 <style scoped lang="stylus">
-.main {
-  text-align: center
-  display: flex
-  // margin: auto
-  // flex-direction: row
-  justify-content: center
+.legacy-screen
+  // A 20-row well must fit below the Arcade header and Legacy controls.
+  // Keep the cell size responsive without ever changing engine dimensions.
+  --legacy-cell-size unquote('clamp(12px, min(25px, calc((100dvh - 265px) / 20), calc((100vw - 195px) / 12)), 25px)')
+  --legacy-preview-cell-size unquote('min(22px, var(--legacy-cell-size))')
+  width 100%
+  max-width 100%
 
-  .info {
-    display: flex
-    // padding: 1rem
-    flex-direction: column
-    min-width: 7rem
-    align-items: center
+.main
+  display flex
+  align-items flex-start
+  justify-content center
+  gap clamp(12px, 2vw, 24px)
+  width 100%
+  max-width 100%
+  margin 0 auto
 
-    &> div {
-      padding-bottom: 0.3rem
-    }
-  }
+  .info
+    display flex
+    flex 0 0 110px
+    flex-direction column
+    align-items center
+    gap 12px
+    min-width 0
+    color #f5ecff
+    font-size 15px
+    text-align center
 
-  .github {
-    & > a {
-      display: inline-block
-      height: 28px
-      padding-left: 0.2rem
-      vertical-align: middle
-      font-size: small
-      color: #25a5ff
-      font-family: 'Segoe UI'
-      // font-weight: 500;
-      text-decoration: none
-    }
-  }
+  .stakan
+    position relative
+    display flex
+    flex 0 0 auto
+    flex-direction column-reverse
+    width max-content
+    max-width 100%
 
-  .dupa {
-    position: relative
-    background: rgba(252, 255, 79, 0.878)
-    width: 50%
-    align-self: center
-    border: 2px solid #333
-    padding: 0.5em
-    color: red
-    transition: all 1s
-    // transition: all 1s cubic-bezier(0, 0, 0.2, 1)
-    top: -30em
-    opacity: 0
+    .row
+      display flex
+      flex 0 0 auto
+      justify-content center
+      height var(--legacy-cell-size)
 
-    &.end {
-      top: -18em
-      opacity: 1
-    }
-  }
+      > div
+        display flex
+        flex 0 0 var(--legacy-cell-size)
+        align-items center
+        justify-content center
+        width var(--legacy-cell-size)
+        height var(--legacy-cell-size)
+        overflow hidden
+        background-color #efe
+        color #fff
+        font-family 'Helvetica Neue', Helvetica, Arial, sans-serif
+        font-size unquote('clamp(9px, calc(var(--legacy-cell-size) * .52), 14px)')
+        font-weight 900
+        line-height 1
+        white-space nowrap
 
-  .stakan {
-    // flex: 1 1
-    display: flex
-    // margin: auto
-    flex-direction: column-reverse
+        &.N1
+          background-color #8cff8c
 
-    // justify-content: center
-    .row {
-      display: flex
+        &.N2
+          background-color #ed8cff
 
-      // flex-direction: row
-      // justify-content: center
-      // align-items: baseline
-      & > div {
-        height: 25px
-        width: 25px
-        // flex: 0 0 25px
-        background-color: #efe
-        // background-color: #eee
-        font-family: 'Helvetica Neue'
-        font-weight: 900
-        font-size: 20px
+        &.N3
+          background-color lightness(#ed8cff, 81%)
 
-        &.N1 {
-          background-color: #8cff8c
-        }
+        &.N4
+          background-color #ff6c6c
 
-        &.N2 {
-          background-color: #ed8cff
-        }
+        &.N5
+          background-color #caca0a
 
-        &.N3 {
-          background-color: lightness(#ed8cff, 81%)
-        }
+        &.N6
+          background-color #4fb6ff
 
-        &.N4 {
-          background-color: #ff6c6c
-        }
+        &.N7
+          background-color #4ff6ff
 
-        &.N5 {
-          background-color: #caca0a
-        }
+        &.N8
+          background-color #aebece
 
-        &.N6 {
-          background-color: #4fb6ff
-        }
+        &.N9
+          background-color #eee
 
-        &.N7 {
-          background-color: #4ff6ff
-        }
+  .stakan--board
+    &:focus
+      outline none
 
-        &.N8 {
-          background-color: #aebece
-        }
+    &:focus-visible
+      outline 2px solid rgba(255, 205, 126, .82)
+      outline-offset 4px
 
-        &.N9 {
-          // background-color: #abc
-          background-color: #eee
-        }
-      }
-    }
-  }
+  .next
+    padding 7px
+    border 1px solid rgba(211, 190, 250, .28)
+    border-radius 12px
+    background rgba(10, 13, 34, .35)
 
-  .next {
-    // flex: 0.3
+    .row
+      height var(--legacy-preview-cell-size)
 
-    // align-items: flex-end
-    .row {
-      .N0 {
-        background: transparent
-      }
-    }
-  }
-}
+      > div
+        flex-basis var(--legacy-preview-cell-size)
+        width var(--legacy-preview-cell-size)
+        height var(--legacy-preview-cell-size)
+
+        &.N0
+          background-color transparent
+
+  .dupa
+    // This overlay must not take up a phantom extra row in the 20-row well.
+    position absolute
+    z-index 1
+    top 50%
+    left 50%
+    width max-content
+    max-width 90%
+    padding 10px 16px
+    border 2px solid #333
+    border-radius 8px
+    background rgba(252, 255, 79, .92)
+    color #a71136
+    font-size 20px
+    font-weight 900
+    opacity 0
+    pointer-events none
+    transform translate(-50%, -50%)
+    transition opacity .2s ease
+
+    &.end
+      opacity 1
+
+// Only the historical Colors skin (4) displays different piece hues.
+.legacy-screen:not(.legacy-screen--colors)
+  .main .stakan .row > div
+    background-color #f7f7f7
+    color #191919
+
+    &.N1,
+    &.N2,
+    &.N3,
+    &.N4,
+    &.N5,
+    &.N6,
+    &.N7
+      background-color #aebece
+      color #202020
+
+    &.N8
+      background-color #bfbfbf
+      color #161616
+
+    &.N9
+      background-color #e2e2e2
+      color #444
+
+  .main .next .row > div.N0
+    background-color transparent
+
+// Text is a glyph-only skin: no separate rectangular background per block.
+// Filled cells match the well's light surface, so "[ ]" provides the shape.
+// The dark Next Piece panel uses light glyphs on transparency for contrast.
+.legacy-screen.legacy-screen--text
+  .main .stakan--board
+    background-color #f7f7f7
+
+    .row > div
+      background-color transparent
+
+      &.N1,
+      &.N2,
+      &.N3,
+      &.N4,
+      &.N5,
+      &.N6,
+      &.N7
+        background-color transparent
+        color #202020
+
+  .main .next .row > div
+    &.N1,
+    &.N2,
+    &.N3,
+    &.N4,
+    &.N5,
+    &.N6,
+    &.N7
+      background-color transparent
+      color #f3f0fa
+
+@media (max-width: 620px)
+  .legacy-screen
+    --legacy-cell-size unquote('clamp(12px, min(24px, calc((100dvh - 360px) / 20), calc((100vw - 32px) / 12)), 24px)')
+
+  .main
+    flex-direction column
+    align-items center
+    gap 12px
+
+    .info
+      flex 0 0 auto
+      flex-direction row
+      justify-content center
+      gap 17px
+      width 100%
+
+    .next
+      padding 5px
+
+@media (prefers-reduced-motion: reduce)
+  .main .dupa
+    transition none
 </style>

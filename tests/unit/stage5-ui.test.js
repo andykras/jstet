@@ -60,12 +60,74 @@ test('Legacy Lab retains all four skins and live animation/drop options', () => 
   const legacy = read('src/components/stakan.vue')
   for (const token of ['v-model.number="theme"', '1 · Symbols', '2 · ASCII',
     '3 · Text', '4 · Colors', 'v-model="linesAnimated"', 'v-model="dropSoft"',
-    'Animate line clears (A)', 'Soft drop (S)', '@click="newGame"',
+    'Animate line clears (A)', 'Soft drop (S)', '@click="restartFromControls"',
     'this.isLabControl(e.target)', 'this.cells = emptyCells()']) {
     assert.ok(legacy.includes(token), token)
   }
   assert.ok(legacy.includes("if (e.key == 'a') this.linesAnimated = !this.linesAnimated"))
   assert.ok(legacy.includes("if (e.key == 's') this.dropSoft = !this.dropSoft"))
+})
+
+test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', () => {
+  const legacy = read('src/components/stakan.vue')
+  assert.ok(legacy.includes("'legacy-screen--colors': theme === 4"))
+  assert.ok(legacy.includes("'legacy-screen--text': theme === 3"))
+  assert.ok(legacy.includes('.legacy-screen:not(.legacy-screen--colors)'))
+  for (const token of ['&.N1,', '&.N2,', '&.N3,', '&.N4,', '&.N5,', '&.N6,', '&.N7',
+    'background-color #aebece', 'color #202020', 'background-color #f7f7f7',
+    '.legacy-screen.legacy-screen--text', 'background-color transparent',
+    'color #f3f0fa']) {
+    assert.ok(legacy.includes(token), token)
+  }
+  assert.ok(legacy.includes('if (p >= 1 && p <= 4)'))
+  assert.ok(legacy.includes('background-color #8cff8c'))
+  assert.ok(legacy.includes('background-color #4ff6ff'))
+  // The old inline debug/status block and duplicate GitHub link overlapped the well.
+  for (const removed of ['animated: {{', 'drop soft: {{', 'theme: {{', 'class="github"',
+    'github.com/andykras/jstet']) {
+    assert.equal(legacy.includes(removed), false, removed)
+  }
+  assert.ok(legacy.includes('Animate line clears (A)'))
+  assert.ok(legacy.includes('Soft drop (S)'))
+})
+
+test('Legacy playfield retains arrow keys after entering the mode or changing options', () => {
+  const legacy = read('src/components/stakan.vue')
+  assert.match(legacy, /ref="gameField"[^>]*tabindex="0"/)
+  assert.ok(legacy.includes('this.focusGameField()'))
+  assert.ok(legacy.includes("this.$refs.gameField?.focus({ preventScroll: true })"))
+  assert.equal((legacy.match(/@change="focusGameField"/g) || []).length, 3)
+  assert.ok(legacy.includes('@click="restartFromControls"'))
+  assert.ok(legacy.includes('restartFromControls()'))
+  // Keep native Select and checkbox keyboard controls when they own focus.
+  assert.ok(legacy.includes('shouldIgnoreGameInput(e.target) || this.isLabControl(e.target)'))
+  assert.ok(legacy.includes('&:focus-visible'))
+  assert.ok(legacy.includes('outline-offset 4px'))
+})
+
+test('Legacy next piece is centered within a transparent fixed 4x4 preview', () => {
+  const legacy = read('src/components/stakan.vue')
+  for (const token of ['v-for="(row, y) in nextPreview"', 'v-for="(cell, x) in row"',
+    'value: this.getPiece(this.nextTet, sourceX, sourceY, 0) || 0',
+    'Array.from({ length: 4 }, (_, y)', 'Array.from({ length: 4 }, (_, x)',
+    'getSymbol(cell.sourceX, cell.sourceY, nextTet, 0)',
+    '.main .next .row > div.N0', 'background-color transparent']) {
+    assert.ok(legacy.includes(token), token)
+  }
+  assert.equal(legacy.includes('v-for="y in getSize(nextTet)"'), false)
+})
+
+test('Legacy well sizes to viewport without an inner scrollbar or phantom overlay row', () => {
+  const legacy = read('src/components/stakan.vue')
+  const shell = read('src/styles/arcade-shell.styl')
+  const stage5 = read('src/styles/arcade-stage5.styl')
+  for (const token of ['--legacy-cell-size', '100dvh', '100vw',
+    'stakan stakan--board', 'position absolute', 'flex 0 0 var(--legacy-cell-size)']) {
+    assert.ok(legacy.includes(token), token)
+  }
+  assert.match(shell, /\.lab-layout\n  \/\/ Legacy uses natural page flow[^\n]*\n  overflow visible/)
+  assert.match(stage5, /\.lab-layout\n  max-width 100%\n  overflow visible/)
+  assert.equal(stage5.includes('overflow-x auto'), false)
 })
 
 test('touch layout remains accessible in portrait and short landscape', () => {
