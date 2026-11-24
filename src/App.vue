@@ -873,6 +873,44 @@ export default {
 @import './styles/arcade-touch-surface.styl'
 @import './styles/leaderboard.styl'
 
+// Service-worker updates are opt-in and never interrupt a live game.
+.app-update-notice
+  position fixed
+  z-index 130
+  top unquote('max(12px, env(safe-area-inset-top, 0px))')
+  left 50%
+  transform translateX(-50%)
+  display flex
+  align-items center
+  justify-content center
+  flex-wrap wrap
+  gap 10px
+  width unquote('min(92vw, 520px)')
+  padding 11px 14px
+  border 1px solid rgba(247, 196, 118, .58)
+  border-radius 12px
+  background rgba(18, 18, 39, .96)
+  box-shadow 0 12px 32px rgba(0, 0, 0, .42)
+  color #f1e8dc
+  font-size 12px
+  line-height 1.45
+  text-align center
+
+.app-update-notice__button
+  min-height 33px
+  padding 6px 12px
+  border 1px solid rgba(255, 211, 135, .72)
+  border-radius 8px
+  background rgba(253, 194, 98, .18)
+  color #ffe4b3
+  font inherit
+  font-weight 800
+  cursor pointer
+
+  &:focus-visible
+    outline 2px solid var(--arcade-orange)
+    outline-offset 2px
+
 // Discreet build marker: which commit is deployed, without stealing attention.
 .build-badge
   position fixed
