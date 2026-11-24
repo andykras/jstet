@@ -209,6 +209,8 @@
                aria-label="Score, blocks and bonus">
           <GameHud class="stats-column stats-column--right"
                    :mode="mode"
+                   :hard="hard"
+                   :single-block="preferences.singleBlock"
                    section="right" />
         </aside>
 
