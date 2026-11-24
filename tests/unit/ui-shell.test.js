@@ -36,7 +36,7 @@ test('a discreet build badge shows which commit is deployed', () => {
   assert.match(app, /class="build-badge"/)
   assert.match(app, /aria-hidden="true"/)
   assert.match(app, /buildId\(\) \{\n      return import\.meta\.env\.VITE_BUILD_ID \|\| 'dev'\n    \}/)
-  assert.match(app, /\.build-badge\n  position fixed/)
+  assert.match(app, /\.build-badge\n  \/\/ Relative to the cabinet[^\n]*\n  position absolute/)
   assert.match(app, /pointer-events none/)
 })
 
