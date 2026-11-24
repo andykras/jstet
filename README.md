@@ -35,7 +35,7 @@ On phone and tablet widths, on-screen controls provide **left**, **right**, **ro
 
 Expand **Developer lab** in the footer and enable **Legacy engine** to inspect the original self-contained `src/components/stakan.vue` implementation. The main engine is stopped while the Lab is active, and restarts cleanly on return.
 
-Lab controls include four historical skins (**Symbols**, **ASCII**, **Text**, **Colors**), line-clear animation, soft/hard drop and New Game. The original Lab keyboard shortcuts still work: **1–4** change skins, **A** toggles line-clear animation, and **S** toggles drop behavior. These are Lab-only options, separate from the Arcade/Prism player themes.
+Lab controls include four historical skins: **Symbols** (1), **ASCII** (2), and **Text** (3) display the original-style symbols or glyphs in **black and white**; **Colors** (4) keeps the multicolored tetrominoes. The skin affects only rendering, not game rules or scoring. Choose a skin from the Developer Lab selector or press **1–4** on the keyboard; **A** toggles line-clear animation, and **S** toggles drop behavior. These are Lab-only options, separate from the Arcade/Prism player themes.
 
 ## Development
 
