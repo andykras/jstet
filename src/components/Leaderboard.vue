@@ -118,6 +118,12 @@
         <p v-if="preview"
            class="leaderboard-demo-notice"
            role="status">SAMPLE SCORES · VISUAL PREVIEW · NOT LIVE</p>
+        <p v-if="cachedAtMs"
+           class="leaderboard-cache-notice"
+           role="status">
+          <span aria-hidden="true">◌</span>
+          Offline snapshot · last updated {{ new Date(cachedAtMs).toLocaleString() }}
+        </p>
         <div class="leaderboard-section-heading leaderboard-section-heading--top">
           <span>{{ period === 'week' ? 'THIS WEEK’S CHAMPIONS' : 'ALL-TIME LEGENDS' }}</span>
           <small>{{ period === 'week' ? 'Resets Monday · 00:00 UTC' : 'Best scores ever' }}</small>
@@ -315,7 +321,7 @@ import { queueLeaderboardRun, clearQueuedLeaderboardRuns } from '@/utils/leaderb
 import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
-  leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard,
+  leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard, cachedLeaderboard,
   registerLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
   setLeaderboardAutoPublish, forgetLeaderboardPlayer
 } from '@/utils/leaderboardClient.js'
@@ -344,6 +350,7 @@ export default {
       mine: null,
       loading: false,
       loadError: '',
+      cachedAtMs: null,
       publishing: false,
       publishError: '',
       profileError: '',
@@ -382,11 +389,19 @@ export default {
     toggleEntry(playerId) {
       this.expandedId = this.expandedId === playerId ? null : playerId
     },
+    useCachedRanking(fallbackMessage) {
+      const snapshot = cachedLeaderboard(this.mode, this.period, this.profile)
+      this.entries = snapshot?.entries || []
+      this.mine = snapshot?.mine || null
+      this.cachedAtMs = snapshot?.cachedAtMs || null
+      this.loadError = snapshot ? '' : fallbackMessage
+    },
     async refresh() {
       if (this.preview) {
         this.sequence++
         this.loading = false
         this.loadError = ''
+        this.cachedAtMs = null
         this.mine = null
         this.expandedId = null
         this.entries = leaderboardPreviewEntries(this.mode, this.period)
@@ -395,15 +410,15 @@ export default {
       if (!this.configured) return
       if (!this.online) {
         this.sequence++
-        this.entries = []
-        this.mine = null
         this.loading = false
-        this.loadError = 'Offline: live rankings are unavailable. Your local best is still saved.'
+        this.expandedId = null
+        this.useCachedRanking('Offline: live rankings are unavailable. Your local best is still saved.')
         return
       }
       const requestId = ++this.sequence
       this.loading = true
       this.loadError = ''
+      this.cachedAtMs = null
       this.entries = []
       this.mine = null
       this.expandedId = null
@@ -414,7 +429,7 @@ export default {
         this.mine = result.mine
       } catch (error) {
         if (requestId !== this.sequence) return
-        this.loadError = error.message
+        this.useCachedRanking(error.message)
       } finally {
         if (requestId === this.sequence) this.loading = false
       }
