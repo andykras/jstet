@@ -2,44 +2,55 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
-const app = readFileSync(new URL('../../src/App.vue', import.meta.url), 'utf8')
-const component = readFileSync(new URL('../../src/components/Leaderboard.vue', import.meta.url), 'utf8')
+const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
+const app = read('src/App.vue')
+const component = read('src/components/Leaderboard.vue')
+const badges = read('src/components/LeaderboardRunBadges.vue')
+const details = read('src/components/LeaderboardRunDetails.vue')
 
-test('leaderboard stays outside the engine and listens for real game completion', () => {
+test('leaderboard is driven by real game completion, without awaiting the network', () => {
   assert.match(app, /on\('done', \(\) => this\.onRunComplete\(\)\)/)
   assert.match(app, /this\.lastRun = run/)
-  assert.match(app, /if \(leaderboardConfigured && canRankRun\(run\)\) \{\n        if \(isLeaderboardAutoPublishEnabled\(\)\) this\.sendCompletedRun\(\)/)
+  assert.match(app, /if \(isLeaderboardAutoPublishEnabled\(\)\) this\.queueCompletedRun\(run\)/)
   assert.match(app, /<Leaderboard v-if="leaderboardOpen"/)
-  assert.match(app, /<button ref="leaderboardTrigger"/)
+  assert.match(app, /platform: detectRunPlatform\(\)/)
 })
 
-test('opening the ranking pauses play and does not automatically resume it', () => {
+test('opening rankings pauses play and closing never auto-resumes it', () => {
   assert.match(app, /openLeaderboard\(\) \{[\s\S]*?this\.pauseForDialog\(\)[\s\S]*?this\.leaderboardOpen = true/)
   assert.match(app, /closeLeaderboard\(\) \{[\s\S]*?this\.leaderboardOpen = false/)
   assert.match(app, /&& !settingsOpen && !leaderboardOpen/)
 })
 
-test('first publication requires a nickname and explicit opt-in', () => {
-  assert.match(app, /hardDrop: this\.hard/)
-  assert.match(app, /singleBlock: this\.preferences\.singleBlock/)
+test('new players opt in explicitly, not while playing offline', () => {
   assert.match(component, /@submit\.prevent="registerAndPublish"/)
-  assert.match(component, /Join & publish score/)
-  assert.match(component, /automatically/)
-  assert.match(component, /role="dialog"/)
-  assert.match(component, /role="alert"/)
+  assert.match(component, /Save score/)
+  assert.match(component, /!online/)
+  assert.match(component, /automatically publishing/)
 })
 
-test('ranking rows carry option badges and expandable run details', () => {
-  assert.match(component, /leaderboard-badge--hard/)
+test('podium, regular rows and standing share accessible vector device badges', () => {
+  const uses = component.match(/<LeaderboardRunBadges/g) || []
+  assert.equal(uses.length, 3)
+  assert.match(badges, /role="img"/)
+  assert.match(badges, /aria-label="Hard Drop"/)
+  assert.match(badges, /aria-label="Phone or tablet"/)
+  assert.match(badges, /aria-label="Computer"/)
+  assert.match(badges, /aria-label="Device unknown"/)
+  assert.doesNotMatch(component, />ALL<|>HD<|>1×1</)
+  assert.match(details, /entry\.singleBlock === false/)
+  assert.match(details, /entry\.platform === 'mobile'/)
   assert.match(component, /toggleEntry\(playerId\)/)
-  assert.match(component, /leaderboard-entry__details/)
-  assert.match(component, /formatRunDuration\(entry\.durationMs\)/)
-  assert.match(component, /entry\.hardDrop === true \? 'Hard drop' : 'Soft drop'/)
-  assert.match(component, /entry\.singleBlock === false \? 'All at once' : 'One at a time'/)
-  assert.match(component, /leaderboard-personal__badges/)
-  const styles = readFileSync(new URL('../../src/styles/leaderboard.styl', import.meta.url), 'utf8')
-  const rules = readFileSync(new URL('../../src/utils/leaderboardRules.js', import.meta.url), 'utf8')
-  assert.match(styles, /\.leaderboard-badge\n/)
-  assert.match(styles, /\.leaderboard-entry__details\n/)
-  assert.match(rules, /formatRunDuration/)
+  const styles = read('src/styles/leaderboard.styl')
+  assert.match(styles, /\.leaderboard-run-badge--drop/)
+  assert.match(styles, /\.leaderboard-run-badge--mobile/)
+  assert.match(styles, /\.leaderboard-run-badge--desktop/)
+})
+
+test('PHP stores and returns platform metadata independently of score ranking', () => {
+  const php = read('leaderboard-api/php/index.php')
+  assert.match(php, /'platform' => \$platform/)
+  assert.match(php, /'platform' => \$best\['platform'\] \?\? null/)
+  assert.match(php, /'platform' => \$row\['platform'\]/)
+  assert.match(php, /\$id \. '\|' \. \$run\['mode'\]/)
 })
