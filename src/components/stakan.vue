@@ -1,5 +1,6 @@
 <template>
-  <div class="legacy-screen" :class="{ 'legacy-screen--colors': theme === 4 }">
+  <div class="legacy-screen"
+       :class="{ 'legacy-screen--text': theme === 3, 'legacy-screen--colors': theme === 4 }">
     <section class="legacy-options"
              aria-label="Legacy engine options">
       <label class="legacy-options__field">
@@ -732,7 +733,7 @@ export default {
     &.N5,
     &.N6,
     &.N7
-      background-color #b9b9b9
+      background-color #aebece
       color #202020
 
     &.N8
@@ -745,6 +746,37 @@ export default {
 
   .main .next .row > div.N0
     background-color transparent
+
+// Text is a glyph-only skin: no separate rectangular background per block.
+// Filled cells match the well's light surface, so "[ ]" provides the shape.
+// The dark Next Piece panel uses light glyphs on transparency for contrast.
+.legacy-screen.legacy-screen--text
+  .main .stakan--board
+    background-color #f7f7f7
+
+    .row > div
+      background-color transparent
+
+      &.N1,
+      &.N2,
+      &.N3,
+      &.N4,
+      &.N5,
+      &.N6,
+      &.N7
+        background-color transparent
+        color #202020
+
+  .main .next .row > div
+    &.N1,
+    &.N2,
+    &.N3,
+    &.N4,
+    &.N5,
+    &.N6,
+    &.N7
+      background-color transparent
+      color #f3f0fa
 
 @media (max-width: 620px)
   .legacy-screen
