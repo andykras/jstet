@@ -12,6 +12,14 @@
            'is-lab': naiveImplementation
          }
        ]">
+    <div v-if="updateReady && status === 'gameOver' && !leaderboardOpen"
+         class="app-update-notice"
+         role="status">
+      <span>New game version ready. Reload to update the leaderboard.</span>
+      <button type="button"
+              class="app-update-notice__button"
+              @click="reloadUpdatedApp">Reload</button>
+    </div>
     <div class="arcade-console">
       <header class="arcade-header">
         <div class="arcade-brand"
@@ -391,6 +399,7 @@ export default {
       localBest: readPersonalBest('tetcolor'),
       newPersonalBest: false,
       scoreSubmission: { status: 'idle', error: '' },
+      updateReady: false,
       queuedScores: pendingLeaderboardCount(),
       online: leaderboardOnline(),
       leaderboardSyncBusy: false,
@@ -461,6 +470,7 @@ export default {
     window.addEventListener('resize', this.syncPreviewCellSize)
     window.addEventListener('online', this.onLeaderboardOnline)
     window.addEventListener('offline', this.onLeaderboardOffline)
+    window.addEventListener('jstet:update-available', this.onAppUpdateAvailable)
     // Network maintenance is scheduled after the game is already running.
     this.$nextTick(() => this.syncQueuedScores())
   },
@@ -469,6 +479,7 @@ export default {
     window.removeEventListener('resize', this.syncPreviewCellSize)
     window.removeEventListener('online', this.onLeaderboardOnline)
     window.removeEventListener('offline', this.onLeaderboardOffline)
+    window.removeEventListener('jstet:update-available', this.onAppUpdateAvailable)
     clearTimeout(this.leaderboardSyncTimer)
     if (this.wellResizeObserver) this.wellResizeObserver.disconnect()
   },
@@ -600,6 +611,15 @@ export default {
     onLeaderboardProfileForgotten() {
       this.queuedScores = pendingLeaderboardCount()
       this.scoreSubmission = { status: 'idle', error: '' }
+    },
+
+    onAppUpdateAvailable() {
+      this.updateReady = true
+    },
+
+    reloadUpdatedApp() {
+      // A reload is opt-in and is never triggered in the middle of a game.
+      window.location.reload()
     },
 
     onLeaderboardOnline() {
