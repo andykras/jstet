@@ -182,7 +182,10 @@ const postScore = async (request, env) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(), player.id, run.runId, run.mode, run.ruleset, run.score, run.cleared,
-    run.level, run.durationMs, run.hardDrop === true ? 1 : 0, run.singleBlock !== false ? 1 : 0, now
+    run.level, run.durationMs,
+    run.hardDrop == null ? null : (run.hardDrop ? 1 : 0),
+    run.singleBlock == null ? null : (run.singleBlock ? 1 : 0),
+    now
   ).run()
   return json({ accepted: true, duplicate: saved.meta?.changes === 0 }, 201)
 }
