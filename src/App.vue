@@ -173,6 +173,9 @@
                    class="game-state-overlay__summary">Final score <strong>{{ $store.state.score.toLocaleString('en-US') }}</strong></p>
                 <p v-if="status === 'gameOver' && newPersonalBest"
                    class="game-state-overlay__record">NEW PERSONAL BEST</p>
+                <p v-if="status === 'gameOver' && scoreSubmission.status === 'queued'"
+                   class="game-state-overlay__summary"
+                   role="status">Score saved on this device · waiting to sync.</p>
                 <p v-if="status === 'gameOver' && scoreSubmission.status === 'sent'"
                    class="game-state-overlay__summary"
                    role="status">Score published to the leaderboard.</p>
@@ -196,7 +199,8 @@
                           type="button"
                           class="arcade-button"
                           @click="openLeaderboard">
-                    {{ rankableLastRun && scoreSubmission.status !== 'sent' ? 'Publish score' : 'Leaderboard' }}</button>
+                    {{ rankableLastRun && (scoreSubmission.status === 'idle' || scoreSubmission.status === 'error')
+                      ? 'Publish score' : 'Leaderboard' }}</button>
                 </div>
               </div>
             </div>
