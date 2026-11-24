@@ -23,24 +23,26 @@
       <span class="hud-stat__label">{{ progressLabel }}</span>
       <output class="hud-stat__number">{{ blocks }}</output>
     </div>
-    <Transition name="bonus-hud">
-      <div v-if="section !== 'left' && mode === 'tetcolor' && displayBonus > 0"
-           class="hud-stat hud-stat--bonus">
-        <span class="hud-stat__label">Bonus</span>
-        <output class="hud-stat__number"
-                aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
-      </div>
-    </Transition>
     <div v-if="section !== 'left'"
-         class="hud-meta"
-         aria-label="Active run rules">
-      <span class="hud-meta__item"
-            :class="hard ? 'hud-meta__item--hard' : 'hud-meta__item--soft'"
-            :title="hard ? 'Space and swipe lock the piece instantly' : 'Space and swipe move the piece down softly'">
-        ● {{ hard ? 'HARD DROP' : 'SOFT DROP' }}</span>
-      <span class="hud-meta__item"
-            :title="singleBlock ? 'Matches clear one at a time' : 'Matches clear all at once'">
-        ● {{ singleBlock ? 'STEP CLEAR' : 'ALL CLEAR' }}</span>
+         class="hud-footer">
+      <Transition name="bonus-hud">
+        <div v-if="mode === 'tetcolor' && displayBonus > 0"
+             class="hud-stat hud-stat--bonus">
+          <span class="hud-stat__label">Bonus</span>
+          <output class="hud-stat__number"
+                  aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
+        </div>
+      </Transition>
+      <div class="hud-meta"
+           aria-label="Active run rules">
+        <span class="hud-meta__item"
+              :class="hard ? 'hud-meta__item--hard' : 'hud-meta__item--soft'"
+              :title="hard ? 'Space and swipe lock the piece instantly' : 'Space and swipe move the piece down softly'">
+          ● {{ hard ? 'HARD DROP' : 'SOFT DROP' }}</span>
+        <span class="hud-meta__item"
+              :title="singleBlock ? 'Matches clear one at a time' : 'Matches clear all at once'">
+          ● {{ singleBlock ? 'STEP CLEAR' : 'ALL CLEAR' }}</span>
+      </div>
     </div>
   </section>
 </template>
@@ -125,7 +127,23 @@ export default {
   opacity 0
   transform translateY(10px)
 
-// Active run rules: discreet meta line under the score, never louder than stats.
+// Keep the bonus and the run rules as one bottom-anchored unit.
+// Without a bonus, the rules occupy the exact same bottom edge.
+@media (min-width: 921px)
+  .right-column .game-hud .hud-footer
+    display flex
+    flex 0 0 auto
+    flex-direction column
+    gap clamp(9px, 1.5vh, 16px)
+    margin-top auto
+
+  .right-column .game-hud .hud-footer .hud-stat--bonus
+    margin-top 0
+
+  .right-column .game-hud .hud-footer .hud-meta
+    margin-top 0
+
+// Active run rules: subtle text below the optional bonus card.
 .game-hud .hud-meta
   display flex
   flex-wrap wrap
