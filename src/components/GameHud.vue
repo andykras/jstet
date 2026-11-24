@@ -33,6 +33,16 @@
                   aria-live="polite">+{{ displayBonus.toLocaleString('en-US') }}</output>
         </div>
       </Transition>
+      <div class="hud-meta"
+           aria-label="Active run rules">
+        <span class="hud-meta__item"
+              :class="hard ? 'hud-meta__item--hard' : 'hud-meta__item--soft'"
+              :title="hard ? 'Space and swipe lock the piece instantly' : 'Space and swipe move the piece down softly'">
+          ● {{ hard ? 'HARD DROP' : 'SOFT DROP' }}</span>
+        <span class="hud-meta__item"
+              :title="singleBlock ? 'Matches clear one at a time' : 'Matches clear all at once'">
+          ● {{ singleBlock ? 'STEP CLEAR' : 'ALL CLEAR' }}</span>
+      </div>
     </div>
   </section>
 </template>
@@ -45,7 +55,9 @@ export default {
   name: 'GameHud',
   props: {
     mode: { type: String, default: 'tetcolor' },
-    section: { type: String, default: 'all' }
+    section: { type: String, default: 'all' },
+    hard: { type: Boolean, default: false },
+    singleBlock: { type: Boolean, default: true }
   },
   data() {
     return { displayBonus: 0 }
@@ -126,6 +138,39 @@ export default {
 
   .right-column .game-hud .hud-footer .hud-stat--bonus
     margin-top 0
+
+  .right-column .game-hud .hud-footer .hud-meta
+    margin-top 0
+
+// Active run rules: subtle text below the optional bonus card.
+.game-hud .hud-meta
+  display flex
+  flex-wrap wrap
+  gap 4px 10px
+  margin-top 6px
+  font-size 9px
+  line-height 1.4
+  letter-spacing .06em
+
+.hud-meta__item
+  color rgba(255, 255, 255, .42)
+  white-space nowrap
+
+.hud-meta__item--hard
+  color #ffd479
+
+// On phones both HUD rails are absolute corner overlays; keep the meta in
+// the free strip between the Level and Score cards instead of the flow.
+@media (max-width: 920px)
+  .right-column .game-hud .hud-meta
+    position absolute
+    top 14px
+    left 50%
+    transform translateX(-50%)
+    margin 0
+    max-width 44vw
+    justify-content center
+    text-align center
 
 @media (prefers-reduced-motion: reduce)
   .bonus-hud-enter-active,

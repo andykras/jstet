@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
 
-test('transient bonus stays in one bottom-anchored footer', () => {
+test('run rules stay in one bottom-anchored group with the transient bonus', () => {
   const hud = read('src/components/GameHud.vue')
   const start = hud.indexOf('class="hud-footer"')
   const end = hud.indexOf('</section>', start)
@@ -12,15 +12,14 @@ test('transient bonus stays in one bottom-anchored footer', () => {
   const footer = hud.slice(start, end)
   assert.ok(footer.includes('<Transition name="bonus-hud">'))
   assert.ok(footer.includes('mode === \'tetcolor\' && displayBonus > 0'))
-
-  // Run-rule details live on leaderboard rows, not in the HUD: no meta line here.
-  assert.ok(!footer.includes('class="hud-meta"'))
-  assert.ok(!footer.includes('HARD DROP'))
+  assert.ok(footer.includes('class="hud-meta"'))
+  assert.ok(footer.indexOf('hud-stat--bonus') < footer.indexOf('class="hud-meta"'))
 
   // Only the optional bonus card disappears; the footer itself stays anchored.
   assert.match(hud, /@media \(min-width: 921px\)[\s\S]*?\.right-column \.game-hud \.hud-footer\n[\s\S]*?margin-top auto/)
   assert.match(hud, /\.right-column \.game-hud \.hud-footer \.hud-stat--bonus\n\s+margin-top 0/)
-  assert.doesNotMatch(hud, /hud-meta/)
+  assert.match(hud, /\.right-column \.game-hud \.hud-footer \.hud-meta\n\s+margin-top 0/)
+  assert.match(hud, /@media \(max-width: 920px\)[\s\S]*?\.right-column \.game-hud \.hud-meta/)
 })
 
 test('build ID stays inside the cabinet rather than the viewport border', () => {
