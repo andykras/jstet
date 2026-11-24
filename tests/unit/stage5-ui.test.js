@@ -88,6 +88,31 @@ test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', 
   assert.ok(legacy.includes('Soft drop (S)'))
 })
 
+test('Legacy next piece is centered within a transparent fixed 4x4 preview', () => {
+  const legacy = read('src/components/stakan.vue')
+  for (const token of ['v-for="(row, y) in nextPreview"', 'v-for="(cell, x) in row"',
+    'value: this.getPiece(this.nextTet, sourceX, sourceY, 0) || 0',
+    'Array.from({ length: 4 }, (_, y)', 'Array.from({ length: 4 }, (_, x)',
+    'getSymbol(cell.sourceX, cell.sourceY, nextTet, 0)',
+    '.main .next .row > div.N0', 'background-color transparent']) {
+    assert.ok(legacy.includes(token), token)
+  }
+  assert.equal(legacy.includes('v-for="y in getSize(nextTet)"'), false)
+})
+
+test('Legacy well sizes to viewport without an inner scrollbar or phantom overlay row', () => {
+  const legacy = read('src/components/stakan.vue')
+  const shell = read('src/styles/arcade-shell.styl')
+  const stage5 = read('src/styles/arcade-stage5.styl')
+  for (const token of ['--legacy-cell-size', '100dvh', '100vw',
+    'stakan stakan--board', 'position absolute', 'flex 0 0 var(--legacy-cell-size)']) {
+    assert.ok(legacy.includes(token), token)
+  }
+  assert.match(shell, /\.lab-layout\n  \/\/ Legacy uses natural page flow[^\n]*\n  overflow visible/)
+  assert.match(stage5, /\.lab-layout\n  max-width 100%\n  overflow visible/)
+  assert.equal(stage5.includes('overflow-x auto'), false)
+})
+
 test('touch layout remains accessible in portrait and short landscape', () => {
   const base = read('src/styles/arcade-stage5.styl')
   const responsive = read('src/styles/arcade-responsive.styl')
