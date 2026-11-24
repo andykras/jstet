@@ -34,8 +34,19 @@
         <p v-else-if="submission.status === 'sent'"
            class="leaderboard-publish__success"
            role="status">Score published. You're on the board!</p>
+        <p v-else-if="submission.status === 'queued'"
+           class="leaderboard-publish__success"
+           role="status">
+          Saved on this device. It will be published when the server is reachable.
+          <button v-if="online"
+                  type="button"
+                  class="leaderboard-text-action"
+                  @click="$emit('sync')">Try now</button>
+          <span v-if="submission.error"
+                class="leaderboard-sync-detail">{{ submission.error }}</span>
+        </p>
         <p v-else-if="submission.status === 'sending' || publishing"
-           role="status">Publishing score…</p>
+           role="status">Saving score…</p>
         <template v-else>
           <form v-if="!profile"
                 @submit.prevent="registerAndPublish">
@@ -52,9 +63,10 @@
                      placeholder="Your arcade name">
               <button type="submit"
                       class="arcade-button arcade-button--primary"
-                      :disabled="publishing">Save score</button>
+                      :disabled="publishing || !online">Save score</button>
             </div>
-            <p>No account needed. Joining also enables automatic publishing of future scores on this device.</p>
+            <p v-if="!online">Offline: your personal best is saved. Join when you're connected to publish scores.</p>
+            <p v-else>No account needed. Joining also enables automatic publishing of future scores on this device.</p>
           </form>
           <button v-else
                   type="button"
@@ -65,6 +77,16 @@
              role="alert">{{ publishError || submission.error }}</p>
         </template>
       </section>
+
+      <div v-if="configured && pendingCount"
+           class="leaderboard-sync-notice"
+           role="status">
+        <span>{{ pendingCount }} {{ pendingCount === 1 ? 'score' : 'scores' }} saved on this device · {{ online ? 'awaiting sync' : 'offline' }}</span>
+        <button v-if="online"
+                type="button"
+                class="leaderboard-text-action"
+                @click="$emit('sync')">Sync now</button>
+      </div>
 
       <div class="leaderboard-controls">
         <div class="leaderboard-tabs"
@@ -289,11 +311,12 @@
 <script>
 import { canRankRun, formatLeaderboardScore, normalizeLeaderboardNickname } from '@/utils/leaderboardRules.js'
 import LeaderboardRunDetails from '@/components/LeaderboardRunDetails.vue'
+import { queueLeaderboardRun, clearQueuedLeaderboardRuns } from '@/utils/leaderboardOutbox.js'
 import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
   leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard,
-  registerLeaderboardPlayer, publishLeaderboardRun, isLeaderboardAutoPublishEnabled,
+  registerLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
   setLeaderboardAutoPublish, forgetLeaderboardPlayer
 } from '@/utils/leaderboardClient.js'
 
@@ -303,9 +326,11 @@ export default {
   props: {
     defaultMode: { type: String, default: 'tetcolor' },
     pendingRun: { type: Object, default: null },
-    submission: { type: Object, default: () => ({ status: 'idle' }) }
+    submission: { type: Object, default: () => ({ status: 'idle' }) },
+    pendingCount: { type: Number, default: 0 },
+    online: { type: Boolean, default: true }
   },
-  emits: ['close', 'published'],
+  emits: ['close', 'queued', 'sync', 'profile-forgotten'],
   data() {
     return {
       modes: [{ label: 'TetColor', value: 'tetcolor' }, { label: 'Classic', value: 'classic' }],
@@ -338,7 +363,8 @@ export default {
   watch: {
     mode() { this.refresh() },
     period() { this.refresh() },
-    'submission.status'() { this.refresh() }
+    'submission.status'(status) { if (status === 'sent') this.refresh() },
+    online() { this.refresh() }
   },
   mounted() {
     this.$nextTick(() => {
@@ -367,6 +393,14 @@ export default {
         return
       }
       if (!this.configured) return
+      if (!this.online) {
+        this.sequence++
+        this.entries = []
+        this.mine = null
+        this.loading = false
+        this.loadError = 'Offline: live rankings are unavailable. Your local best is still saved.'
+        return
+      }
       const requestId = ++this.sequence
       this.loading = true
       this.loadError = ''
@@ -386,7 +420,7 @@ export default {
       }
     },
     async registerAndPublish() {
-      if (this.publishing || !canRankRun(this.pendingRun)) return
+      if (this.publishing || !this.online || !canRankRun(this.pendingRun)) return
       const validNickname = normalizeLeaderboardNickname(this.nickname)
       if (!validNickname) {
         this.publishError = 'Use 3–16 letters, digits, underscores or hyphens.'
@@ -416,9 +450,9 @@ export default {
         this.publishing = false
       }
     },
-    async publishScore() {
-      await publishLeaderboardRun(this.pendingRun, this.profile)
-      this.$emit('published', this.pendingRun.runId)
+    publishScore() {
+      queueLeaderboardRun(this.pendingRun, this.profile)
+      this.$emit('queued', this.pendingRun.runId)
     },
     onAutoPublishChange(enabled) {
       this.profileError = ''
@@ -429,12 +463,19 @@ export default {
       }
     },
     forgetProfile() {
-      if (!window.confirm('Forget this profile on this device? Published scores will remain public.')) return
+      if (!window.confirm('Forget this profile and unsent scores on this device? Published scores will remain public.')) return
+      try {
+        clearQueuedLeaderboardRuns(this.profile)
+      } catch (error) {
+        this.profileError = error.message
+        return
+      }
       if (!forgetLeaderboardPlayer()) {
         this.profileError = 'Unable to clear browser storage.'
         return
       }
       this.profile = null
+      this.$emit('profile-forgotten')
       this.profileError = ''
       this.publishError = ''
       this.refresh()
