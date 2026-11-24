@@ -334,11 +334,11 @@ export default {
           const border = this.gameActive ? '\\|/-'[indexBorder % 4] : 'x'
           return val == 9 ? border : val != 8 && val ? '.-'[Math.floor(Math.random() * 2)] : val == 8 ? '&nbsp;' : '.'
         case 3:
-          if (pieceOnly) return val ? '[ ]' : '&nbsp;'
+          if (pieceOnly) return val ? '[&nbsp; ]' : '&nbsp;'
           if (val == 9) {
             return x == 1 ? '&lt;!' : y == 1 && x < w ? '==<br>\\/' : '!&gt;'
           }
-          return val == 0 ? '.' : val == 8 ? '--' : '[ ]'
+          return val == 0 ? '.' : val == 8 ? '--' : '[&nbsp; ]'
         case 4:
           return '&nbsp;'
       }
