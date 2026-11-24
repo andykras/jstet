@@ -68,10 +68,48 @@ const apiRequest = async(path, { method = 'GET', token, body } = {}) => {
   }
 }
 
-export const fetchLeaderboard = (mode, period, player = readLeaderboardPlayer()) => apiRequest(
-  '/api/v1/leaderboard?mode=' + encodeURIComponent(mode) + '&period=' + encodeURIComponent(period),
-  { token: player?.token }
-)
+const CACHE_KEY = 'jstet.leaderboard.snapshots.v1'
+
+const currentWeekStart = () => {
+  const now = new Date()
+  const monday = (now.getUTCDay() + 6) % 7
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - monday)
+}
+
+export const cachedLeaderboard = (mode, period, player = readLeaderboardPlayer(), target = storage()) => {
+  if (!target) return null
+  try {
+    const cache = JSON.parse(target.getItem(CACHE_KEY) || '{}')
+    const snapshot = cache[mode + ':' + period]
+    if (!snapshot || !Array.isArray(snapshot.data?.entries) || !Number.isFinite(snapshot.cachedAtMs)) return null
+    if (period === 'week' && Date.parse(snapshot.data.weekStartsAt) !== currentWeekStart()) return null
+    return {
+      ...snapshot.data,
+      mine: snapshot.playerId && snapshot.playerId === player?.id ? snapshot.data.mine : null,
+      cachedAtMs: snapshot.cachedAtMs
+    }
+  } catch (_) {
+    return null
+  }
+}
+
+export const fetchLeaderboard = async(mode, period, player = readLeaderboardPlayer()) => {
+  const data = await apiRequest(
+    '/api/v1/leaderboard?mode=' + encodeURIComponent(mode) + '&period=' + encodeURIComponent(period),
+    { token: player?.token }
+  )
+  const target = storage()
+  if (target && Array.isArray(data.entries)) {
+    try {
+      const cache = JSON.parse(target.getItem(CACHE_KEY) || '{}')
+      cache[mode + ':' + period] = { data, playerId: player?.id || null, cachedAtMs: Date.now() }
+      target.setItem(CACHE_KEY, JSON.stringify(cache))
+    } catch (_) {
+      // Cached rankings are optional and must never stop normal gameplay.
+    }
+  }
+  return data
+}
 
 export const registerLeaderboardPlayer = async nickname => {
   const data = await apiRequest('/api/v1/players', {
