@@ -68,13 +68,21 @@ Users can disable automatic submissions or forget the local profile from the lea
 Already published scores remain public when a device forgets its profile.
 
 Personal best scores are also saved locally, independently of API availability and
-separately by game mode, while retaining existing historical local bests from
-both clearing settings. The game remains fully playable if the
-API is offline or not configured. Configure
-`VITE_LEADERBOARD_API_URL` at **build time** to connect the static PWA to the
-separately deployed [Worker/D1 leaderboard API](leaderboard-api/README.md).
-Do not deploy the API or switch the public PWA to it without verifying CORS, migrations,
-manual moderation, mobile interaction and the non-cheat-proof score model first.
+separately by game mode, while retaining historical records from both clearing settings.
+
+The Hall of Fame presents the top three players as a podium, followed by the remaining
+Top 20. Select any player to inspect the winning run's level, duration, blocks/lines,
+Hard Drop setting and clearing mode. Run options are display-only and **never**
+create another leaderboard or disqualify a result. Unknown options on older
+records appear as a dash, not invented settings. Your standing remains visible
+outside the Top 20.
+
+The game remains fully playable without the API. The **current backend** is a
+[same-origin PHP leaderboard on kraspeed](leaderboard-api/README.md#kraspeed-deployment-current-production-choice),
+configured with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org` at build time.
+The Worker/D1 implementation in the repository is unused reference code. A feature
+release must update both the static site and the PHP API script while preserving
+`/srv/tetcolor/api-data/state.json` and the existing rollback path.
 
 ### Visual-only preview (no backend)
 
