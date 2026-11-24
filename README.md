@@ -37,6 +37,11 @@ Expand **Developer lab** in the footer and enable **Legacy engine** to inspect t
 
 Lab controls include four historical skins: **Symbols** (1), **ASCII** (2), and **Text** (3) display the original-style symbols or glyphs in **black and white**; **Colors** (4) keeps the multicolored tetrominoes. The skin affects only rendering, not game rules or scoring. Choose a skin from the Developer Lab selector or press **1–4** on the keyboard; **A** toggles line-clear animation, and **S** toggles drop behavior. These are Lab-only options, separate from the Arcade/Prism player themes.
 
+Legacy's **Next Piece** preview displays a centered, compact 4×4 outline with
+transparent empty cells. Its 20-row well scales with the available viewport
+rather than creating a nested scrollable game panel; on very short screens the
+page may scroll normally. The game rules and board dimensions are unchanged.
+
 ## Development
 
 Requires **Node.js 20.19+ or 22.12+** and npm.
