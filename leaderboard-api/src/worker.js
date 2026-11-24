@@ -32,6 +32,10 @@ export const validateRun = run => {
   if (!Number.isSafeInteger(run.durationMs) || run.durationMs < 1000 || run.durationMs > 8 * 60 * 60 * 1000) {
     return 'Invalid run duration.'
   }
+  if (run.completedAtMs != null && (
+    !Number.isSafeInteger(run.completedAtMs) || run.completedAtMs < 1577836800000 ||
+    run.completedAtMs > Date.now() + 300000
+  )) return 'Invalid completion time.'
   return null
 }
 
@@ -109,7 +113,7 @@ const rankQuery = `
         PARTITION BY player_id ORDER BY score DESC, created_ms ASC, id ASC
       ) AS best_index
     FROM scores
-    WHERE mode = ? AND ruleset = ? AND created_ms >= ?
+    WHERE mode = ? AND ruleset = ? AND COALESCE(completed_ms, created_ms) >= ?
   ), ranked AS (
     SELECT players.id AS player_id, players.nickname,
       per_player.score, per_player.cleared, per_player.level, per_player.duration_ms,
@@ -178,14 +182,14 @@ const postScore = async (request, env) => {
   const saved = await env.DB.prepare(`
     INSERT OR IGNORE INTO scores
       (id, player_id, run_id, mode, ruleset, score, cleared, level, duration_ms,
-       hard_drop, single_block, created_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       hard_drop, single_block, completed_ms, created_ms)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(), player.id, run.runId, run.mode, run.ruleset, run.score, run.cleared,
     run.level, run.durationMs,
     run.hardDrop == null ? null : (run.hardDrop ? 1 : 0),
     run.singleBlock == null ? null : (run.singleBlock ? 1 : 0),
-    now
+    run.completedAtMs ?? now, now
   ).run()
   return json({ accepted: true, duplicate: saved.meta?.changes === 0 }, 201)
 }
