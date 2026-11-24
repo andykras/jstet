@@ -94,6 +94,11 @@ function validate_run(mixed $run): ?string
     foreach (['hardDrop', 'singleBlock'] as $flag) {
         if (array_key_exists($flag, $run) && !is_bool($run[$flag])) return 'Invalid run options.';
     }
+    // Device type is presentation metadata, not a competitive category.
+    if (array_key_exists('platform', $run) &&
+        !in_array($run['platform'], ['mobile', 'desktop'], true)) {
+        return 'Invalid device platform.';
+    }
     foreach ([['score', 1, 25000000], ['cleared', 0, 100000], ['level', 0, 8]] as [$key, $min, $max]) {
         $value = $run[$key] ?? null;
         if (!is_int($value) || $value < $min || $value > $max) return 'Invalid ' . $key . '.';
@@ -234,6 +239,7 @@ function publish_score(): never
         // Older clients may omit these display-only settings; do not guess them.
         $hardDrop = $run['hardDrop'] ?? null;
         $singleBlock = $run['singleBlock'] ?? null;
+        $platform = $run['platform'] ?? null;
         foreach (['all', $week] as $bucket) {
             $key = $id . '|' . $run['mode'] . '|' . $bucket;
             $best = $state['bests'][$key] ?? null;
@@ -248,6 +254,7 @@ function publish_score(): never
                     'durationMs' => $run['durationMs'],
                     'hardDrop' => $hardDrop,
                     'singleBlock' => $singleBlock,
+                    'platform' => $platform,
                     'createdMs' => $completedAtMs
                 ];
             }
@@ -294,7 +301,8 @@ function leaderboard(): never
                 'level' => $best['level'] ?? null,
                 'durationMs' => $best['durationMs'] ?? null,
                 'hardDrop' => $best['hardDrop'] ?? null,
-                'singleBlock' => $best['singleBlock'] ?? null
+                'singleBlock' => $best['singleBlock'] ?? null,
+                'platform' => $best['platform'] ?? null
             ];
         }
         usort($ranked, fn(array $a, array $b): int => $b['score'] <=> $a['score'] ?: strcmp($a['playerId'], $b['playerId']));
@@ -309,7 +317,8 @@ function leaderboard(): never
                     'level' => $row['level'],
                     'durationMs' => $row['durationMs'],
                     'hardDrop' => $row['hardDrop'],
-                    'singleBlock' => $row['singleBlock']
+                    'singleBlock' => $row['singleBlock'],
+                    'platform' => $row['platform']
                 ];
                 break;
             }
@@ -329,7 +338,8 @@ function leaderboard(): never
             'level' => $row['level'] ?? null,
             'durationMs' => $row['durationMs'] ?? null,
             'hardDrop' => $row['hardDrop'] ?? null,
-            'singleBlock' => $row['singleBlock'] ?? null
+            'singleBlock' => $row['singleBlock'] ?? null,
+            'platform' => $row['platform'] ?? null
         ];
     }
     respond([
