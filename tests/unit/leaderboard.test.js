@@ -25,8 +25,8 @@ const run = {
 test('the leaderboard dialog keeps a compact width on desktop', () => {
   const styles = read('src/styles/leaderboard.styl')
   // Stylus evaluates its own min(), so the CSS function must be quoted through.
-  assert.match(styles, /width unquote\('min\(100%, 480px\)'\)/)
-  assert.match(styles, /max-height unquote\('min\(92dvh, 780px\)'\)/)
+  assert.match(styles, /width unquote\('min\(100%, 560px\)'\)/)
+  assert.match(styles, /max-height unquote\('min\(94dvh, 900px\)'\)/)
   assert.doesNotMatch(styles, /width min\(100%/)
 })
 
@@ -41,6 +41,8 @@ test('the competitive run preserves the engine score and declares the scoring co
     cleared: 45, level: 3, durationMs: 123000, ruleset: LEADERBOARD_RULESET,
     hardDrop: true, singleBlock: false
   })
+  assert.equal(completedRun({ ...run, platform: 'mobile' }).platform, 'mobile')
+  assert.equal(completedRun({ ...run, platform: 'desktop' }).platform, 'desktop')
   assert.equal(canRankRun(run), true)
   assert.equal(canRankRun({ ...run, mode: 'classic' }), true)
 })
