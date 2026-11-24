@@ -79,6 +79,13 @@ test('Legacy skins 1–3 use monochrome cells; skin 4 retains original colors', 
   assert.ok(legacy.includes('if (p >= 1 && p <= 4)'))
   assert.ok(legacy.includes('background-color: #8cff8c'))
   assert.ok(legacy.includes('background-color: #4ff6ff'))
+  // The old inline debug/status block and duplicate GitHub link overlapped the well.
+  for (const removed of ['animated: {{', 'drop soft: {{', 'theme: {{', 'class="github"',
+    'github.com/andykras/jstet']) {
+    assert.equal(legacy.includes(removed), false, removed)
+  }
+  assert.ok(legacy.includes('Animate line clears (A)'))
+  assert.ok(legacy.includes('Soft drop (S)'))
 })
 
 test('touch layout remains accessible in portrait and short landscape', () => {
