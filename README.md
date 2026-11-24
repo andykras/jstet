@@ -1,5 +1,7 @@
 # JSTET — Arcade 2077
 
+![TetColor gameplay](docs/tetcolor.jpg)
+
 A browser puzzle game with two playable modes, built with **Vue 3 (Options API)**, **Vuex 4**, **Vite 7**, **Stylus**, and **mitt**.
 
 The original **TetColor** game mechanics are preserved inside a modern arcade interface. **Classic** provides a separate seven-tetromino ruleset. A historical, independently implemented version remains accessible in **Developer Lab**.

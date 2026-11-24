@@ -12,8 +12,8 @@
       <header class="leaderboard-header">
         <div class="leaderboard-header__copy">
           <p class="leaderboard-kicker"><span aria-hidden="true">✦</span> ARCADE 2077 · HIGH SCORES</p>
-          <h2 id="leaderboard-heading">LEADERBOARD<span aria-hidden="true">.</span></h2>
-          <p class="leaderboard-subtitle">One game. One shot at glory.</p>
+          <h2 id="leaderboard-heading">LEADERBOARD</h2>
+          <p class="leaderboard-subtitle">One game. One shot. One glory.</p>
         </div>
         <button type="button"
                 class="dialog-close"
