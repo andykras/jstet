@@ -83,7 +83,10 @@ The engine, controls, score calculation and personal-best tracking never wait fo
 the leaderboard API. The installed PWA uses its existing service-worker precache
 for the game shell and assets, so after an initial online installation/load it
 can be opened and played in airplane mode (subject to the browser keeping its
-offline cache). API fetches are optional, fail immediately when the browser
+offline cache). New service workers do not silently replace an already-running
+game: when a new version is detected, a **Reload** prompt appears after Game Over.
+A current session is never forcibly refreshed. The small build ID at the bottom
+of the game can be compared between devices to identify stale installed PWAs. API fetches are optional, fail immediately when the browser
 reports offline and have bounded timeouts. No background connection is needed
 to start or finish a game.
 
