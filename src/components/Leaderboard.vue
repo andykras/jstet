@@ -115,6 +115,7 @@
         <div v-else-if="entries.length"
              class="leaderboard-results">
           <div class="leaderboard-podium"
+               role="group"
                aria-label="Top three players">
             <div v-for="entry in podiumEntries"
                  :key="entry.playerId"
@@ -131,7 +132,11 @@
                 <span class="leaderboard-podium__medal"
                       aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
                 <span class="leaderboard-podium__place">#{{ entry.rank }}</span>
-                <span class="leaderboard-podium__name">{{ entry.nickname }}</span>
+                <span class="leaderboard-podium__name">
+                  {{ entry.nickname }}
+                  <small v-if="profile && entry.playerId === profile.id"
+                         class="leaderboard-podium__you">YOU</small>
+                </span>
                 <strong class="leaderboard-podium__score">{{ formatLeaderboardScore(entry.score) }}</strong>
                 <span class="leaderboard-podium__tags">
                   <span v-if="entry.hardDrop === true"
@@ -324,10 +329,7 @@ export default {
   computed: {
     personalBest() { return readPersonalBest(this.mode) },
     autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) },
-    podiumEntries() {
-      const leaders = this.entries.slice(0, 3)
-      return [leaders[1], leaders[0], leaders[2]].filter(Boolean)
-    },
+    podiumEntries() { return this.entries.slice(0, 3) },
     remainingEntries() { return this.entries.slice(3) },
     activePodiumEntry() {
       return this.entries.slice(0, 3).find(entry => entry.playerId === this.expandedId) || null
