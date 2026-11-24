@@ -155,7 +155,7 @@
               <button type="button"
                       class="leaderboard-podium__button"
                       :aria-expanded="expandedId === entry.playerId"
-                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
+                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + runBadgeDescription(entry) + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
                       @click="toggleEntry(entry.playerId)">
                 <span class="leaderboard-podium__medal"
                       aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
@@ -213,7 +213,7 @@
               <button type="button"
                       class="leaderboard-entry__main"
                       :aria-expanded="expandedId === entry.playerId"
-                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
+                      :aria-label="entry.nickname + ', rank ' + entry.rank + ', ' + formatLeaderboardScore(entry.score) + '. ' + runBadgeDescription(entry) + (expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'"
                       @click="toggleEntry(entry.playerId)">
                 <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
                 <span class="leaderboard-entry__player">
@@ -369,6 +369,14 @@ export default {
   methods: {
     canRankRun,
     formatLeaderboardScore,
+    runBadgeDescription(entry) {
+      const labels = []
+      if (entry.hardDrop === true) labels.push('Hard Drop')
+      if (entry.platform === 'mobile') labels.push('Phone or tablet')
+      else if (entry.platform === 'desktop') labels.push('Computer')
+      else labels.push('Device unknown')
+      return labels.join('. ') + '. '
+    },
     toggleEntry(playerId) {
       this.expandedId = this.expandedId === playerId ? null : playerId
     },
