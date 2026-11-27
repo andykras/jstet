@@ -29,7 +29,6 @@ export const removeThreeBlock = _ => {
     for (let y = 1; y < h + 1; ++y) {
       if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
     }
-    // Cleared cells vacate the top of the column; never leave stale -2 markers behind.
     for (let y = cur; y < h; ++y) $cells[y][x] = 0
   }
 }
