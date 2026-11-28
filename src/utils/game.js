@@ -416,9 +416,10 @@ const update = (X, Y, R, action = 'gravity') => {
       $bus.emit('sound:drop')
       if (game.tetcolor) {
         game.cascadeDepth = 0
+        const pendingBefore = $three.size
         $three = detectClears('tetcolor', getThreeBlock)
         game.chainBonus = 0
-        if ($three.size) {
+        if ($three.size > pendingBefore) {
           game.matchStreak++
           const combo = comboBonusForStreak(game.matchStreak, game.scorePart)
           if (combo > 0) {

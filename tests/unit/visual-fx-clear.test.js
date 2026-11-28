@@ -73,26 +73,18 @@ test('Classic: line-clear step includes all 10 colored cells in exactly that row
   assert.deepEqual([...first, ...second].map(cell => cell.color).sort(), cells.map(cell => cell.color).sort())
 })
 
-test('a top visible row match is captured even though the detector cannot mark it', () => {
-  // getThreeBlock detects matches whose third cell sits on the top visible row
-  // (y = height - 1) but its marking loop stops one row earlier, while the
-  // removal compaction does delete that cell. Group membership is the source
-  // of truth, not the -2 marks.
+test('a pending top-row match is captured without changing its original colors', () => {
   const board = new Stakan(19, 9, 4)
   const top = board.height - 1
   board[top - 2][3] = 5
   board[top - 1][3] = 5
   board[top][3] = 5
   const candidates = captureClearCandidates(board)
-  // Simulate the engine: all three cells are queued for removal, only the
-  // lower two are marked -2.
   const group = new Set([3 * board.height + top - 2, 3 * board.height + top - 1, 3 * board.height + top])
-  board[top - 2][3] = -2
-  board[top - 1][3] = -2
   const cells = markedClearFxCells(candidates, board, (x, y) => group.has(x * board.height + y))
   assert.equal(cells.length, 3)
+  assert.equal(board[top][3], 5)
   assert.deepEqual(cells.find(cell => cell.row === 0), { column: 2, row: 0, color: 5 })
-  // Step selection reaches the top cell too.
   assert.deepEqual(clearStepFxCells(cells, 'tetcolor', 3, top, board), [{ column: 2, row: 0, color: 5 }])
 })
 
