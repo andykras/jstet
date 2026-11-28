@@ -6,12 +6,15 @@
           aria-label="Hard Drop"
           title="Hard Drop">
       <svg
+        class="leaderboard-run-badge__fist"
         viewBox="0 0 24 24"
         aria-hidden="true">
         <path
-          d="M12 2v12m-5-5 5 5 5-5" />
+          d="M5.2 11.2 6.8 7.4a1.8 1.8 0 0 1 3.3-.1l.7 1.2 1.1-2.1a1.8 1.8 0 0 1 3.2.3l.2.6 1.1-1.1a1.8 1.8 0 0 1 3 1l.1 1 .8-.2a1.8 1.8 0 0 1 2.2 1.7v3.1a7 7 0 0 1-7 7h-2.6a6.5 6.5 0 0 1-5.7-3.4l-2-3.5a1.7 1.7 0 0 1 1.9-2.5Z" />
         <path
-          d="M5 18h14M7 21h10" />
+          d="m8 10.1 2.1 1.1m1.4-2.7 2 1.2m1.2-1.3 2 1.2m-6.1 4 3 1.3 3.1-1.1" />
+        <path
+          d="m3.6 5-1.2-1.2M8 3V1.5M20 4l1.3-1.3" />
       </svg>
     </span>
     <span v-if="entry.platform === 'mobile'"
