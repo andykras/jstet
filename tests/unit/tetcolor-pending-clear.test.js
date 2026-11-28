@@ -35,7 +35,7 @@ test('put rejects overflow and overlap without partially writing the piece', () 
   assert.equal(cells[5][4], 5)
 })
 
-test('Hard Drop cannot move a new piece through a pending ALL CLEAR match', async () => {
+test('Hard Drop cannot move a new piece through a pending ALL CLEAR match', () => {
   const cells = board()
   const dispose = setup(gameBus)
   const onUpdate = item => store.commit('setPieceState', item)
