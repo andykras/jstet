@@ -51,15 +51,17 @@ export const getThreeBlock = _ => {
     $cells[y + ry][x + rx] == $cells[y][x]
 
   const previousSize = $three.size
+  const found = new Set()
   for (let y = 1; y < h - 1; ++y) {
     for (let x = 1; x < w - 1; ++x) {
       if ($cells[y][x] <= 0 || $three.has(x * h + y)) continue
-      if (check(x, y,  0, -1, 0,  1)) $three.add(x * h + y).add((x - 1) * h + y).add((x + 1) * h + y) // prettier-ignore
-      if (check(x, y, -1, -1, 1,  1)) $three.add(x * h + y).add((x - 1) * h + y - 1).add((x + 1) * h + y + 1) // prettier-ignore
-      if (check(x, y, -1,  0, 1,  0)) $three.add(x * h + y).add(x * h + y - 1).add(x * h + y + 1) // prettier-ignore
-      if (check(x, y, -1,  1, 1, -1)) $three.add(x * h + y).add((x - 1) * h + y + 1).add((x + 1) * h + y - 1) // prettier-ignore
+      if (check(x, y,  0, -1, 0,  1)) found.add(x * h + y).add((x - 1) * h + y).add((x + 1) * h + y) // prettier-ignore
+      if (check(x, y, -1, -1, 1,  1)) found.add(x * h + y).add((x - 1) * h + y - 1).add((x + 1) * h + y + 1) // prettier-ignore
+      if (check(x, y, -1,  0, 1,  0)) found.add(x * h + y).add(x * h + y - 1).add(x * h + y + 1) // prettier-ignore
+      if (check(x, y, -1,  1, 1, -1)) found.add(x * h + y).add((x - 1) * h + y + 1).add((x + 1) * h + y - 1) // prettier-ignore
     }
   }
+  for (const xy of found) $three.add(xy)
   if ($three.size > previousSize) {
     let delta = -1
     $three.bonus = 0
