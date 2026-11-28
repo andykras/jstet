@@ -7,6 +7,7 @@ const app = read('src/App.vue')
 const component = read('src/components/Leaderboard.vue')
 const badges = read('src/components/LeaderboardRunBadges.vue')
 const details = read('src/components/LeaderboardRunDetails.vue')
+const client = read('src/utils/leaderboardClient.js')
 
 test('leaderboard is driven by real game completion, without awaiting the network', () => {
   assert.match(app, /on\('done', \(\) => this\.onRunComplete\(\)\)/)
@@ -34,6 +35,8 @@ test('podium, regular rows and standing share accessible vector device badges', 
   assert.equal(uses.length, 3)
   assert.match(badges, /role="img"/)
   assert.match(badges, /aria-label="Hard Drop"/)
+  assert.match(badges, /leaderboard-run-badge__fist/)
+  assert.doesNotMatch(badges, /M12 2v12m-5-5 5 5 5-5/)
   assert.match(badges, /aria-label="Phone or tablet"/)
   assert.match(badges, /aria-label="Computer"/)
   assert.match(badges, /aria-label="Device unknown"/)
@@ -64,8 +67,27 @@ test('podium and Top 20 rows expand independently and third place sits lower', (
   assert.ok(component.includes("expandedSource === 'list' && expandedId === entry.playerId"))
   assert.ok(component.includes("if (this.expandedSource !== 'podium') return null"))
   const styles = read('src/styles/leaderboard.styl')
-  assert.ok(styles.includes('.leaderboard-podium__slot--2 .leaderboard-podium__button\n  min-height 180px\n  padding-top 28px'))
-  assert.ok(styles.includes('  .leaderboard-podium__slot--2 .leaderboard-podium__button\n    min-height 164px\n    padding-top 25px'))
+  assert.ok(styles.includes('.leaderboard-podium__slot--1 .leaderboard-podium__button\n  min-height 216px'))
+  assert.ok(styles.includes('.leaderboard-podium__slot--2 .leaderboard-podium__button\n  min-height 188px'))
+  assert.ok(styles.includes('.leaderboard-podium__slot--3 .leaderboard-podium__button\n  min-height 164px'))
+  assert.ok(styles.includes('  .leaderboard-podium__slot--1 .leaderboard-podium__button\n    min-height 205px'))
+  assert.ok(styles.includes('  .leaderboard-podium__slot--2 .leaderboard-podium__button\n    min-height 177px'))
+  assert.ok(styles.includes('  .leaderboard-podium__slot--3 .leaderboard-podium__button\n    min-height 150px'))
+  assert.ok(styles.includes('.leaderboard-podium__you\n  display inline'))
+})
+
+
+test('players can rename their existing public profile without creating a new identity', () => {
+  assert.ok(component.includes('@click="beginRename"'))
+  assert.ok(component.includes('@submit.prevent="renameProfile"'))
+  assert.ok(component.includes('renameLeaderboardPlayer'))
+  assert.ok(client.includes("apiRequest('/api/v1/players/me'"))
+  assert.ok(client.includes("method: 'PATCH'"))
+  const php = read('leaderboard-api/php/index.php')
+  assert.ok(php.includes('function rename_player(): never'))
+  assert.ok(php.includes('Access-Control-Allow-Methods: GET, POST, PATCH, OPTIONS'))
+  assert.ok(php.includes("if ($path === '/api/v1/players/me' && $method === 'PATCH') rename_player();"))
+  assert.ok(php.includes("$state['players'][$id]['nickname'] = $nickname"))
 })
 
 test('PHP stores and returns platform metadata independently of score ranking', () => {
