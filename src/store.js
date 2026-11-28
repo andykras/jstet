@@ -3,6 +3,7 @@ import { createStore } from 'vuex'
 export default createStore({
   state: {
     cells: null,
+    pendingClears: Object.freeze(new Set()),
     pieces: null,
     item: null,
     lines: 0,
@@ -15,6 +16,9 @@ export default createStore({
   mutations: {
     setCells(state, cells) {
       state.cells = Object.freeze(cells)
+    },
+    setPendingClears(state, cells) {
+      state.pendingClears = Object.freeze(new Set(cells))
     },
     setPieces(state, pieces) {
       state.pieces = Object.freeze(pieces)
@@ -52,10 +56,11 @@ export default createStore({
     getSize({ pieces, item }) {
       return pieces && item && pieces[item.N].size
     },
-    getWellValue: ({ cells, pieces, item, lines }) => (x, y) => {
-      if (!item) return cells[y - 1][x - 1] + lines
+    getWellValue: ({ cells, pendingClears, pieces, item, lines }) => (x, y) => {
+      const value = pendingClears.has((x - 1) * cells.height + y - 1) ? -2 : cells[y - 1][x - 1]
+      if (!item) return value + lines
       const { T, X, Y, R } = item
-      return pieces[T].get(x - X - 1, y - Y - 1, R) || cells[y - 1][x - 1]
+      return pieces[T].get(x - X - 1, y - Y - 1, R) || value
     },
     getNextValue: ({ pieces, item, lines }) => (x, y) => {
       if (!item) return lines
