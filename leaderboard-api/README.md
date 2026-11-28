@@ -45,7 +45,10 @@ Build the frontend with `VITE_LEADERBOARD_API_URL=https://tetcolor.andykras.org`
 
 The PHP endpoint mirrors the Worker contract, validation, 10-second score
 spacing, five registrations per hashed IP per hour, duplicate-run protection and
-`arcade-v1` scoring-contract checks, independent of clearing preferences.
+`arcade-v1` scoring-contract checks, independent of clearing preferences. It also supports authenticated
+`PATCH /api/v1/players/me` with `{ "nickname": "NewName" }` to rename the existing
+player profile. The player ID, bearer token, score history and auto-publish setting
+are preserved; historical and future rankings display the updated nickname.
 The optional `platform` field is either `mobile` (phone/tablet) or
 `desktop` (computer), reported by the browser at completion. It is saved
 alongside the winning run and included in the public top 20 and personal rank
