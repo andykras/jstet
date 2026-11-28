@@ -124,6 +124,22 @@ export const registerLeaderboardPlayer = async nickname => {
   return player
 }
 
+
+export const renameLeaderboardPlayer = async(nickname, player = readLeaderboardPlayer()) => {
+  if (!player) throw new Error('Leaderboard profile is unavailable.')
+  const data = await apiRequest('/api/v1/players/me', {
+    method: 'PATCH',
+    token: player.token,
+    body: { nickname: nickname.trim() }
+  })
+  if (data.id !== player.id || typeof data.nickname !== 'string') {
+    throw new Error('Unexpected profile response. Your existing profile was not changed locally.')
+  }
+  const updated = { ...player, nickname: data.nickname }
+  storePlayer(updated)
+  return updated
+}
+
 export const publishLeaderboardRun = (run, player = readLeaderboardPlayer()) => {
   if (!player) throw new Error('Choose a nickname before publishing a score.')
   return apiRequest('/api/v1/scores', { method: 'POST', token: player.token, body: run })
