@@ -290,7 +290,7 @@
            class="leaderboard-error"
            role="alert">{{ profileError }}</p>
       </div>
-      <form v-if="renaming"
+      <form v-if="configured && profile && !preview && renaming"
             class="leaderboard-rename"
             @submit.prevent="renameProfile">
         <label for="leaderboard-rename-nickname">New nickname</label>
@@ -569,6 +569,8 @@ export default {
         return
       }
       this.profile = null
+      this.renaming = false
+      this.renameError = ''
       this.$emit('profile-forgotten')
       this.profileError = ''
       this.publishError = ''
