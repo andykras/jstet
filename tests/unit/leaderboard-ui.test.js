@@ -40,11 +40,32 @@ test('podium, regular rows and standing share accessible vector device badges', 
   assert.doesNotMatch(component, />ALL<|>HD<|>1×1</)
   assert.match(details, /entry\.singleBlock === false/)
   assert.match(details, /entry\.platform === 'mobile'/)
-  assert.match(component, /toggleEntry\(playerId\)/)
+  assert.match(component, /toggleEntry\(playerId, source\)/)
   const styles = read('src/styles/leaderboard.styl')
   assert.match(styles, /\.leaderboard-run-badge--drop/)
   assert.match(styles, /\.leaderboard-run-badge--mobile/)
   assert.match(styles, /\.leaderboard-run-badge--desktop/)
+})
+
+test('the full Top 20 includes podium players even when there are only three entries', () => {
+  assert.ok(component.includes('<span>TOP 20</span>'))
+  assert.ok(component.includes('<small>RANK 01—20</small>'))
+  assert.ok(component.includes('aria-label="Top 20 players"'))
+  assert.ok(component.includes('v-for="entry in entries"'))
+  assert.ok(!component.includes('remainingEntries'))
+  assert.ok(!component.includes('RANK 04—20'))
+  assert.ok(!component.includes('v-if="remainingEntries.length"'))
+})
+
+test('podium and Top 20 rows expand independently and third place sits lower', () => {
+  assert.ok(component.includes("toggleEntry(entry.playerId, 'podium')"))
+  assert.ok(component.includes("toggleEntry(entry.playerId, 'list')"))
+  assert.ok(component.includes("expandedSource === 'podium' && expandedId === entry.playerId"))
+  assert.ok(component.includes("expandedSource === 'list' && expandedId === entry.playerId"))
+  assert.ok(component.includes("if (this.expandedSource !== 'podium') return null"))
+  const styles = read('src/styles/leaderboard.styl')
+  assert.ok(styles.includes('.leaderboard-podium__slot--2 .leaderboard-podium__button\n  min-height 180px\n  padding-top 28px'))
+  assert.ok(styles.includes('  .leaderboard-podium__slot--2 .leaderboard-podium__button\n    min-height 164px\n    padding-top 25px'))
 })
 
 test('PHP stores and returns platform metadata independently of score ranking', () => {
