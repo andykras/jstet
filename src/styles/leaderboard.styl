@@ -404,6 +404,12 @@
 .leaderboard-entry--mine
   border-color rgba(118, 221, 247, .58)
   background rgba(23, 64, 90, .37)
+  box-shadow inset 3px 0 rgba(108, 218, 250, .58)
+
+.leaderboard-entry--standing-only
+  margin-top 9px
+  border-style dashed
+  background rgba(23, 64, 90, .2)
 
 .leaderboard-entry__main
   display grid
@@ -413,6 +419,9 @@
   width 100%
   min-height 54px
   padding 9px 12px
+
+.leaderboard-entry--mine .leaderboard-entry__main
+  min-height 66px
   border 0
   border-radius 11px
   background transparent
@@ -437,6 +446,27 @@
   align-items center
   gap 3px 7px
   min-width 0
+
+.leaderboard-entry__player--mine
+  flex-direction column
+  align-items flex-start
+  justify-content center
+  gap 3px
+
+.leaderboard-entry__standing-label
+  color #92daee
+  font-size 9px
+  font-weight 900
+  letter-spacing .14em
+  line-height 1
+
+.leaderboard-entry__identity
+  display flex
+  align-items center
+  flex-wrap wrap
+  gap 4px 7px
+  min-width 0
+  max-width 100%
 
 .leaderboard-entry__name
   overflow hidden
@@ -532,65 +562,6 @@
   border-color rgba(147, 139, 175, .23)
   background rgba(103, 100, 136, .08)
   color #938fae
-
-.leaderboard-personal__identity > .leaderboard-run-badges
-  justify-content flex-start
-  margin-top 5px
-
-.leaderboard-personal
-  display grid
-  grid-template-columns minmax(0, 1fr) auto
-  align-items center
-  gap 14px
-  margin-top 19px
-  padding 14px 16px
-  border 1px solid rgba(106, 216, 248, .43)
-  border-radius 13px
-  background linear-gradient(115deg, rgba(31, 99, 129, .31), rgba(18, 37, 67, .69))
-  box-shadow inset 3px 0 rgba(108, 218, 250, .58)
-
-.leaderboard-personal__identity
-  display flex
-  flex-direction column
-  gap 3px
-  min-width 0
-
-  > strong
-    overflow hidden
-    color #f0fcff
-    font-size 17px
-    font-weight 850
-    text-overflow ellipsis
-    white-space nowrap
-
-.leaderboard-personal__eyebrow
-  color #92daee
-  font-size 10px
-  font-weight 900
-  letter-spacing .14em
-
-.leaderboard-personal__best
-  color #a9cfda
-  font-size 11px
-  font-variant-numeric tabular-nums
-
-.leaderboard-personal__position
-  display flex
-  flex-direction column
-  align-items flex-end
-  gap 2px
-
-  > span
-    color #88d1ee
-    font-size 10px
-    font-weight 900
-    letter-spacing .11em
-
-  > strong
-    color #fff
-    font-size 27px
-    font-weight 900
-    font-variant-numeric tabular-nums
 
 .leaderboard-local
   display flex
@@ -910,9 +881,6 @@
     margin-bottom 10px
 
   .leaderboard-publish
-    padding 12px
-
-  .leaderboard-personal
     padding 12px
 
 @media (max-width: 370px)
