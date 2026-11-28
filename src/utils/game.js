@@ -10,7 +10,7 @@ import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
 import { getPieceFxCells, captureClearCandidates, markedClearFxCells, mergeClearFxCells, clearStepFxCells } from '@/utils/visualFx'
 
 // todo clear measure!!!!!!!!!!!!!!!
-const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
+const speed = { start: 1000, clear: 80, drop: 10, three: 80, scheduled: 100 }
 const BONUS_HOLD_MS = 270
 // let item = { T: 0 }
 let item = {}
