@@ -20,7 +20,7 @@ if ($origin !== '' && !in_array($origin, $allowed, true)) {
     respond(['error' => 'Origin not allowed.'], 403);
 }
 if ($origin !== '') header('Access-Control-Allow-Origin: ' . $origin);
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PATCH, OPTIONS');
 header('Access-Control-Allow-Headers: Authorization, Content-Type');
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
     http_response_code(204);
@@ -215,6 +215,27 @@ function create_player(string $salt): never
     respond(['id' => $player['id'], 'nickname' => $player['nickname'], 'token' => $token], 201);
 }
 
+
+function rename_player(): never
+{
+    $body = read_json();
+    $nickname = normalized_nickname($body['nickname'] ?? null);
+    if ($nickname === null) {
+        respond(['error' => 'Use 3–16 letters, digits, underscores or hyphens.'], 400);
+    }
+
+    $updated = with_state(function (array &$state) use ($nickname): ?array {
+        $player = find_player($state);
+        if ($player === null) return null;
+        $id = $player['id'];
+        $state['players'][$id]['nickname'] = $nickname;
+        return ['id' => $id, 'nickname' => $nickname];
+    });
+
+    if ($updated === null) respond(['error' => 'Player session not found. Choose a new nickname.'], 401);
+    respond($updated);
+}
+
 function publish_score(): never
 {
     $player = with_state(fn(array &$state) => find_player($state));
@@ -368,6 +389,7 @@ try {
     }
     if ($path === '/api/v1/leaderboard' && $method === 'GET') leaderboard();
     if ($path === '/api/v1/players' && $method === 'POST') create_player($salt);
+    if ($path === '/api/v1/players/me' && $method === 'PATCH') rename_player();
     if ($path === '/api/v1/scores' && $method === 'POST') publish_score();
     respond(['error' => 'Endpoint not found.'], 404);
 } catch (Throwable $error) {
