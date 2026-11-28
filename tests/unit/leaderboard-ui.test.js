@@ -53,7 +53,7 @@ test('podium and ranked rows share accessible vector device badges', () => {
 test('the full Top 20 includes podium players even when there are only three entries', () => {
   assert.ok(component.includes('<span>TOP 20</span>'))
   assert.ok(component.includes('<small>RANK 01—20</small>'))
-  assert.ok(component.includes('aria-label="Top 20 players"'))
+  assert.ok(component.includes("Top 20 players and your standing"))
   assert.ok(component.includes('v-for="entry in leaderboardRows"'))
   assert.ok(!component.includes('remainingEntries'))
   assert.ok(!component.includes('RANK 04—20'))
