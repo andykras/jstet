@@ -52,6 +52,21 @@ test('two quick locks can enqueue independent matches before one ALL CLEAR resol
   for (const y of [8, 9, 10]) assert.equal(cells[y][5], 0)
 })
 
+test('a completed clear can produce a new cascade from settling survivors', () => {
+  const cells = board()
+  for (const x of [3, 4, 5]) cells[3][x] = 6
+  for (const y of [2, 4, 5]) cells[y][4] = 4
+
+  assert.equal(getThreeBlock().size, 3)
+  assert.equal(removeThreeBlock(), 3)
+  assert.deepEqual([cells[2][4], cells[3][4], cells[4][4]], [4, 4, 4])
+
+  assert.equal(getThreeBlock().size, 3)
+  assert.equal(removeThreeBlock(), 3)
+  assert.equal(store.state.pendingClears.size, 0)
+  assert.deepEqual([cells[2][4], cells[3][4], cells[4][4]], [0, 0, 0])
+})
+
 test('a fresh match cannot reuse already pending cells', () => {
   const cells = board()
   for (const x of [2, 3, 4]) cells[5][x] = 3
