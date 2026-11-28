@@ -19,11 +19,7 @@
          class="gravity-piece-layer"
          aria-hidden="true">
       <div ref="gravityPiece"
-           class="gravity-piece"
-           :style="{
-             left: `calc(${activePiece.X - 1} * var(--jstet-cell-size))`,
-             bottom: `calc(${activePiece.Y - 1} * var(--jstet-cell-size))`
-           }">
+           class="gravity-piece">
         <div v-for="cell in activePiece.cells"
              :key="cell.key"
              class="game-cell gravity-piece__cell"
@@ -123,15 +119,21 @@ export default {
     },
     onVisibilityChange() {
       if (document.hidden && this.$refs.gravityPiece) {
-        this.$refs.gravityPiece.style.setProperty('--gravity-offset', '0px')
+        const item = this.$store.state.item
+        if (item) this.$refs.gravityPiece.style.transform = `translate3d(${(item.X - 1) * this.cellSize}px, ${(1 - item.Y) * this.cellSize}px, 0)`
       }
     },
     paintGravity() {
       const element = this.$refs.gravityPiece
-      if (element && this.cellSize) {
+      const item = this.$store.state.item
+      if (element && item && this.cellSize) {
         const motionDisabled = this.reducedMotion || this.osReducedMotion || document.hidden
         const progress = motionDisabled ? 0 : game.visualGravityProgress(performance.now())
-        element.style.setProperty('--gravity-offset', `${progress * this.cellSize}px`)
+        const x = (item.X - 1) * this.cellSize
+        const y = (1 - item.Y + progress) * this.cellSize
+        // Move the entire piece in one compositor transform; never animate
+        // the logical cell coordinates or relayout the settled board.
+        element.style.transform = `translate3d(${x}px, ${y}px, 0)`
       }
       this.gravityFrame = requestAnimationFrame(this.paintGravity)
     },
@@ -192,9 +194,11 @@ export default {
 
 .gravity-piece
   position absolute
+  left 0
+  bottom 0
   width 0
   height 0
-  transform translate3d(0, var(--gravity-offset, 0px), 0)
+  transform translate3d(0, 0, 0)
   will-change transform
   pointer-events none
 
