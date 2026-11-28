@@ -69,7 +69,7 @@ test('your standing replaces the matching row and remains pinned below Top 20 wh
   assert.ok(component.includes('standingOnly: true'))
   assert.ok(!component.includes('leaderboard-personal'))
   const styles = read('src/styles/leaderboard.styl')
-  assert.ok(styles.includes('.leaderboard-entry--mine .leaderboard-entry__main\\n  min-height 78px'.replace('\\n', '\n')))
+  assert.ok(styles.includes('.leaderboard-entry--mine .leaderboard-entry__main\n  min-height 78px'))
   assert.ok(styles.includes('svg.leaderboard-run-badge__punch'))
 })
 
