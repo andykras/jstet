@@ -186,7 +186,7 @@
             <small>RANK 01—20</small>
           </div>
           <ol class="leaderboard-list"
-              aria-label="Top 20 players">
+               :aria-label="leaderboardRows.length > entries.length ? 'Top 20 players and your standing' : 'Top 20 players'">
             <li v-for="entry in leaderboardRows"
                 :key="entry.playerId"
                 class="leaderboard-entry"
