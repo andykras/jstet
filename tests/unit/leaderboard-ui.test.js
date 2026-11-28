@@ -30,13 +30,13 @@ test('new players opt in explicitly, not while playing offline', () => {
   assert.match(component, /automatic publishing/)
 })
 
-test('podium, regular rows and standing share accessible vector device badges', () => {
+test('podium and ranked rows share accessible vector device badges', () => {
   const uses = component.match(/<LeaderboardRunBadges/g) || []
-  assert.equal(uses.length, 3)
+  assert.equal(uses.length, 2)
   assert.match(badges, /role="img"/)
   assert.match(badges, /aria-label="Hard Drop"/)
-  assert.match(badges, /leaderboard-run-badge__fist/)
-  assert.doesNotMatch(badges, /M12 2v12m-5-5 5 5 5-5/)
+  assert.match(badges, /leaderboard-run-badge__impact/)
+  assert.doesNotMatch(badges, /leaderboard-run-badge__fist|M12 2v12m-5-5 5 5 5-5/)
   assert.match(badges, /aria-label="Phone or tablet"/)
   assert.match(badges, /aria-label="Computer"/)
   assert.match(badges, /aria-label="Device unknown"/)
@@ -58,6 +58,15 @@ test('the full Top 20 includes podium players even when there are only three ent
   assert.ok(!component.includes('remainingEntries'))
   assert.ok(!component.includes('RANK 04—20'))
   assert.ok(!component.includes('v-if="remainingEntries.length"'))
+})
+
+test('your standing replaces the matching row and remains pinned below Top 20 when unranked there', () => {
+  assert.ok(component.includes('v-for="entry in leaderboardRows"'))
+  assert.ok(component.includes('class="leaderboard-entry__standing-label">YOUR STANDING</span>'))
+  assert.ok(component.includes("'leaderboard-entry--standing-only': entry.standingOnly === true"))
+  assert.ok(component.includes("if (this.entries.some(entry => entry.playerId === this.profile.id)) return this.entries"))
+  assert.ok(component.includes('standingOnly: true'))
+  assert.ok(!component.includes('leaderboard-personal'))
 })
 
 test('podium and Top 20 rows expand independently and third place sits lower', () => {
