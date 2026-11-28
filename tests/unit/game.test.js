@@ -1,8 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 import Piece from '../../src/utils/piece.js'
 import Stakan from '../../src/utils/stakan.js'
+
+const gameSource = readFileSync(new URL('../../src/utils/game.js', import.meta.url), 'utf8')
 
 test('piece exposes its size and quarter-turn rotations', () => {
   const piece = new Piece([[0, 1, 0], [0, 1, 0], [0, 1, 0]], 4)
@@ -22,4 +25,9 @@ test('new well has boundaries, empty cells and hidden rows', () => {
   assert.equal(cells[1][0], -1)
   assert.equal(cells[1][8], -1)
   assert.equal(cells[1][1], 0)
+})
+
+test('modern soft drop uses the 10 ms base timing', () => {
+  assert.match(gameSource, /drop: 10/)
+  assert.match(gameSource, /game\.drop > 0 \? speed\.drop \/ game\.drop/)
 })
