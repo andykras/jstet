@@ -151,13 +151,13 @@
                  class="leaderboard-podium__slot"
                  :class="['leaderboard-podium__slot--' + entry.rank, {
                    'leaderboard-podium__slot--mine': profile && entry.playerId === profile.id,
-                   'leaderboard-podium__slot--open': expandedId === entry.playerId
+                   'leaderboard-podium__slot--open': expandedSource === 'podium' && expandedId === entry.playerId
                  }]">
               <button type="button"
                       class="leaderboard-podium__button"
-                      :aria-expanded="expandedId === entry.playerId"
+                      :aria-expanded="expandedSource === 'podium' && expandedId === entry.playerId"
                       :aria-label="podiumLabel(entry)"
-                      @click="toggleEntry(entry.playerId)">
+                      @click="toggleEntry(entry.playerId, 'podium')">
                 <span class="leaderboard-podium__medal"
                       aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
                 <span class="leaderboard-podium__place">#{{ entry.rank }}</span>
@@ -169,7 +169,7 @@
                 <strong class="leaderboard-podium__score">{{ formatLeaderboardScore(entry.score) }}</strong>
                 <LeaderboardRunBadges :entry="entry" />
                 <span class="leaderboard-podium__hint"
-                      aria-hidden="true">{{ expandedId === entry.playerId ? '−' : '+' }} details</span>
+                      aria-hidden="true">{{ expandedSource === 'podium' && expandedId === entry.playerId ? '−' : '+' }} details</span>
               </button>
             </div>
           </div>
@@ -198,25 +198,22 @@
             </div>
           </div>
 
-          <div v-if="remainingEntries.length"
-               class="leaderboard-section-heading leaderboard-section-heading--list">
-            <span>THE CHALLENGERS</span>
-            <small>RANK 04—20</small>
+          <div class="leaderboard-section-heading leaderboard-section-heading--list">
+            <span>TOP 20</span>
+            <small>RANK 01—20</small>
           </div>
-          <ol v-if="remainingEntries.length"
-              class="leaderboard-list"
-              start="4"
-              aria-label="Other ranked players">
-            <li v-for="entry in remainingEntries"
+          <ol class="leaderboard-list"
+              aria-label="Top 20 players">
+            <li v-for="entry in entries"
                 :key="entry.playerId"
                 class="leaderboard-entry"
                 :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id,
-                          'leaderboard-entry--open': expandedId === entry.playerId }">
+                          'leaderboard-entry--open': expandedSource === 'list' && expandedId === entry.playerId }">
               <button type="button"
                       class="leaderboard-entry__main"
-                      :aria-expanded="expandedId === entry.playerId"
+                      :aria-expanded="expandedSource === 'list' && expandedId === entry.playerId"
                       :aria-label="rowLabel(entry)"
-                      @click="toggleEntry(entry.playerId)">
+                      @click="toggleEntry(entry.playerId, 'list')">
                 <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
                 <span class="leaderboard-entry__player">
                   <span class="leaderboard-entry__name">
@@ -236,7 +233,7 @@
                      stroke-linejoin="round"
                      aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
               </button>
-              <div v-if="expandedId === entry.playerId"
+              <div v-if="expandedSource === 'list' && expandedId === entry.playerId"
                    class="leaderboard-entry__details">
                 <LeaderboardRunDetails :entry="entry"
                                        :mode="mode" />
@@ -340,6 +337,7 @@ export default {
       publishError: '',
       profileError: '',
       expandedId: null,
+      expandedSource: null,
       sequence: 0
     }
   },
@@ -347,9 +345,9 @@ export default {
     personalBest() { return readPersonalBest(this.mode) },
     autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) },
     podiumEntries() { return this.entries.slice(0, 3) },
-    remainingEntries() { return this.entries.slice(3) },
     activePodiumEntry() {
-      return this.entries.slice(0, 3).find(entry => entry.playerId === this.expandedId) || null
+      if (this.expandedSource !== 'podium') return null
+      return this.podiumEntries.find(entry => entry.playerId === this.expandedId) || null
     }
   },
   watch: {
@@ -379,16 +377,18 @@ export default {
       else labels.push('Device unknown')
       return labels.join('. ') + '. '
     },
-    rowLabel(entry) {
+    rowLabel(entry, source = 'list') {
       return entry.nickname + ', rank ' + entry.rank + ', ' +
         formatLeaderboardScore(entry.score) + '. ' + this.runBadgeDescription(entry) +
-        (this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
+        (this.expandedSource === source && this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
     },
     podiumLabel(entry) {
-      return this.rowLabel(entry)
+      return this.rowLabel(entry, 'podium')
     },
-    toggleEntry(playerId) {
-      this.expandedId = this.expandedId === playerId ? null : playerId
+    toggleEntry(playerId, source) {
+      const sameEntry = this.expandedId === playerId && this.expandedSource === source
+      this.expandedId = sameEntry ? null : playerId
+      this.expandedSource = sameEntry ? null : source
     },
     useCachedRanking(fallbackMessage) {
       const snapshot = cachedLeaderboard(this.mode, this.period, this.profile)
@@ -405,6 +405,7 @@ export default {
         this.cachedAtMs = null
         this.mine = null
         this.expandedId = null
+        this.expandedSource = null
         this.entries = leaderboardPreviewEntries(this.mode, this.period)
         return
       }
@@ -413,6 +414,7 @@ export default {
         this.sequence++
         this.loading = false
         this.expandedId = null
+        this.expandedSource = null
         this.useCachedRanking('Offline: live rankings are unavailable. Your local best is still saved.')
         return
       }
@@ -423,6 +425,7 @@ export default {
       this.entries = []
       this.mine = null
       this.expandedId = null
+      this.expandedSource = null
       try {
         const result = await fetchLeaderboard(this.mode, this.period, this.profile)
         if (requestId !== this.sequence) return
