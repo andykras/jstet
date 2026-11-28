@@ -278,13 +278,47 @@
                  @change="onAutoPublishChange($event.target.checked)">
           Automatically publish future scores
         </label>
-        <button type="button"
-                class="leaderboard-text-action"
-                @click="forgetProfile">Forget this profile on this device</button>
+        <div class="leaderboard-profile-actions">
+          <button type="button"
+                  class="leaderboard-text-action"
+                  @click="beginRename">Rename nickname</button>
+          <button type="button"
+                  class="leaderboard-text-action"
+                  @click="forgetProfile">Forget this profile on this device</button>
+        </div>
         <p v-if="profileError"
            class="leaderboard-error"
            role="alert">{{ profileError }}</p>
       </div>
+      <form v-if="renaming"
+            class="leaderboard-rename"
+            @submit.prevent="renameProfile">
+        <label for="leaderboard-rename-nickname">New nickname</label>
+        <div class="leaderboard-publish__form-row">
+          <input id="leaderboard-rename-nickname"
+                 ref="renameInput"
+                 v-model.trim="renameNickname"
+                 type="text"
+                 required
+                 minlength="3"
+                 maxlength="16"
+                 autocomplete="nickname"
+                 :disabled="renamingProfile"
+                 placeholder="Your arcade name">
+          <button type="submit"
+                  class="arcade-button arcade-button--primary"
+                  :disabled="renamingProfile || !online">Save nickname</button>
+          <button type="button"
+                  class="leaderboard-text-action"
+                  :disabled="renamingProfile"
+                  @click="cancelRename">Cancel</button>
+        </div>
+        <p>Changing your nickname updates the name shown on all your existing and future scores.</p>
+        <p v-if="!online">Reconnect to rename your public nickname.</p>
+        <p v-if="renameError"
+           class="leaderboard-error"
+           role="alert">{{ renameError }}</p>
+      </form>
       <p v-if="configured || preview"
          class="leaderboard-disclaimer">
         {{ preview
@@ -304,7 +338,7 @@ import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
   leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard, cachedLeaderboard,
-  registerLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
+  registerLeaderboardPlayer, renameLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
   setLeaderboardAutoPublish, forgetLeaderboardPlayer
 } from '@/utils/leaderboardClient.js'
 
@@ -336,6 +370,10 @@ export default {
       publishing: false,
       publishError: '',
       profileError: '',
+      renaming: false,
+      renameNickname: '',
+      renamingProfile: false,
+      renameError: '',
       expandedId: null,
       expandedSource: null,
       sequence: 0
@@ -479,6 +517,43 @@ export default {
         this.profile = setLeaderboardAutoPublish(enabled)
       } catch (error) {
         this.profileError = error.message
+      }
+    },
+
+    beginRename() {
+      if (!this.profile) return
+      this.renameNickname = this.profile.nickname
+      this.renameError = ''
+      this.renaming = true
+      this.$nextTick(() => this.$refs.renameInput?.focus())
+    },
+    cancelRename() {
+      if (this.renamingProfile) return
+      this.renaming = false
+      this.renameError = ''
+    },
+    async renameProfile() {
+      if (this.renamingProfile || !this.profile || !this.online) return
+      const nickname = normalizeLeaderboardNickname(this.renameNickname)
+      if (!nickname) {
+        this.renameError = 'Use 3–16 letters, digits, underscores or hyphens.'
+        return
+      }
+      if (nickname === this.profile.nickname) {
+        this.renaming = false
+        this.renameError = ''
+        return
+      }
+      this.renamingProfile = true
+      this.renameError = ''
+      try {
+        this.profile = await renameLeaderboardPlayer(nickname, this.profile)
+        this.renaming = false
+        await this.refresh()
+      } catch (error) {
+        this.renameError = error.message
+      } finally {
+        this.renamingProfile = false
       }
     },
     forgetProfile() {
