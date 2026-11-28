@@ -25,9 +25,11 @@ export const removeThreeBlockSorted = _ => {
 export const removeThreeBlock = _ => {
   ;($cells = store.state.cells), (h = $cells.height), (w = $cells.width)
   for (let x = 1; x < w - 1; ++x) {
-    for (let cur = 1, y = cur; y < h + 1; ++y) {
+    let cur = 1
+    for (let y = cur; y < h + 1; ++y) {
       if (!$three.has(x * h + y)) $cells[cur++][x] = $cells[y][x]
     }
+    for (let y = cur; y < h; ++y) $cells[y][x] = 0
   }
 }
 
