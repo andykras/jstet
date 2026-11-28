@@ -35,8 +35,9 @@ test('podium and ranked rows share accessible vector device badges', () => {
   assert.equal(uses.length, 2)
   assert.match(badges, /role="img"/)
   assert.match(badges, /aria-label="Hard Drop"/)
-  assert.match(badges, /leaderboard-run-badge__impact/)
-  assert.doesNotMatch(badges, /leaderboard-run-badge__fist|M12 2v12m-5-5 5 5 5-5/)
+  assert.match(badges, /leaderboard-run-badge__punch/)
+  assert.match(badges, /viewBox="0 0 384 512"/)
+  assert.doesNotMatch(badges, /leaderboard-run-badge__impact|leaderboard-run-badge__fist|M12 2v12m-5-5 5 5 5-5/)
   assert.match(badges, /aria-label="Phone or tablet"/)
   assert.match(badges, /aria-label="Computer"/)
   assert.match(badges, /aria-label="Device unknown"/)
@@ -67,6 +68,9 @@ test('your standing replaces the matching row and remains pinned below Top 20 wh
   assert.ok(component.includes("if (this.entries.some(entry => entry.playerId === this.profile.id)) return this.entries"))
   assert.ok(component.includes('standingOnly: true'))
   assert.ok(!component.includes('leaderboard-personal'))
+  const styles = read('src/styles/leaderboard.styl')
+  assert.ok(styles.includes('.leaderboard-entry--mine .leaderboard-entry__main\\n  min-height 78px'.replace('\\n', '\n')))
+  assert.ok(styles.includes('svg.leaderboard-run-badge__punch'))
 })
 
 test('podium and Top 20 rows expand independently and third place sits lower', () => {
