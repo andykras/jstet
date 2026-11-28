@@ -388,7 +388,7 @@ const set = (X, Y, R, T = item.T, N = item.N) => {
 // }
 
 const update = (X, Y, R, action = 'gravity') => {
-  if ($lines.length || $three.size) return
+  if (($lines.length > 0 && game.singleBlock) || ($three.size > 0 && game.singleBlock)) return
 
   const previous = item
   const accepted = set(X, Y, R)
@@ -508,11 +508,11 @@ const moveToColumn = targetX => {
 }
 
 const dropDown = _ => {
-  if ($lines.length || $three.size) return
+  const clearing = game.singleBlock && ($lines.length > 0 || $three.size > 0)
   const start = item
   while (set(item.X, item.Y - 1, item.R));
   const distance = start.Y - item.Y
-  if (distance > 0) {
+  if (!clearing && distance > 0) {
     emitFx('fx:hard-drop', () => Object.freeze({
       from: Object.freeze({ X: start.X, Y: start.Y, R: start.R }),
       to: Object.freeze({ X: item.X, Y: item.Y, R: item.R }),
@@ -520,7 +520,7 @@ const dropDown = _ => {
       cells: getPieceFxCells(start, $pieces, $cells)
     }))
   }
-  game.hardDropPending = true
+  if (!clearing) game.hardDropPending = true
   update(item.X, item.Y + game.drop++, item.R)
 }
 
