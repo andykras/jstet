@@ -10,7 +10,7 @@ import { comboBonusForStreak, cascadeBonus } from '@/game/bonus'
 import { getPieceFxCells, captureClearCandidates, markedClearFxCells, mergeClearFxCells, clearStepFxCells } from '@/utils/visualFx'
 
 // todo clear measure!!!!!!!!!!!!!!!
-const speed = { start: 1000, clear: 80, drop: 20, three: 80, scheduled: 100 }
+const speed = { start: 1000, clear: 80, drop: 10, three: 80, scheduled: 100 }
 const BONUS_HOLD_MS = 270
 // let item = { T: 0 }
 let item = {}
@@ -218,6 +218,34 @@ export const game = {
     const count = this.gravityElapsed() / delta
     this.gravityIntervals[delta] = this.gravityIntervals[delta] ?? count
     return count > this.gravityIntervals[delta] + 1
+  },
+
+  // Fractional visual progress for ordinary gravity only. The authoritative
+  // piece coordinates and collision/locking schedule remain integer-based.
+  // Read the same logical clock/counter used by gravityInterval() so the
+  // rendered piece arrives at the next cell when the engine advances it.
+  visualGravityProgress(now = performance.now()) {
+    if (!this.started || this.paused || this.bonusHoldUntil || this.scheduled ||
+      this.drop > 0 || (this.singleBlock && ($lines.length || $three.size))) return 0
+
+    const period = this.speed()
+    const counter = this.gravityIntervals[period]
+    const piece = $pieces?.[item.T]
+    if (!(period > 0) || !Number.isFinite(counter) || !piece || !$cells) return 0
+
+    // Never draw the active piece into a blocked cell. This is a read-only
+    // equivalent of set()'s collision check at the *next* gravity row.
+    const nextY = item.Y - 1
+    for (let y = 0; y < piece.size; y++) {
+      const row = $cells[nextY + y]
+      if (!row) continue
+      for (let x = 0; x < piece.size; x++) {
+        if (piece.get(x, y, item.R) > 0 && row[item.X + x] !== 0) return 0
+      }
+    }
+
+    const elapsed = now - this.startedTime - this.gravityPauseOffset
+    return Math.max(0, Math.min(1, elapsed / period - counter))
   },
 
   increase() {
