@@ -71,7 +71,7 @@ After the first eligible Game Over, the nickname/publication panel opens automat
 and places the form above the rankings; no registration is needed on subsequent runs.
 Games with a positive score qualify regardless of the clearing setting.
 The player credential lives in localStorage, so clearing browser data loses the profile.
-Users can disable automatic submissions or forget the local profile from the leaderboard.
+Users can rename their public nickname, disable automatic submissions or forget the local profile from the leaderboard.
 Already published scores remain public when a device forgets its profile.
 
 Personal best scores are also saved locally, independently of API availability and
