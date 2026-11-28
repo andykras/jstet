@@ -154,12 +154,18 @@ export default {
       const valR = valueAt(x + 1, y)
       const valD = valueAt(x, y - 1)
       const active = overlay && val > 0 && isActivePieceCell(x, y, this.$store.state.pieces, this.$store.state.item)
+      // In the original grid, an adjacent *empty* cell draws the exposed
+      // left/bottom border, so the filled cell suppresses that edge. The
+      // floating piece has no neighboring empty cells to draw those edges:
+      // suppress only borders shared by two cells of the active tetromino.
+      const pieceLeft = overlay && isActivePieceCell(x - 1, y, this.$store.state.pieces, this.$store.state.item)
+      const pieceBelow = overlay && isActivePieceCell(x, y - 1, this.$store.state.pieces, this.$store.state.item)
 
       return {
         ['N' + val]: val != -1,
         item: val != 0,
-        left: (val != 0 && valL != 0) || valL == 0,
-        bottom: (val != 0 && valD != 0) || valD == 0,
+        left: overlay ? pieceLeft : (val != 0 && valL != 0) || valL == 0,
+        bottom: overlay ? pieceBelow : (val != 0 && valD != 0) || valD == 0,
         empty: val == 0,
         right: val == 0 && valR != 0,
         top: val == 0 && valU != 0,
