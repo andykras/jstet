@@ -137,13 +137,23 @@ export default {
       }
       this.gravityFrame = requestAnimationFrame(this.paintGravity)
     },
+    getSettledValue(x, y) {
+      // Clearing updates the existing board in place. Keep line count as a
+      // reactive dependency, just like the original getWellValue getter.
+      void this.$store.state.lines
+      return this.$store.state.cells?.[y - 1]?.[x - 1] ?? 0
+    },
     getThemeClass(x, y, overlay = false) {
-      const val = this.getWellValue(x, y)
-      const valL = this.getWellValue(x - 1, y)
-      const valU = this.getWellValue(x, y + 1)
-      const valR = this.getWellValue(x + 1, y)
-      const valD = this.getWellValue(x, y - 1)
-      const active = val > 0 && isActivePieceCell(x, y, this.$store.state.pieces, this.$store.state.item)
+      // The base grid must show the *settled* field, including normal empty
+      // cell backgrounds beneath the falling piece. Hiding active cells with
+      // visibility:hidden exposed the board's dark backing during descent.
+      const valueAt = overlay ? this.getWellValue : this.getSettledValue
+      const val = valueAt(x, y)
+      const valL = valueAt(x - 1, y)
+      const valU = valueAt(x, y + 1)
+      const valR = valueAt(x + 1, y)
+      const valD = valueAt(x, y - 1)
+      const active = overlay && val > 0 && isActivePieceCell(x, y, this.$store.state.pieces, this.$store.state.item)
 
       return {
         ['N' + val]: val != -1,
@@ -153,8 +163,7 @@ export default {
         empty: val == 0,
         right: val == 0 && valR != 0,
         top: val == 0 && valU != 0,
-        'fx-active': this.visualFx && active,
-        'gravity-underlay': !overlay && active
+        'fx-active': this.visualFx && active
       }
     },
     isBorder(x, y) {
@@ -179,11 +188,6 @@ export default {
 
   &__row
     display flex
-
-    // Keep the cell's layout and adjacency logic, but only draw the moving
-    // copy so active colors and borders never appear twice.
-    > .game-cell.gravity-underlay
-      visibility hidden
 
 .gravity-piece-layer
   position absolute
