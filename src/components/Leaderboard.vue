@@ -181,33 +181,17 @@
                                    :mode="mode" />
           </div>
 
-          <div v-if="profile && !preview"
-               class="leaderboard-personal"
-               aria-label="Your position">
-            <div class="leaderboard-personal__identity">
-              <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
-              <strong>{{ profile.nickname }}</strong>
-              <span class="leaderboard-personal__best">Best ·
-                {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
-              <LeaderboardRunBadges v-if="!loading && !loadError && mine"
-                                   :entry="mine" />
-            </div>
-            <div class="leaderboard-personal__position">
-              <span>RANK</span>
-              <strong>{{ !loading && !loadError && mine ? '#' + mine.rank : '—' }}</strong>
-            </div>
-          </div>
-
           <div class="leaderboard-section-heading leaderboard-section-heading--list">
             <span>TOP 20</span>
             <small>RANK 01—20</small>
           </div>
           <ol class="leaderboard-list"
               aria-label="Top 20 players">
-            <li v-for="entry in entries"
+            <li v-for="entry in leaderboardRows"
                 :key="entry.playerId"
                 class="leaderboard-entry"
                 :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id,
+                          'leaderboard-entry--standing-only': entry.standingOnly === true,
                           'leaderboard-entry--open': expandedSource === 'list' && expandedId === entry.playerId }">
               <button type="button"
                       class="leaderboard-entry__main"
@@ -215,11 +199,14 @@
                       :aria-label="rowLabel(entry)"
                       @click="toggleEntry(entry.playerId, 'list')">
                 <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
-                <span class="leaderboard-entry__player">
-                  <span class="leaderboard-entry__name">
-                    {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
+                <span class="leaderboard-entry__player"
+                      :class="{ 'leaderboard-entry__player--mine': profile && entry.playerId === profile.id }">
+                  <span v-if="profile && entry.playerId === profile.id"
+                        class="leaderboard-entry__standing-label">YOUR STANDING</span>
+                  <span class="leaderboard-entry__identity">
+                    <span class="leaderboard-entry__name">{{ entry.nickname }}</span>
+                    <LeaderboardRunBadges :entry="entry" />
                   </span>
-                  <LeaderboardRunBadges :entry="entry" />
                 </span>
                 <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
                 <svg class="leaderboard-entry__chevron"
@@ -249,19 +236,6 @@
           <p>Finish a game. Claim the first spot.</p>
         </div>
 
-        <div v-if="profile && !preview && !entries.length && !loading && !loadError"
-             class="leaderboard-personal"
-             aria-label="Your position">
-          <div class="leaderboard-personal__identity">
-            <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
-            <strong>{{ profile.nickname }}</strong>
-            <span class="leaderboard-personal__best">No published scores in this period yet</span>
-          </div>
-          <div class="leaderboard-personal__position">
-            <span>RANK</span>
-            <strong>—</strong>
-          </div>
-        </div>
       </template>
 
       <div class="leaderboard-local"
@@ -383,6 +357,16 @@ export default {
     personalBest() { return readPersonalBest(this.mode) },
     autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) },
     podiumEntries() { return this.entries.slice(0, 3) },
+    leaderboardRows() {
+      if (!this.profile || !this.mine) return this.entries
+      if (this.entries.some(entry => entry.playerId === this.profile.id)) return this.entries
+      return [...this.entries, {
+        ...this.mine,
+        playerId: this.profile.id,
+        nickname: this.profile.nickname,
+        standingOnly: true
+      }]
+    },
     activePodiumEntry() {
       if (this.expandedSource !== 'podium') return null
       return this.podiumEntries.find(entry => entry.playerId === this.expandedId) || null
@@ -416,7 +400,8 @@ export default {
       return labels.join('. ') + '. '
     },
     rowLabel(entry, source = 'list') {
-      return entry.nickname + ', rank ' + entry.rank + ', ' +
+      const standing = this.profile && entry.playerId === this.profile.id ? 'Your standing. ' : ''
+      return standing + entry.nickname + ', rank ' + entry.rank + ', ' +
         formatLeaderboardScore(entry.score) + '. ' + this.runBadgeDescription(entry) +
         (this.expandedSource === source && this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
     },
