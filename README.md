@@ -71,14 +71,15 @@ After the first eligible Game Over, the nickname/publication panel opens automat
 and places the form above the rankings; no registration is needed on subsequent runs.
 Games with a positive score qualify regardless of the clearing setting.
 The player credential lives in localStorage, so clearing browser data loses the profile.
-Users can disable automatic submissions or forget the local profile from the leaderboard.
+Users can rename their public nickname, disable automatic submissions or forget the local profile from the leaderboard.
 Already published scores remain public when a device forgets its profile.
 
 Personal best scores are also saved locally, independently of API availability and
 separately by game mode, while retaining historical records from both clearing settings.
 
-The Hall of Fame presents the top three players as a podium, followed by the remaining
-Top 20. Each result uses compact SVG icon badges: golden Hard Drop,
+The Hall of Fame highlights the top three players on a stepped podium, followed by a
+complete **TOP 20** list that also includes those same three players. The list is visible
+as soon as the first score is published. Each result uses compact SVG icon badges: golden Hard Drop,
 turquoise phone/tablet, or blue desktop computer. Clearing mode is shown only
 in the expanded run details, with blocks/lines, level and duration. Platform
 is captured locally at Game Over based on browser device signals, so it is

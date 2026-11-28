@@ -151,13 +151,13 @@
                  class="leaderboard-podium__slot"
                  :class="['leaderboard-podium__slot--' + entry.rank, {
                    'leaderboard-podium__slot--mine': profile && entry.playerId === profile.id,
-                   'leaderboard-podium__slot--open': expandedId === entry.playerId
+                   'leaderboard-podium__slot--open': expandedSource === 'podium' && expandedId === entry.playerId
                  }]">
               <button type="button"
                       class="leaderboard-podium__button"
-                      :aria-expanded="expandedId === entry.playerId"
+                      :aria-expanded="expandedSource === 'podium' && expandedId === entry.playerId"
                       :aria-label="podiumLabel(entry)"
-                      @click="toggleEntry(entry.playerId)">
+                      @click="toggleEntry(entry.playerId, 'podium')">
                 <span class="leaderboard-podium__medal"
                       aria-hidden="true">{{ entry.rank === 1 ? '★' : '◆' }}</span>
                 <span class="leaderboard-podium__place">#{{ entry.rank }}</span>
@@ -169,7 +169,7 @@
                 <strong class="leaderboard-podium__score">{{ formatLeaderboardScore(entry.score) }}</strong>
                 <LeaderboardRunBadges :entry="entry" />
                 <span class="leaderboard-podium__hint"
-                      aria-hidden="true">{{ expandedId === entry.playerId ? '−' : '+' }} details</span>
+                      aria-hidden="true">{{ expandedSource === 'podium' && expandedId === entry.playerId ? '−' : '+' }} details</span>
               </button>
             </div>
           </div>
@@ -181,48 +181,32 @@
                                    :mode="mode" />
           </div>
 
-          <div v-if="profile && !preview"
-               class="leaderboard-personal"
-               aria-label="Your position">
-            <div class="leaderboard-personal__identity">
-              <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
-              <strong>{{ profile.nickname }}</strong>
-              <span class="leaderboard-personal__best">Best ·
-                {{ !loading && !loadError && mine ? formatLeaderboardScore(mine.score) : '—' }}</span>
-              <LeaderboardRunBadges v-if="!loading && !loadError && mine"
-                                   :entry="mine" />
-            </div>
-            <div class="leaderboard-personal__position">
-              <span>RANK</span>
-              <strong>{{ !loading && !loadError && mine ? '#' + mine.rank : '—' }}</strong>
-            </div>
+          <div class="leaderboard-section-heading leaderboard-section-heading--list">
+            <span>TOP 20</span>
+            <small>RANK 01—20</small>
           </div>
-
-          <div v-if="remainingEntries.length"
-               class="leaderboard-section-heading leaderboard-section-heading--list">
-            <span>THE CHALLENGERS</span>
-            <small>RANK 04—20</small>
-          </div>
-          <ol v-if="remainingEntries.length"
-              class="leaderboard-list"
-              start="4"
-              aria-label="Other ranked players">
-            <li v-for="entry in remainingEntries"
+          <ol class="leaderboard-list"
+              :aria-label="leaderboardRows.length > entries.length ? 'Top 20 players and your standing' : 'Top 20 players'">
+            <li v-for="entry in leaderboardRows"
                 :key="entry.playerId"
                 class="leaderboard-entry"
                 :class="{ 'leaderboard-entry--mine': profile && entry.playerId === profile.id,
-                          'leaderboard-entry--open': expandedId === entry.playerId }">
+                          'leaderboard-entry--standing-only': entry.standingOnly === true,
+                          'leaderboard-entry--open': expandedSource === 'list' && expandedId === entry.playerId }">
               <button type="button"
                       class="leaderboard-entry__main"
-                      :aria-expanded="expandedId === entry.playerId"
+                      :aria-expanded="expandedSource === 'list' && expandedId === entry.playerId"
                       :aria-label="rowLabel(entry)"
-                      @click="toggleEntry(entry.playerId)">
+                      @click="toggleEntry(entry.playerId, 'list')">
                 <span class="leaderboard-entry__rank">{{ String(entry.rank).padStart(2, '0') }}</span>
-                <span class="leaderboard-entry__player">
-                  <span class="leaderboard-entry__name">
-                    {{ entry.nickname }}<small v-if="profile && entry.playerId === profile.id">YOU</small>
+                <span class="leaderboard-entry__player"
+                      :class="{ 'leaderboard-entry__player--mine': profile && entry.playerId === profile.id }">
+                  <span v-if="profile && entry.playerId === profile.id"
+                        class="leaderboard-entry__standing-label">YOUR STANDING</span>
+                  <span class="leaderboard-entry__identity">
+                    <span class="leaderboard-entry__name">{{ entry.nickname }}</span>
+                    <LeaderboardRunBadges :entry="entry" />
                   </span>
-                  <LeaderboardRunBadges :entry="entry" />
                 </span>
                 <strong class="leaderboard-entry__score">{{ formatLeaderboardScore(entry.score) }}</strong>
                 <svg class="leaderboard-entry__chevron"
@@ -236,7 +220,7 @@
                      stroke-linejoin="round"
                      aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
               </button>
-              <div v-if="expandedId === entry.playerId"
+              <div v-if="expandedSource === 'list' && expandedId === entry.playerId"
                    class="leaderboard-entry__details">
                 <LeaderboardRunDetails :entry="entry"
                                        :mode="mode" />
@@ -252,19 +236,6 @@
           <p>Finish a game. Claim the first spot.</p>
         </div>
 
-        <div v-if="profile && !preview && !entries.length && !loading && !loadError"
-             class="leaderboard-personal"
-             aria-label="Your position">
-          <div class="leaderboard-personal__identity">
-            <span class="leaderboard-personal__eyebrow">YOUR STANDING</span>
-            <strong>{{ profile.nickname }}</strong>
-            <span class="leaderboard-personal__best">No published scores in this period yet</span>
-          </div>
-          <div class="leaderboard-personal__position">
-            <span>RANK</span>
-            <strong>—</strong>
-          </div>
-        </div>
       </template>
 
       <div class="leaderboard-local"
@@ -281,13 +252,47 @@
                  @change="onAutoPublishChange($event.target.checked)">
           Automatically publish future scores
         </label>
-        <button type="button"
-                class="leaderboard-text-action"
-                @click="forgetProfile">Forget this profile on this device</button>
+        <div class="leaderboard-profile-actions">
+          <button type="button"
+                  class="leaderboard-text-action"
+                  @click="beginRename">Rename nickname</button>
+          <button type="button"
+                  class="leaderboard-text-action"
+                  @click="forgetProfile">Forget this profile on this device</button>
+        </div>
         <p v-if="profileError"
            class="leaderboard-error"
            role="alert">{{ profileError }}</p>
       </div>
+      <form v-if="configured && profile && !preview && renaming"
+            class="leaderboard-rename"
+            @submit.prevent="renameProfile">
+        <label for="leaderboard-rename-nickname">New nickname</label>
+        <div class="leaderboard-publish__form-row">
+          <input id="leaderboard-rename-nickname"
+                 ref="renameInput"
+                 v-model.trim="renameNickname"
+                 type="text"
+                 required
+                 minlength="3"
+                 maxlength="16"
+                 autocomplete="nickname"
+                 :disabled="renamingProfile"
+                 placeholder="Your arcade name">
+          <button type="submit"
+                  class="arcade-button arcade-button--primary"
+                  :disabled="renamingProfile || !online">Save nickname</button>
+          <button type="button"
+                  class="leaderboard-text-action"
+                  :disabled="renamingProfile"
+                  @click="cancelRename">Cancel</button>
+        </div>
+        <p>Changing your nickname updates the name shown on all your existing and future scores.</p>
+        <p v-if="!online">Reconnect to rename your public nickname.</p>
+        <p v-if="renameError"
+           class="leaderboard-error"
+           role="alert">{{ renameError }}</p>
+      </form>
       <p v-if="configured || preview"
          class="leaderboard-disclaimer">
         {{ preview
@@ -307,7 +312,7 @@ import { readPersonalBest } from '@/utils/personalBest.js'
 import { leaderboardPreviewEnabled, leaderboardPreviewEntries } from '@/utils/leaderboardPreview.js'
 import {
   leaderboardConfigured, readLeaderboardPlayer, fetchLeaderboard, cachedLeaderboard,
-  registerLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
+  registerLeaderboardPlayer, renameLeaderboardPlayer, isLeaderboardAutoPublishEnabled,
   setLeaderboardAutoPublish, forgetLeaderboardPlayer
 } from '@/utils/leaderboardClient.js'
 
@@ -339,7 +344,12 @@ export default {
       publishing: false,
       publishError: '',
       profileError: '',
+      renaming: false,
+      renameNickname: '',
+      renamingProfile: false,
+      renameError: '',
       expandedId: null,
+      expandedSource: null,
       sequence: 0
     }
   },
@@ -347,9 +357,19 @@ export default {
     personalBest() { return readPersonalBest(this.mode) },
     autoPublish() { return isLeaderboardAutoPublishEnabled(this.profile) },
     podiumEntries() { return this.entries.slice(0, 3) },
-    remainingEntries() { return this.entries.slice(3) },
+    leaderboardRows() {
+      if (!this.profile || !this.mine) return this.entries
+      if (this.entries.some(entry => entry.playerId === this.profile.id)) return this.entries
+      return [...this.entries, {
+        ...this.mine,
+        playerId: this.profile.id,
+        nickname: this.profile.nickname,
+        standingOnly: true
+      }]
+    },
     activePodiumEntry() {
-      return this.entries.slice(0, 3).find(entry => entry.playerId === this.expandedId) || null
+      if (this.expandedSource !== 'podium') return null
+      return this.podiumEntries.find(entry => entry.playerId === this.expandedId) || null
     }
   },
   watch: {
@@ -379,16 +399,19 @@ export default {
       else labels.push('Device unknown')
       return labels.join('. ') + '. '
     },
-    rowLabel(entry) {
-      return entry.nickname + ', rank ' + entry.rank + ', ' +
+    rowLabel(entry, source = 'list') {
+      const standing = this.profile && entry.playerId === this.profile.id ? 'Your standing. ' : ''
+      return standing + entry.nickname + ', rank ' + entry.rank + ', ' +
         formatLeaderboardScore(entry.score) + '. ' + this.runBadgeDescription(entry) +
-        (this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
+        (this.expandedSource === source && this.expandedId === entry.playerId ? 'Hide' : 'Show') + ' run details.'
     },
     podiumLabel(entry) {
-      return this.rowLabel(entry)
+      return this.rowLabel(entry, 'podium')
     },
-    toggleEntry(playerId) {
-      this.expandedId = this.expandedId === playerId ? null : playerId
+    toggleEntry(playerId, source) {
+      const sameEntry = this.expandedId === playerId && this.expandedSource === source
+      this.expandedId = sameEntry ? null : playerId
+      this.expandedSource = sameEntry ? null : source
     },
     useCachedRanking(fallbackMessage) {
       const snapshot = cachedLeaderboard(this.mode, this.period, this.profile)
@@ -405,6 +428,7 @@ export default {
         this.cachedAtMs = null
         this.mine = null
         this.expandedId = null
+        this.expandedSource = null
         this.entries = leaderboardPreviewEntries(this.mode, this.period)
         return
       }
@@ -413,6 +437,7 @@ export default {
         this.sequence++
         this.loading = false
         this.expandedId = null
+        this.expandedSource = null
         this.useCachedRanking('Offline: live rankings are unavailable. Your local best is still saved.')
         return
       }
@@ -423,6 +448,7 @@ export default {
       this.entries = []
       this.mine = null
       this.expandedId = null
+      this.expandedSource = null
       try {
         const result = await fetchLeaderboard(this.mode, this.period, this.profile)
         if (requestId !== this.sequence) return
@@ -478,6 +504,43 @@ export default {
         this.profileError = error.message
       }
     },
+
+    beginRename() {
+      if (!this.profile) return
+      this.renameNickname = this.profile.nickname
+      this.renameError = ''
+      this.renaming = true
+      this.$nextTick(() => this.$refs.renameInput?.focus())
+    },
+    cancelRename() {
+      if (this.renamingProfile) return
+      this.renaming = false
+      this.renameError = ''
+    },
+    async renameProfile() {
+      if (this.renamingProfile || !this.profile || !this.online) return
+      const nickname = normalizeLeaderboardNickname(this.renameNickname)
+      if (!nickname) {
+        this.renameError = 'Use 3–16 letters, digits, underscores or hyphens.'
+        return
+      }
+      if (nickname === this.profile.nickname) {
+        this.renaming = false
+        this.renameError = ''
+        return
+      }
+      this.renamingProfile = true
+      this.renameError = ''
+      try {
+        this.profile = await renameLeaderboardPlayer(nickname, this.profile)
+        this.renaming = false
+        await this.refresh()
+      } catch (error) {
+        this.renameError = error.message
+      } finally {
+        this.renamingProfile = false
+      }
+    },
     forgetProfile() {
       if (!window.confirm('Forget this profile and unsent scores on this device? Published scores will remain public.')) return
       try {
@@ -491,6 +554,8 @@ export default {
         return
       }
       this.profile = null
+      this.renaming = false
+      this.renameError = ''
       this.$emit('profile-forgotten')
       this.profileError = ''
       this.publishError = ''
